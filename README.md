@@ -1,5 +1,10 @@
 # coffee-paste-front
 
+
+
+[![coffee-paste build](https://github.com/coffee-paste/coffee-paste-front/workflows/coffee-paste/badge.svg?branch=main)](https://github.com/coffee-paste/coffee-paste-front/actions)
+
+
 ## Project setup
 ```
 npm install
