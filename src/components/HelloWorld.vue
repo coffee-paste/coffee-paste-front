@@ -1,32 +1,105 @@
 <template>
   <div class="hello">
     <!-- <Editor v-model="content" toolbar="full" placeholder="Take a coffee and start pasting..." editorStyle="height: 320px"/> -->
-    <Editor v-model="content" toolbar="full" @text-change="onchange"  placeholder="Take a coffee and start pasting..." editorStyle="height: 80vh"/>
-    {{ content }}
+    <Editor
+      :key="lastFeedUpdate"
+      v-model="contentHTML"
+      toolbar="full"
+      @text-change="onchange"
+      placeholder="Take a coffee and start pasting..."
+      editorStyle="height: 80vh"
+    />
+    {{ contentHTML }}
   </div>
 </template>
 
-<script lang="ts">
-import { Options, Vue } from "vue-class-component";
+<script lang="js">
+// import { Options, Vue } from "vue-class-component";
+// @Options({
+//   props: {
+//     msg: String,
+//   },
+//   methods: {
+//     onchange: (e: { htmlValue: string; textValue: string }) => {},
+//   },
+// })
 
-@Options({
-  props: {
-    msg: String,
+let ws;
+export default {
+  // msg!: string;
+  // content!: string;
+  name: "HelloWorld",
+  created() {
+    this.load();
   },
-  methods: {
-    onchange : (e : { htmlValue: string, textValue: string }) => { }
-  }
-})
-export default class HelloWorld extends Vue {
-  msg!: string;
-  content!: string;
-
   data() {
     return {
-      content : ''
-    }
-  }
-}
+      lastFeedUpdate: `${new Date().getTime()}`,
+      noteId: "",
+      contentHTML: "",
+      contentText: "",
+    };
+  },
+  methods: {
+    async load() {
+      const { VUE_APP_API_URL } = process.env;
+
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        return;
+      }
+
+      const o = {
+        method: "get",
+        headers: {
+          authentication: token,
+        },
+      };
+
+      try {
+        const response = await fetch(`${VUE_APP_API_URL}/notes/workspace`, o);
+
+        const workspace = (await response.json());
+
+        if (workspace.length < 1) {
+          return;
+        }
+
+        this.noteId = workspace[0].id;
+        this.contentHTML = workspace[0].contentHTML;
+        ws = new WebSocket(
+          `${VUE_APP_API_URL.replace(
+            "http",
+            "ws"
+          )}/notes?authentication=${token}`
+        );
+
+        ws.onmessage = (msg) => {
+          const data = JSON.parse(msg.data);
+          this.contentHTML = data.contentHTML;
+          this.lastFeedUpdate = `${new Date().getTime()}`;
+        };
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    onchange(e) {
+      const f = this.noteId;
+      // console.log(y.noteId);
+      // y.noteId = '888';
+      if (ws) {
+        ws.send(
+          JSON.stringify({
+            noteId: this.noteId,
+            contentHTML: e.htmlValue,
+            contentText: e.textValue,
+          })
+        );
+      }
+    },
+  },
+};
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
