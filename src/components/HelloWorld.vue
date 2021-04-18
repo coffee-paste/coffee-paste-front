@@ -45,6 +45,7 @@ export default {
   },
   methods: {
     async load() {
+      this.status = "LOADING";
       const { VUE_APP_API_URL } = process.env;
 
       const token = localStorage.getItem("token");
@@ -66,6 +67,7 @@ export default {
         const workspace = (await response.json());
 
         if (workspace.length < 1) {
+          this.status = "MO NOTE FOUND";
           return;
         }
 
@@ -88,6 +90,7 @@ export default {
 
         ws.onclose = () => {
           this.status = "CLOSE";
+          this.load();
         }
         ws.onmessage = (msg) => {
           const data = JSON.parse(msg.data);
@@ -97,6 +100,7 @@ export default {
           this.msgStatus = `RECIVED AT ${new Date().toString()}`
         };
       } catch (error) {
+        this.status = "ERROR FETCH WORKSPACE";
         console.log(error);
       }
     },
