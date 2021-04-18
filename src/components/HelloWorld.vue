@@ -9,7 +9,8 @@
       placeholder="Take a coffee and start pasting..."
       editorStyle="height: 80vh"
     />
-    {{ contentHTML }}
+    CHANNEL STATUS: <strong>{{ status }}</strong> <br />
+    MSG STATUS: <strong>{{ msgStatus }}</strong>
   </div>
 </template>
 
@@ -34,6 +35,8 @@ export default {
   },
   data() {
     return {
+      status: "unknwon",
+      msgStatus: "unknwon",
       lastFeedUpdate: `${new Date().getTime()}`,
       noteId: "",
       contentHTML: "",
@@ -75,10 +78,23 @@ export default {
           )}/notes?authentication=${token}`
         );
 
+        ws.onopen = () => {
+          this.status = "OPEN";
+        }
+
+        ws.onerror = () => {
+          this.status = "ERROR";
+        }
+
+        ws.onclose = () => {
+          this.status = "CLOSE";
+        }
         ws.onmessage = (msg) => {
           const data = JSON.parse(msg.data);
           this.contentHTML = data.contentHTML;
           this.lastFeedUpdate = `${new Date().getTime()}`;
+
+          this.msgStatus = `RECIVED AT ${new Date().toString()}`
         };
       } catch (error) {
         console.log(error);
@@ -96,6 +112,7 @@ export default {
             contentText: e.textValue,
           })
         );
+        this.msgStatus = `SENT AT ${new Date().toString()}`
       }
     },
   },
@@ -104,5 +121,4 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped lang="scss">
-
 </style>
