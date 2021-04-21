@@ -7,7 +7,7 @@
       toolbar="full"
       @text-change="onchange"
       placeholder="Take a coffee and start pasting..."
-      editorStyle="height: 80vh"
+      editorStyle="height: 90vh"
     >
       <template #toolbar>
         <span class="ql-formats">
