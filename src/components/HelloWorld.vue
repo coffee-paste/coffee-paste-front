@@ -171,5 +171,10 @@ export default {
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped lang="scss">
+<style lang="scss">
+.hello {
+  // Fix new line issue https://github.com/quilljs/quill/issues/1074
+  * { margin: 0; }
+}
+
 </style>
