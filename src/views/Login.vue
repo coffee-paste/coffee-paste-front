@@ -4,12 +4,7 @@
       <div class="login-container">
         <Card>
           <template #header>
-            <img
-              alt="coffee paste lopg"
-              src="../assets/icon.png"
-              width="200"
-              height="200"
-            />
+            <img alt="coffee paste lopg" src="../assets/coffee-paste.png" />
           </template>
           <template #title> Coffee-Paste </template>
           <template #content>
@@ -138,7 +133,7 @@ export default {
           `${VUE_APP_API_URL}/auth/oauth2`,
           options
         );
-        const token = authResponse.headers.get('Authentication');
+        const token = authResponse.headers.get("Authentication");
         localStorage.setItem("token", token);
 
         const o1 = {
@@ -189,15 +184,15 @@ export default {
       right: 0;
 
       margin: auto;
-      margin-top: 15%;
+      margin-top: calc(50vh - 300px);
 
       .p-card-header img {
-        width: 200px;
+        width: 170px;
         height: 200px;
       }
 
       .login-provider-container {
-        margin: 20px;
+        margin: 15px;
 
         .login-button {
           width: 300px;
