@@ -6,5 +6,5 @@ declare module '*.vue' {
 }
 
 declare module 'primevue/utils' {
-    export function UniqueComponentId(prefix = 'pv_id_'): string;
+    export function UniqueComponentId(prefix: string = 'pv_id_'): string;
 }
