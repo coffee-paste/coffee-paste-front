@@ -1,12 +1,23 @@
 import { envFacade } from "../env-facade";
+import { getLocalStorageItem, LocalStorageKey, setLocalStorageItem } from "../local-storage";
 
 class CredentialsManager {
 
     public getToken(): string {
         if (envFacade.isDevMode) {
-            return envFacade.devModeApiKey;
+            return getLocalStorageItem<string>(LocalStorageKey.DevToken, { itemType: "string" }) || '';
         }
-        return localStorage.getItem('token') || '';
+        return '';
+    }
+
+    public setToken(token: string) {
+        if (envFacade.isDevMode) {
+            setLocalStorageItem<string>(
+                LocalStorageKey.DevToken,
+                token,
+                { itemType: "string" }
+            );
+        }
     }
 }
 

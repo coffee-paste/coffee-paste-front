@@ -8,3 +8,8 @@ declare module '*.vue' {
 declare module 'primevue/utils' {
     export function UniqueComponentId(prefix: string = 'pv_id_'): string;
 }
+
+declare module "*.png" {
+  const value: string;
+  export default value;
+}

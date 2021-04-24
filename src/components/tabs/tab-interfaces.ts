@@ -8,4 +8,5 @@ export interface INoteTab {
     id: string;
     name?: string;
     contentHTML?: string;
+    lastNoteFeedUpdate?: string;
 }
