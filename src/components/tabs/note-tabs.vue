@@ -2,7 +2,7 @@
 <template>
     <div>
         <div>
-            <TabView @tab-click="onTabClick">
+            <TabView @tab-click="onTabClick" :activeIndex="activeTabIndex">
                 <TabPanel v-for="tab in tabs" :key="tab.id" :header="tab.name">
                     <NoteTab
                         :id="tab.id"
@@ -35,6 +35,10 @@ const NoteTabsComponent = defineComponent({
         newNote: () => true,
     },
     props: {
+        activeIndex: {
+            type: Number,
+            required: false
+        },
         tabs: {
             type: Array as PropType<INoteTab[]>,
             required: true,
@@ -42,6 +46,7 @@ const NoteTabsComponent = defineComponent({
     },
     data() {
         return {
+            activeTabIndex: this.activeIndex || 0,
             tab: this.tabs,
             newTabKey: CREATE_TAB_KEY,
         };

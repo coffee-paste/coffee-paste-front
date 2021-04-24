@@ -1,12 +1,15 @@
 <template>
     <div class="main-view">
+        <MainViewToolbar/>
         <NoteTabs 
             :tabs="notes"
             @noteChanged="onNoteChanged" 
             @newNote="onNewNote"
         />
-        CHANNEL STATUS: <strong>{{ status }}</strong> <br />
-        MSG STATUS: <strong>{{ msgStatus }}</strong>
+        <div class="status-container">
+            CHANNEL STATUS: <strong>{{ status }}</strong> <br />
+            MSG STATUS: <strong>{{ msgStatus }}</strong>
+        </div>
     </div>
 </template>
 
@@ -16,12 +19,13 @@ import { defineComponent } from "vue";
 import { NoteTabs } from "./tabs/note-tabs.vue";
 import { INoteChangedEventArgs, INoteTab } from "./tabs/tab-interfaces";
 import { credentialsManager } from "../infrafstructure/session-management/credential-manager";
+import { MainViewToolbar } from "./toolbar/main-view-toolbar.vue";
 import { NotesSocket } from "../infrafstructure/notes-socket";
 
 let ws: WebSocket;
 
 export default defineComponent({
-    components: { NoteTabs },
+    components: { NoteTabs, MainViewToolbar },
     created() {
         this.load();
     },
@@ -42,7 +46,7 @@ export default defineComponent({
                 this.notes = (await new NotesApi({ apiKey: credentialsManager.getToken() }).getOpenNotes()) as INoteTab[];
                 console.log(`Done! Content: ${JSON.stringify(this.notes)}`);
 
-                if (this.notes.length <= 0) {
+                if (this.notes?.length > 0 !== true) {
                     this.status = "NO NOTES FOUND";
                     return;
                 }
@@ -64,6 +68,7 @@ export default defineComponent({
                     this.lastFeedUpdate = `${new Date().getTime()}`;
                     this.msgStatus = `RECIVED AT ${new Date().toString()}`;
                 };
+
             } catch (error) {
                 this.status = "ERROR FETCH WORKSPACE";
                 console.log(error);
@@ -98,6 +103,9 @@ export default defineComponent({
     // Fix new line issue https://github.com/quilljs/quill/issues/1074
     * {
         margin: 0;
+    }
+    .status-container {
+        margin-top: 1em;
     }
 }
 </style>
