@@ -3,7 +3,7 @@ import { credentialsManager } from "./session-management/credential-manager";
 
 export class NotesSocket extends WebSocket {
 
-    public constructor() {
-        super(`${envFacade.apiUrl.replace("http", "ws")}/notes?authentication=${credentialsManager.getToken()}`)
+    public constructor(channelKey: string) {
+        super(`${envFacade.apiUrl.replace("http", "ws")}/notes?channelKey=${channelKey}`)
     }
 }

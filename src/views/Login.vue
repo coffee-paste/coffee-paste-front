@@ -196,7 +196,7 @@ export default defineComponent({
                 if (workspace.length < 1) {
                     await new NotesApi({
                         apiKey: credentialsManager.getToken(),
-                    }).createNotes();
+                    }).createNote();
                 }
                 window.location.href = `${redirectUri}/#/workspace`;
             } catch (error) {

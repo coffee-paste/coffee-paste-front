@@ -56,7 +56,7 @@ export interface FetchArgs {
  * @class BaseAPI
  */
 export class BaseAPI {
-    protected configuration?: Configuration;
+    protected configuration: Configuration;
 
     constructor(configuration?: Configuration, protected basePath: string = BASE_PATH, protected fetch: FetchAPI = portableFetch) {
         if (configuration) {
@@ -73,7 +73,7 @@ export class BaseAPI {
  * @extends {Error}
  */
 export class RequiredError extends Error {
-    name: string = "RequiredError"
+    name: "RequiredError"
     constructor(public field: string, msg?: string) {
         super(msg);
     }
@@ -292,6 +292,40 @@ export const AuthenticationApiFetchParamCreator = function (configuration?: Conf
             const needsSerialization = (<any>"OAuth2Session" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
+           localVarRequestOptions.credentials = 'include';
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        logout(options: any = {}): FetchArgs {
+            const localVarPath = `/auth/logout`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication jwt required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("authentication")
+					: configuration.apiKey;
+                localVarHeaderParameter["authentication"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+           localVarRequestOptions.credentials = 'include';
+
             return {
                 url: url.format(localVarUrlObj),
                 options: localVarRequestOptions,
@@ -324,6 +358,23 @@ export const AuthenticationApiFp = function(configuration?: Configuration) {
                 });
             };
         },
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        logout(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
+            const localVarFetchArgs = AuthenticationApiFetchParamCreator(configuration).logout(options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response;
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
     }
 };
 
@@ -341,6 +392,14 @@ export const AuthenticationApiFactory = function (configuration?: Configuration,
          */
         authByOAuth(body: OAuth2Session, options?: any) {
             return AuthenticationApiFp(configuration).authByOAuth(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        logout(options?: any) {
+            return AuthenticationApiFp(configuration).logout(options)(fetch, basePath);
         },
     };
 };
@@ -363,6 +422,16 @@ export class AuthenticationApi extends BaseAPI {
         return AuthenticationApiFp(this.configuration).authByOAuth(body, options)(this.fetch, this.basePath);
     }
 
+    /**
+     * 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AuthenticationApi
+     */
+    public logout(options?: any) {
+        return AuthenticationApiFp(this.configuration).logout(options)(this.fetch, this.basePath);
+    }
+
 }
 /**
  * NotesApi - fetch parameter creator
@@ -375,7 +444,7 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createNotes(options: any = {}): FetchArgs {
+        createNote(options: any = {}): FetchArgs {
             const localVarPath = `/notes`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
@@ -394,6 +463,8 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+           localVarRequestOptions.credentials = 'include';
 
             return {
                 url: url.format(localVarUrlObj),
@@ -431,6 +502,8 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
 
+           localVarRequestOptions.credentials = 'include';
+
             return {
                 url: url.format(localVarUrlObj),
                 options: localVarRequestOptions,
@@ -461,6 +534,40 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
 
+           localVarRequestOptions.credentials = 'include';
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Generating channel key in order to allow open web-socket channel.  The key should append to the WS URL as channelKey param, the channel key is valid for 1 minute only.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getChannelKey(options: any = {}): FetchArgs {
+            const localVarPath = `/notes/notes/channel-key`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication jwt required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("authentication")
+					: configuration.apiKey;
+                localVarHeaderParameter["authentication"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+           localVarRequestOptions.credentials = 'include';
+
             return {
                 url: url.format(localVarUrlObj),
                 options: localVarRequestOptions,
@@ -490,6 +597,8 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+           localVarRequestOptions.credentials = 'include';
 
             return {
                 url: url.format(localVarUrlObj),
@@ -536,6 +645,8 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
             const needsSerialization = (<any>"Body" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
+           localVarRequestOptions.credentials = 'include';
+
             return {
                 url: url.format(localVarUrlObj),
                 options: localVarRequestOptions,
@@ -580,6 +691,8 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
             const needsSerialization = (<any>"Body1" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+           localVarRequestOptions.credentials = 'include';
 
             return {
                 url: url.format(localVarUrlObj),
@@ -626,6 +739,8 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
             const needsSerialization = (<any>"Body2" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
+           localVarRequestOptions.credentials = 'include';
+
             return {
                 url: url.format(localVarUrlObj),
                 options: localVarRequestOptions,
@@ -645,8 +760,8 @@ export const NotesApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createNotes(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<string> {
-            const localVarFetchArgs = NotesApiFetchParamCreator(configuration).createNotes(options);
+        createNote(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<string> {
+            const localVarFetchArgs = NotesApiFetchParamCreator(configuration).createNote(options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -682,6 +797,23 @@ export const NotesApiFp = function(configuration?: Configuration) {
          */
         getBacklogNotes(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Array<Note>> {
             const localVarFetchArgs = NotesApiFetchParamCreator(configuration).getBacklogNotes(options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * Generating channel key in order to allow open web-socket channel.  The key should append to the WS URL as channelKey param, the channel key is valid for 1 minute only.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getChannelKey(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<string> {
+            const localVarFetchArgs = NotesApiFetchParamCreator(configuration).getChannelKey(options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -780,8 +912,8 @@ export const NotesApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createNotes(options?: any) {
-            return NotesApiFp(configuration).createNotes(options)(fetch, basePath);
+        createNote(options?: any) {
+            return NotesApiFp(configuration).createNote(options)(fetch, basePath);
         },
         /**
          * 
@@ -799,6 +931,14 @@ export const NotesApiFactory = function (configuration?: Configuration, fetch?: 
          */
         getBacklogNotes(options?: any) {
             return NotesApiFp(configuration).getBacklogNotes(options)(fetch, basePath);
+        },
+        /**
+         * Generating channel key in order to allow open web-socket channel.  The key should append to the WS URL as channelKey param, the channel key is valid for 1 minute only.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getChannelKey(options?: any) {
+            return NotesApiFp(configuration).getChannelKey(options)(fetch, basePath);
         },
         /**
          * 
@@ -854,8 +994,8 @@ export class NotesApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof NotesApi
      */
-    public createNotes(options?: any) {
-        return NotesApiFp(this.configuration).createNotes(options)(this.fetch, this.basePath);
+    public createNote(options?: any) {
+        return NotesApiFp(this.configuration).createNote(options)(this.fetch, this.basePath);
     }
 
     /**
@@ -877,6 +1017,16 @@ export class NotesApi extends BaseAPI {
      */
     public getBacklogNotes(options?: any) {
         return NotesApiFp(this.configuration).getBacklogNotes(options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * Generating channel key in order to allow open web-socket channel.  The key should append to the WS URL as channelKey param, the channel key is valid for 1 minute only.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof NotesApi
+     */
+    public getChannelKey(options?: any) {
+        return NotesApiFp(this.configuration).getChannelKey(options)(this.fetch, this.basePath);
     }
 
     /**
@@ -957,6 +1107,8 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
 
+           localVarRequestOptions.credentials = 'include';
+
             return {
                 url: url.format(localVarUrlObj),
                 options: localVarRequestOptions,
@@ -986,6 +1138,8 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+           localVarRequestOptions.credentials = 'include';
 
             return {
                 url: url.format(localVarUrlObj),

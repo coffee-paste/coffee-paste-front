@@ -1,6 +1,8 @@
+import { getLocalStorageItem, LocalStorageKey } from "./local-storage";
+
 class EnvFacade {
 
-    private _isDevMode: boolean = process.env.VUE_APP_LOCAL_DEV === 'true';
+    private _isDevMode: boolean = process.env.VUE_APP_LOCAL_DEV === 'true' || getLocalStorageItem<boolean>(LocalStorageKey.IsLocalDev, { itemType: 'boolean' }) || false;
     public get isDevMode(): boolean {
         return this._isDevMode;
     }
@@ -9,7 +11,7 @@ class EnvFacade {
     public get apiUrl(): string {
         return this._apiUrl || '';
     }
-    
+
     private _googleClientId?: string = process.env.VUE_APP_GOOGLE_CLIENT_ID;
     public get googleClientId(): string {
         return this._googleClientId || '';

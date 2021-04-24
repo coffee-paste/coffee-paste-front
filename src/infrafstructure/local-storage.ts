@@ -5,11 +5,12 @@ export enum LocalStorageKey {
     DevToken = "DEV_TOKEN",
     LoginWith = "LOGIN_WITH",
     ActiveTabIndex = "ACTIVE_TAB_INDEX",
+    IsLocalDev = "IS_LOCAL_DEV",
 }
 
-
+const g = typeof '';
 export interface LocalStorageItemOptions {
-    itemType: 'number' | 'string' | 'object';
+    itemType: 'number' | 'string' | 'object' | 'boolean';
 }
 
 export function getLocalStorageItem<T>(localStorageKey: LocalStorageKey, LocalStorageItemOptions: LocalStorageItemOptions): T | undefined {
@@ -26,6 +27,8 @@ export function getLocalStorageItem<T>(localStorageKey: LocalStorageKey, LocalSt
             return parseInt(rawItem, 10) as unknown as T;
         case 'object':
             return JSON.parse(rawItem) as T;
+        case 'boolean':
+            return (rawItem === 'true') as unknown as T;
     }
 }
 
@@ -37,6 +40,7 @@ export function setLocalStorageItem<T>(localStorageKey: LocalStorageKey, value: 
             stringToStore = value;
             break;
         case 'number':
+        case 'boolean':
             stringToStore = `${value}`;
             break;
         case 'object':

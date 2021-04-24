@@ -49,9 +49,14 @@ export default defineComponent({
           // TODO add toast, and create a one
           return;
         }
+
+        const channelKey = (await new NotesApi({
+          apiKey: credentialsManager.getToken(),
+        }).getChannelKey());
+  
         this.lastNoteFeedUpdate = `${new Date().getTime()}`;
 
-        ws = new NotesSocket();
+        ws = new NotesSocket(channelKey);
 
         ws.onopen = () => {
           this.status = "OPEN";
@@ -110,7 +115,7 @@ export default defineComponent({
       console.log("Creating new note...");
       const newNoteId = await new NotesApi({
         apiKey: credentialsManager.getToken(),
-      }).createNotes();
+      }).createNote();
       this.notes.push({ id: newNoteId });
     },
   },
