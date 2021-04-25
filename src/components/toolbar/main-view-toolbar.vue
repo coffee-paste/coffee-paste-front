@@ -107,7 +107,7 @@ const MainViewToolbarComponent = defineComponent({
                 credentialsManager.setToken('');
             }
             removeLocalStorageItem<User>(LocalStorageKey.Profile);
-            window.location.href = `/`;
+            // window.location.href = `/`;
         },
 
         onProfileButtonClick(e: any /* Click event type は何？ */): void {
