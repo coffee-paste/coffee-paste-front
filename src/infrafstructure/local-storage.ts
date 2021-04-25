@@ -50,3 +50,7 @@ export function setLocalStorageItem<T>(localStorageKey: LocalStorageKey, value: 
 
     localStorage.setItem(localStorageKey, stringToStore);
 }
+
+export function removeLocalStorageItem<T>(localStorageKey: LocalStorageKey) {
+    localStorage.removeItem(localStorageKey);
+}

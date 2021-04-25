@@ -50,8 +50,14 @@ import { UniqueComponentId } from "primevue/utils";
 import {
     getLocalStorageItem,
     LocalStorageKey,
+    removeLocalStorageItem,
 } from "@/infrafstructure/local-storage";
-import { User } from "@/infrafstructure/api-client";
+import {
+    AuthenticationApi,
+    User,
+} from "@/infrafstructure/api-client";
+import { credentialsManager } from "@/infrafstructure/session-management/credential-manager";
+import { envFacade } from "@/infrafstructure/env-facade";
 
 const MainViewToolbarComponent = defineComponent({
     components: { Toolbar, Button, Menu },
@@ -66,13 +72,15 @@ const MainViewToolbarComponent = defineComponent({
             itemType: "object",
         });
         if (profile?.avatarBase64) {
-            this.avatarBase64 = `data:image/jpg;base64,${profile?.avatarBase64 || ""}`;
+            this.avatarBase64 = `data:image/jpg;base64,${
+                profile?.avatarBase64 || ""
+            }`;
         }
     },
     data() {
         return {
             defaultIcon: PrimeIcons.USER_EDIT,
-            avatarBase64: '',
+            avatarBase64: "",
             profileMenuItems: [
                 {
                     label: "Profile",
@@ -80,7 +88,7 @@ const MainViewToolbarComponent = defineComponent({
                 },
                 {
                     label: "Logout",
-                    command: () => console.log("'Logout' click"),
+                    command: this.logout,
                 },
             ] as IMenuItem[],
         };
@@ -91,6 +99,17 @@ const MainViewToolbarComponent = defineComponent({
         },
     },
     methods: {
+        async logout() {
+            await new AuthenticationApi({
+                apiKey: credentialsManager.getToken(),
+            }).logout();
+            if (envFacade.isDevMode) {
+                credentialsManager.setToken('');
+            }
+            removeLocalStorageItem<User>(LocalStorageKey.Profile);
+            window.location.href = `/`;
+        },
+
         onProfileButtonClick(e: any /* Click event type は何？ */): void {
             (this.$refs.menu as Menu).toggle(e);
         },
