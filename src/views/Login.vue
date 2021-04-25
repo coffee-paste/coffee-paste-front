@@ -72,6 +72,7 @@ import gitlabImage from "../assets/providers-logo/gitlab.png";
 import {
     getLocalStorageItem,
     setLocalStorageItem,
+    removeLocalStorageItem,
     LocalStorageKey,
 } from "../infrafstructure/local-storage";
 import { OAuthProvider } from "../infrafstructure/symbols";
@@ -127,8 +128,6 @@ export default defineComponent({
         if (code) {
             this.auth(code);
         } else {
-            // Mark user as not logedon
-            this.isLogedon = false;
             // If there is a profile, continue to the workspace page (assuming user already logedon)
             if (
                 getLocalStorageItem<User>(LocalStorageKey.Profile, {
@@ -136,6 +135,9 @@ export default defineComponent({
                 })
             ) {
                 window.location.href = `${redirectUri}/#/workspace`;
+            } else {
+                 // Mark user as not logedon if there is no oauth code and no profile detected 
+                 this.isLogedon = false;
             }
         }
     },
@@ -158,9 +160,7 @@ export default defineComponent({
                 { itemType: "string" }
             );
             // Clean the loginwith cache
-            setLocalStorageItem<string>(LocalStorageKey.LoginWith, "", {
-                itemType: "string",
-            });
+            removeLocalStorageItem<string>(LocalStorageKey.LoginWith);
 
             const provider = providers.find((p) => p.name === providerName);
 
