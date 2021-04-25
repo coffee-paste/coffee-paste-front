@@ -115,7 +115,9 @@ export default defineComponent({
       console.log("Creating new note...");
       const newNoteId = await new NotesApi({
         apiKey: credentialsManager.getToken(),
-      }).createNote();
+      }).createNote({
+        name : 'New note'
+      });
       this.notes.push({ id: newNoteId });
     },
   },
