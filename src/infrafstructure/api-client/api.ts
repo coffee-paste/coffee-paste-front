@@ -87,10 +87,10 @@ export class RequiredError extends Error {
 export interface Body {
     /**
      * 
-     * @type {NoteStatus}
+     * @type {string}
      * @memberof Body
      */
-    status: NoteStatus;
+    name?: string;
 }
 /**
  * 
@@ -100,16 +100,10 @@ export interface Body {
 export interface Body1 {
     /**
      * 
-     * @type {string}
+     * @type {NoteStatus}
      * @memberof Body1
      */
-    contentHTML: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof Body1
-     */
-    contentText: string;
+    status: NoteStatus;
 }
 /**
  * 
@@ -121,6 +115,25 @@ export interface Body2 {
      * 
      * @type {string}
      * @memberof Body2
+     */
+    contentHTML: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof Body2
+     */
+    contentText: string;
+}
+/**
+ * 
+ * @export
+ * @interface Body3
+ */
+export interface Body3 {
+    /**
+     * 
+     * @type {string}
+     * @memberof Body3
      */
     name: string;
 }
@@ -292,7 +305,7 @@ export const AuthenticationApiFetchParamCreator = function (configuration?: Conf
             const needsSerialization = (<any>"OAuth2Session" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
-           localVarRequestOptions.credentials = 'include';
+            localVarRequestOptions.credentials = 'include';
 
             return {
                 url: url.format(localVarUrlObj),
@@ -324,7 +337,7 @@ export const AuthenticationApiFetchParamCreator = function (configuration?: Conf
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
 
-           localVarRequestOptions.credentials = 'include';
+            localVarRequestOptions.credentials = 'include';
 
             return {
                 url: url.format(localVarUrlObj),
@@ -441,10 +454,15 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
     return {
         /**
          * 
+         * @param {Body} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createNote(options: any = {}): FetchArgs {
+        createNote(body: Body, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling createNote.');
+            }
             const localVarPath = `/notes`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
@@ -459,12 +477,16 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
                 localVarHeaderParameter["authentication"] = localVarApiKeyValue;
             }
 
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"Body" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
-           localVarRequestOptions.credentials = 'include';
+            localVarRequestOptions.credentials = 'include';
 
             return {
                 url: url.format(localVarUrlObj),
@@ -502,7 +524,7 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
 
-           localVarRequestOptions.credentials = 'include';
+            localVarRequestOptions.credentials = 'include';
 
             return {
                 url: url.format(localVarUrlObj),
@@ -534,7 +556,7 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
 
-           localVarRequestOptions.credentials = 'include';
+            localVarRequestOptions.credentials = 'include';
 
             return {
                 url: url.format(localVarUrlObj),
@@ -547,7 +569,7 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
          * @throws {RequiredError}
          */
         getChannelKey(options: any = {}): FetchArgs {
-            const localVarPath = `/notes/notes/channel-key`;
+            const localVarPath = `/notes/channel-key`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
             const localVarHeaderParameter = {} as any;
@@ -566,7 +588,7 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
 
-           localVarRequestOptions.credentials = 'include';
+            localVarRequestOptions.credentials = 'include';
 
             return {
                 url: url.format(localVarUrlObj),
@@ -598,7 +620,7 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
 
-           localVarRequestOptions.credentials = 'include';
+            localVarRequestOptions.credentials = 'include';
 
             return {
                 url: url.format(localVarUrlObj),
@@ -607,12 +629,12 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
         },
         /**
          * 
-         * @param {Body} body 
+         * @param {Body1} body 
          * @param {string} noteId 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setNotes(body: Body, noteId: string, options: any = {}): FetchArgs {
+        setNotes(body: Body1, noteId: string, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling setNotes.');
@@ -642,10 +664,10 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-            const needsSerialization = (<any>"Body" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            const needsSerialization = (<any>"Body1" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
-           localVarRequestOptions.credentials = 'include';
+            localVarRequestOptions.credentials = 'include';
 
             return {
                 url: url.format(localVarUrlObj),
@@ -654,12 +676,12 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
         },
         /**
          * 
-         * @param {Body1} body 
+         * @param {Body2} body 
          * @param {string} noteId 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setNotesContent(body: Body1, noteId: string, options: any = {}): FetchArgs {
+        setNotesContent(body: Body2, noteId: string, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling setNotesContent.');
@@ -689,10 +711,10 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-            const needsSerialization = (<any>"Body1" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            const needsSerialization = (<any>"Body2" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
-           localVarRequestOptions.credentials = 'include';
+            localVarRequestOptions.credentials = 'include';
 
             return {
                 url: url.format(localVarUrlObj),
@@ -701,12 +723,12 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
         },
         /**
          * 
-         * @param {Body2} body 
+         * @param {Body3} body 
          * @param {string} noteId 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setNotesName(body: Body2, noteId: string, options: any = {}): FetchArgs {
+        setNotesName(body: Body3, noteId: string, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling setNotesName.');
@@ -736,10 +758,10 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-            const needsSerialization = (<any>"Body2" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            const needsSerialization = (<any>"Body3" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
-           localVarRequestOptions.credentials = 'include';
+            localVarRequestOptions.credentials = 'include';
 
             return {
                 url: url.format(localVarUrlObj),
@@ -757,11 +779,12 @@ export const NotesApiFp = function(configuration?: Configuration) {
     return {
         /**
          * 
+         * @param {Body} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createNote(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<string> {
-            const localVarFetchArgs = NotesApiFetchParamCreator(configuration).createNote(options);
+        createNote(body: Body, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<string> {
+            const localVarFetchArgs = NotesApiFetchParamCreator(configuration).createNote(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -843,32 +866,13 @@ export const NotesApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @param {Body} body 
-         * @param {string} noteId 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        setNotes(body: Body, noteId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
-            const localVarFetchArgs = NotesApiFetchParamCreator(configuration).setNotes(body, noteId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response;
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
          * @param {Body1} body 
          * @param {string} noteId 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setNotesContent(body: Body1, noteId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
-            const localVarFetchArgs = NotesApiFetchParamCreator(configuration).setNotesContent(body, noteId, options);
+        setNotes(body: Body1, noteId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
+            const localVarFetchArgs = NotesApiFetchParamCreator(configuration).setNotes(body, noteId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -886,7 +890,26 @@ export const NotesApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setNotesName(body: Body2, noteId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
+        setNotesContent(body: Body2, noteId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
+            const localVarFetchArgs = NotesApiFetchParamCreator(configuration).setNotesContent(body, noteId, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response;
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @param {Body3} body 
+         * @param {string} noteId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        setNotesName(body: Body3, noteId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
             const localVarFetchArgs = NotesApiFetchParamCreator(configuration).setNotesName(body, noteId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -909,11 +932,12 @@ export const NotesApiFactory = function (configuration?: Configuration, fetch?: 
     return {
         /**
          * 
+         * @param {Body} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createNote(options?: any) {
-            return NotesApiFp(configuration).createNote(options)(fetch, basePath);
+        createNote(body: Body, options?: any) {
+            return NotesApiFp(configuration).createNote(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -950,23 +974,13 @@ export const NotesApiFactory = function (configuration?: Configuration, fetch?: 
         },
         /**
          * 
-         * @param {Body} body 
-         * @param {string} noteId 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        setNotes(body: Body, noteId: string, options?: any) {
-            return NotesApiFp(configuration).setNotes(body, noteId, options)(fetch, basePath);
-        },
-        /**
-         * 
          * @param {Body1} body 
          * @param {string} noteId 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setNotesContent(body: Body1, noteId: string, options?: any) {
-            return NotesApiFp(configuration).setNotesContent(body, noteId, options)(fetch, basePath);
+        setNotes(body: Body1, noteId: string, options?: any) {
+            return NotesApiFp(configuration).setNotes(body, noteId, options)(fetch, basePath);
         },
         /**
          * 
@@ -975,7 +989,17 @@ export const NotesApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setNotesName(body: Body2, noteId: string, options?: any) {
+        setNotesContent(body: Body2, noteId: string, options?: any) {
+            return NotesApiFp(configuration).setNotesContent(body, noteId, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @param {Body3} body 
+         * @param {string} noteId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        setNotesName(body: Body3, noteId: string, options?: any) {
             return NotesApiFp(configuration).setNotesName(body, noteId, options)(fetch, basePath);
         },
     };
@@ -990,12 +1014,13 @@ export const NotesApiFactory = function (configuration?: Configuration, fetch?: 
 export class NotesApi extends BaseAPI {
     /**
      * 
+     * @param {Body} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof NotesApi
      */
-    public createNote(options?: any) {
-        return NotesApiFp(this.configuration).createNote(options)(this.fetch, this.basePath);
+    public createNote(body: Body, options?: any) {
+        return NotesApiFp(this.configuration).createNote(body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -1041,26 +1066,14 @@ export class NotesApi extends BaseAPI {
 
     /**
      * 
-     * @param {Body} body 
-     * @param {string} noteId 
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof NotesApi
-     */
-    public setNotes(body: Body, noteId: string, options?: any) {
-        return NotesApiFp(this.configuration).setNotes(body, noteId, options)(this.fetch, this.basePath);
-    }
-
-    /**
-     * 
      * @param {Body1} body 
      * @param {string} noteId 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof NotesApi
      */
-    public setNotesContent(body: Body1, noteId: string, options?: any) {
-        return NotesApiFp(this.configuration).setNotesContent(body, noteId, options)(this.fetch, this.basePath);
+    public setNotes(body: Body1, noteId: string, options?: any) {
+        return NotesApiFp(this.configuration).setNotes(body, noteId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -1071,7 +1084,19 @@ export class NotesApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof NotesApi
      */
-    public setNotesName(body: Body2, noteId: string, options?: any) {
+    public setNotesContent(body: Body2, noteId: string, options?: any) {
+        return NotesApiFp(this.configuration).setNotesContent(body, noteId, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @param {Body3} body 
+     * @param {string} noteId 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof NotesApi
+     */
+    public setNotesName(body: Body3, noteId: string, options?: any) {
         return NotesApiFp(this.configuration).setNotesName(body, noteId, options)(this.fetch, this.basePath);
     }
 
@@ -1107,7 +1132,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
 
-           localVarRequestOptions.credentials = 'include';
+            localVarRequestOptions.credentials = 'include';
 
             return {
                 url: url.format(localVarUrlObj),
@@ -1139,7 +1164,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
 
-           localVarRequestOptions.credentials = 'include';
+            localVarRequestOptions.credentials = 'include';
 
             return {
                 url: url.format(localVarUrlObj),

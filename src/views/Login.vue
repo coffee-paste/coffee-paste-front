@@ -136,8 +136,8 @@ export default defineComponent({
             ) {
                 window.location.href = `${redirectUri}/#/workspace`;
             } else {
-                 // Mark user as not logedon if there is no oauth code and no profile detected 
-                 this.isLogedon = false;
+                // Mark user as not logedon if there is no oauth code and no profile detected
+                this.isLogedon = false;
             }
         }
     },
@@ -196,7 +196,9 @@ export default defineComponent({
                 if (workspace.length < 1) {
                     await new NotesApi({
                         apiKey: credentialsManager.getToken(),
-                    }).createNote();
+                    }).createNote({
+                        name: "New note",
+                    });
                 }
                 window.location.href = `${redirectUri}/#/workspace`;
             } catch (error) {
