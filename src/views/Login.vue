@@ -134,7 +134,7 @@ export default defineComponent({
                     itemType: "object",
                 })
             ) {
-                window.location.href = `${redirectUri}/#/workspace`;
+                this.$router.push("/workspace");
             } else {
                 // Mark user as not logedon if there is no oauth code and no profile detected
                 this.isLogedon = false;
@@ -200,8 +200,19 @@ export default defineComponent({
                         name: "New note",
                     });
                 }
-                window.location.href = `${redirectUri}/#/workspace`;
+                this.$toast.add({
+                    severity: "success",
+                    summary: "Login successfully",
+                    life: 3000,
+                });
+                this.$router.push("/workspace");
             } catch (error) {
+                this.$toast.add({
+                    severity: "error",
+                    summary: "Login failed",
+                    detail: "Please try again later",
+                    life: 6000,
+                });
                 console.log(error);
             }
         },

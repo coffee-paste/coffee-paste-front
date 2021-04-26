@@ -52,10 +52,7 @@ import {
     LocalStorageKey,
     removeLocalStorageItem,
 } from "@/infrafstructure/local-storage";
-import {
-    AuthenticationApi,
-    User,
-} from "@/infrafstructure/api-client";
+import { AuthenticationApi, User } from "@/infrafstructure/api-client";
 import { credentialsManager } from "@/infrafstructure/session-management/credential-manager";
 import { envFacade } from "@/infrafstructure/env-facade";
 
@@ -100,14 +97,28 @@ const MainViewToolbarComponent = defineComponent({
     },
     methods: {
         async logout() {
-            await new AuthenticationApi({
-                apiKey: credentialsManager.getToken(),
-            }).logout();
-            if (envFacade.isDevMode) {
-                credentialsManager.setToken('');
+            try {
+                await new AuthenticationApi({
+                    apiKey: credentialsManager.getToken(),
+                }).logout();
+                if (envFacade.isDevMode) {
+                    credentialsManager.setToken("");
+                }
+                removeLocalStorageItem<User>(LocalStorageKey.Profile);
+                this.$toast.add({
+                    severity: "info",
+                    summary: "Logout successfully",
+                    life: 3000,
+                });
+                this.$router.push("/");
+            } catch (error) {
+                this.$toast.add({
+                    severity: "error",
+                    summary: "Logout failed",
+                    detail: "Please try again later",
+                    life: 6000,
+                });
             }
-            removeLocalStorageItem<User>(LocalStorageKey.Profile);
-            window.location.href = `/`;
         },
 
         onProfileButtonClick(e: any /* Click event type は何？ */): void {
