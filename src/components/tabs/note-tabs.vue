@@ -68,17 +68,12 @@ const NoteTabsComponent = defineComponent({
         onChange(e: INoteChangedEventArgs): void {
             this.$emit("noteChanged", e);
         },
-        onTabClick(e: {
-            originalEvent: { isTrusted: boolean };
-            index: number;
-        }): void {
+        onTabClick(e: { originalEvent: { isTrusted: boolean }, index: number }): void {
             this.activeTabIndex = e.index;
             setLocalStorageItem<number>(
                 LocalStorageKey.ActiveTabIndex,
                 e.index,
-                {
-                    itemType: "number",
-                }
+                { itemType: "number" }
             );
             if (!this.tabs || e.index === this.tabs.length) {
                 this.$emit("newNote");
