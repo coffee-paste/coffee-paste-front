@@ -127,7 +127,6 @@ export default defineComponent({
             }
         },
         onNoteChanged(e: INoteChangedEventArgs): void {
-            console.log(`Note changed: ${JSON.stringify(e)}`);
             if (!ws) {
                 console.error("No websocket open, cannot send update");
                 return;

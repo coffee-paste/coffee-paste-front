@@ -46,7 +46,8 @@ import { defineComponent, PropType } from "vue";
 import Toolbar from "primevue/toolbar";
 import Button from "primevue/button";
 import Menu from "primevue/menu";
-import { IMenuItem, IStatus, StatusType } from "./menu-interfaces";
+import { IStatus, StatusType } from "./menu-interfaces";
+import { IVueMenuItem } from "../common/interfaces";
 import { PrimeIcons } from "primevue/api";
 
 /// <reference path="../../shims-vue.d.ts"/>
@@ -96,7 +97,7 @@ const MainViewToolbarComponent = defineComponent({
                     label: "Logout",
                     command: this.logout,
                 },
-            ] as IMenuItem[],
+            ] as IVueMenuItem[],
         };
     },
     computed: {
@@ -166,7 +167,7 @@ export default MainViewToolbar;
 }
 
 .status-indicator {
-    margin-right: 25px;
+    margin-right: 5px;
     padding-right: 10px;
     justify-content: center;
     .--label {
