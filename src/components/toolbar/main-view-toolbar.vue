@@ -127,7 +127,7 @@ const MainViewToolbarComponent = defineComponent({
                 removeLocalStorageItem<User>(LocalStorageKey.Profile);
                 this.$toast.add({
                     severity: "info",
-                    summary: "Logout successfully",
+                    summary: "Logout successful",
                     life: 3000,
                 });
                 this.$router.push("/");

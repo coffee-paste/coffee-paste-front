@@ -10,6 +10,7 @@ import Card from 'primevue/card';
 import Button from 'primevue/button';
 import ProgressSpinner from 'primevue/progressspinner';
 import Toast from 'primevue/toast';
+import ConfirmationService from 'primevue/confirmationservice';
 
 
 import 'primevue/resources/themes/vela-purple/theme.css';
@@ -21,6 +22,7 @@ const app = createApp(App);
 app.use(PrimeVue);
 app.use(router);
 app.use(ToastService);
+app.use(ConfirmationService);
 
 app.component('Toast', Toast);
 app.component('Dialog', Dialog);

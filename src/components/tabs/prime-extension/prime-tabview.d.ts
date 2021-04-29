@@ -5,6 +5,7 @@ interface TabViewExProps {
 }
 
 export type TabViewEventArgs = { originalEvent: Event, index: number };
+export type TabViewEventArgs<T> = { originalEvent: Event, item: T };
 
 declare class TabViewEx {
     $props: TabViewExProps;
