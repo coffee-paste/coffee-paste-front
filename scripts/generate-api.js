@@ -5,8 +5,45 @@ import fs from 'fs';
 import path from 'path';
 import jszip from 'jszip';
 
+const NODE_BUFFER = 'nodebuffer';
+const CUSTOM_D_TS = 'custom.d.ts';
+const CONFIGURATION_TS = 'configuration.ts';
+const API_TS = 'api.ts';
+const INDEX_TS = 'index.ts';
+const OUTPUT_PATH = 'src/infrastructure/api';
+
 // Build API based on develop branch, unless it's build for main branch, then use main branch API.
 const ENV_BRANCH  = process.env.GITHUB_REF !== 'main' ? 'develop' : 'main';
+
+function mkdirRecursive(dirPath) {
+	if (fs.existsSync(dirPath)) { 
+		return true 
+	}
+	const dirname = path.dirname(dirPath)
+	mkdirRecursive(dirname);
+	fs.mkdirSync(dirPath);
+}
+
+async function depositFile(jsZip, fileName) {
+	const fileBuffer = await jsZip.file(fileName).async(NODE_BUFFER);
+	fs.writeFileSync(path.join(OUTPUT_PATH, fileName), fileBuffer);
+}
+
+async function createApiTs(jsZip) {
+	let fileContents = (await jsZip.file(API_TS).async(NODE_BUFFER)).toString();
+
+	fileContents = fileContents.replace(
+		/import.+portable\-fetch\.*?\"\.*?\;/,
+		'const portableFetch = fetch;'
+	);
+	
+	fileContents = fileContents.replace(
+		/const\s+BASE_PATH\s+=\s+.+?\;/,
+		"import { envFacade } from '../env-facade';\nconst BASE_PATH = envFacade.apiUrl;"
+	);
+
+	fs.writeFileSync(path.join(OUTPUT_PATH, API_TS), fileContents);
+}
 
 (async () => {
 
@@ -32,13 +69,12 @@ const ENV_BRANCH  = process.env.GITHUB_REF !== 'main' ? 'develop' : 'main';
 
     // 2: Extract generated API
     const generatedZip = await jszip.loadAsync(buffer);
-    const apiFile = await generatedZip.file('api.ts').async('nodebuffer');
-    const configurationFile = await generatedZip.file('configuration.ts').async('nodebuffer');
-    const customDFile = await generatedZip.file('custom.d.ts').async('nodebuffer');
-    fs.writeFileSync(path.join('scripts', 'api.ts'), apiFile);
-    fs.writeFileSync(path.join('scripts', 'configuration.ts'), configurationFile);
-    fs.writeFileSync(path.join('scripts', 'custom.d.ts'), customDFile);
 
+	mkdirRecursive(OUTPUT_PATH);
+	await createApiTs(generatedZip);
+	await depositFile(generatedZip, CONFIGURATION_TS);
+	await depositFile(generatedZip, CUSTOM_D_TS);
+	await depositFile(generatedZip, INDEX_TS);
     
     // TODO: Replace portableFetch with fetch.
 

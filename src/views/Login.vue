@@ -74,9 +74,9 @@ import {
     setLocalStorageItem,
     removeLocalStorageItem,
     LocalStorageKey,
-} from "../infrafstructure/local-storage";
-import { OAuthProvider } from "../infrafstructure/symbols";
-import { envFacade } from "../infrafstructure/env-facade";
+} from "../infrastructure/local-storage";
+import { OAuthProvider } from "../infrastructure/symbols";
+import { envFacade } from "../infrastructure/env-facade";
 import { defineComponent } from "vue";
 import {
     AuthenticationApi,
@@ -84,8 +84,8 @@ import {
     OAuth2Service,
     User,
     UsersApi,
-} from "@/infrafstructure/api-client";
-import { credentialsManager } from "@/infrafstructure/session-management/credential-manager";
+} from "@/infrastructure/api";
+import { credentialsManager } from "@/infrastructure/session-management/credential-manager";
 
 const redirectUri = `${window.location.protocol}//${window.location.hostname}${
     location.port ? `:${location.port}` : ""

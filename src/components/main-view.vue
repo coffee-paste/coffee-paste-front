@@ -14,14 +14,14 @@
 </template>
 
 <script lang="ts">
-import { NotesApi } from "@/infrafstructure/api-client";
+import { NotesApi } from "@/infrastructure/api";
 import { defineComponent } from "vue";
 import { NoteTabs } from "./tabs/note-tabs.vue";
 import { INoteChangedEventArgs, INoteTab } from "./tabs/tab-interfaces";
-import { credentialsManager } from "../infrafstructure/session-management/credential-manager";
+import { credentialsManager } from "../infrastructure/session-management/credential-manager";
 import { MainViewToolbar } from "./toolbar/main-view-toolbar.vue";
 import { IStatus, StatusType } from "./toolbar/menu-interfaces";
-import { NotesSocket } from "../infrafstructure/notes-socket";
+import { NotesSocket } from "../infrastructure/notes-socket";
 import { NoteStringConstants } from '../string-constants/note-constants';
 
 const channelStatus = {

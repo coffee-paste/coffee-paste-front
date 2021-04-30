@@ -56,10 +56,10 @@ import {
     getLocalStorageItem,
     LocalStorageKey,
     removeLocalStorageItem,
-} from "@/infrafstructure/local-storage";
-import { AuthenticationApi, User } from "@/infrafstructure/api-client";
-import { credentialsManager } from "@/infrafstructure/session-management/credential-manager";
-import { envFacade } from "@/infrafstructure/env-facade";
+} from "@/infrastructure/local-storage";
+import { AuthenticationApi, User } from "@/infrastructure/api";
+import { credentialsManager } from "@/infrastructure/session-management/credential-manager";
+import { envFacade } from "@/infrastructure/env-facade";
 
 const MainViewToolbarComponent = defineComponent({
     components: { Toolbar, Button, Menu },

@@ -13,12 +13,11 @@
  */
 
 import * as url from "url";
-import { envFacade } from "../env-facade";
-// import * as portableFetch from "portable-fetch";
+const portableFetch = fetch;
 import { Configuration } from "./configuration";
 
-const portableFetch = fetch;
-const BASE_PATH =  envFacade.apiUrl; // "/".replace(/\/+$/, "");
+import { envFacade } from '../env-facade';
+const BASE_PATH = envFacade.apiUrl;
 
 /**
  *
@@ -305,8 +304,6 @@ export const AuthenticationApiFetchParamCreator = function (configuration?: Conf
             const needsSerialization = (<any>"OAuth2Session" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
-            localVarRequestOptions.credentials = 'include';
-
             return {
                 url: url.format(localVarUrlObj),
                 options: localVarRequestOptions,
@@ -336,8 +333,6 @@ export const AuthenticationApiFetchParamCreator = function (configuration?: Conf
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-
-            localVarRequestOptions.credentials = 'include';
 
             return {
                 url: url.format(localVarUrlObj),
@@ -486,8 +481,6 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
             const needsSerialization = (<any>"Body" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
-            localVarRequestOptions.credentials = 'include';
-
             return {
                 url: url.format(localVarUrlObj),
                 options: localVarRequestOptions,
@@ -524,8 +517,6 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
 
-            localVarRequestOptions.credentials = 'include';
-
             return {
                 url: url.format(localVarUrlObj),
                 options: localVarRequestOptions,
@@ -555,8 +546,6 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-
-            localVarRequestOptions.credentials = 'include';
 
             return {
                 url: url.format(localVarUrlObj),
@@ -588,8 +577,6 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
 
-            localVarRequestOptions.credentials = 'include';
-
             return {
                 url: url.format(localVarUrlObj),
                 options: localVarRequestOptions,
@@ -619,8 +606,6 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-
-            localVarRequestOptions.credentials = 'include';
 
             return {
                 url: url.format(localVarUrlObj),
@@ -667,8 +652,6 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
             const needsSerialization = (<any>"Body1" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
-            localVarRequestOptions.credentials = 'include';
-
             return {
                 url: url.format(localVarUrlObj),
                 options: localVarRequestOptions,
@@ -714,8 +697,6 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
             const needsSerialization = (<any>"Body2" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
-            localVarRequestOptions.credentials = 'include';
-
             return {
                 url: url.format(localVarUrlObj),
                 options: localVarRequestOptions,
@@ -760,8 +741,6 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
             const needsSerialization = (<any>"Body3" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
-
-            localVarRequestOptions.credentials = 'include';
 
             return {
                 url: url.format(localVarUrlObj),
@@ -1132,8 +1111,6 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
 
-            localVarRequestOptions.credentials = 'include';
-
             return {
                 url: url.format(localVarUrlObj),
                 options: localVarRequestOptions,
@@ -1163,8 +1140,6 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-
-            localVarRequestOptions.credentials = 'include';
 
             return {
                 url: url.format(localVarUrlObj),
