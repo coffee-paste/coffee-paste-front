@@ -3,6 +3,8 @@ import { PrimeIcons } from "primevue/api"
 // Manually typed from documentation at https?://www.primefaces.org/primevue/showcase/#/menumodel.
 // Concrete type/interface/class not found in PrimeVue source
 
+export type ContextMenuCommandEventArgs = { originalEvent: Event, item: IVueMenuItem };
+
 export interface IVueMenuItem {
 
     /**

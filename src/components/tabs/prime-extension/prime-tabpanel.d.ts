@@ -1,6 +1,6 @@
 import { VNode } from 'vue';
 
-interface TabPanelProps {
+export interface TabPanelProps {
     header?: any;
     disabled?: boolean;
 

@@ -7,7 +7,10 @@
             <OverlayPanel ref="renameOverlay" :showCloseIcon="true" :dismissable="true">
                 <div class="p-field rename-overlay-inline-grid">
                     <label class="note-name-input-label" for="newNoteNameInput">New name</label>
-                    <InputText id="newNoteNameInput" class="p-inputtext-lg" type="text" v-model="newNoteName" />
+                    <span class="texbox-with-button">
+                        <InputText ref="renameNoteTextInput" id="newNoteNameInput" class="p-inputtext-lg" type="text" v-model="this.noteRenameBoxValue" />
+                        <Button class="pi pi-check p-button-icon" @click="sumbitNoteNameChange" :disabled="!this.noteRenameBoxValue"/>
+                    </span>
                 </div>
             </OverlayPanel>
 
@@ -20,8 +23,8 @@
                     <NoteTab
                         :id="tab.id"
                         :content="tab.contentHTML"
-                        @noteChanged="onChange"
                         :lastNoteFeedUpdate="tab.lastNoteFeedUpdate"
+                        @noteChanged="onChange"
                         @contextmenu="onNoteRightClick($event, tab)"
                     />
                 </TabPanel>
@@ -45,17 +48,21 @@ import { defineComponent, PropType } from 'vue';
 import { NoteTab } from './single-note-tab.vue';
 import { TabViewEventArgs } from './prime-extension/prime-tabview';
 import { getLocalStorageItem, LocalStorageKey, setLocalStorageItem } from '@/infrafstructure/local-storage';
-import { IVueMenuItem } from '../common/interfaces';
+import { ContextMenuCommandEventArgs, IVueMenuItem } from '../common/interfaces';
 import { NotesApi, NoteStatus } from '@/infrafstructure/api-client';
 import { credentialsManager } from '@/infrafstructure/session-management/credential-manager';
 
 // An extension of PrimeVue's TabView component. Was missing some events
 import TabView from "./prime-extension/prime-tabview";
-import TabPanel from "./prime-extension/prime-tabpanel";
+import TabPanel, { TabPanelProps } from "./prime-extension/prime-tabpanel";
 import ContextMenu from "primevue/contextmenu";
 import ConfirmPopup from 'primevue/confirmpopup';
 import OverlayPanel from 'primevue/overlaypanel';
 import InputText from 'primevue/inputtext';
+
+interface INoteTabPanel extends INoteTab, TabPanelProps {
+    // Joins a note's data and a normal tab panel props
+}
 
 const CREATE_TAB_KEY = `create-new-tab_${Math.random()}`;
 
@@ -83,7 +90,7 @@ const NoteTabsComponent = defineComponent({
     },
     data() {
         return {
-            tabs: this.notes || [],
+            tabs: (this.notes || []) as INoteTabPanel[],
             newTabKey: CREATE_TAB_KEY,
             activeTabIndex: 0,
             tabPanelContextMenuItems: [
@@ -91,7 +98,8 @@ const NoteTabsComponent = defineComponent({
                 { label: "Archive", icon: PrimeIcons.INBOX, command: this.archiveNote },
                 { label: "Delete", icon: PrimeIcons.TRASH, command: this.deleteNote },
             ] as IVueMenuItem[],
-            contextedTabHeader: { index: undefined, note: undefined } as  { index?: number, note?: INoteTab } | undefined
+            contextedTabHeader: { index: undefined, note: undefined } as  { index?: number, note?: INoteTab } | undefined,
+            noteRenameBoxValue: ''
         };
     },
     methods: {
@@ -114,15 +122,16 @@ const NoteTabsComponent = defineComponent({
             this.$emit("noteRightClick", { originalEvent, note });
         },
 
-        async renameNote(e: TabViewEventArgs): Promise<void> {
+        async renameNote(e: ContextMenuCommandEventArgs): Promise<void> {
             if (!isTabHeaderContextOk(this.contextedTabHeader)) {
                 console.warn(`[NoteTabs.renameNote] Could not determine target note`);
                 return;
             }
-            (this.$refs.renameOverlay as OverlayPanel).toggle(e.originalEvent);
+            this.noteRenameBoxValue = this.contextedTabHeader?.note?.name || '';
+            (this.$refs.renameOverlay as OverlayPanel).show(e.originalEvent);
         },
 
-        async archiveNote(e: TabViewEventArgs): Promise<void> {
+        async archiveNote(e: ContextMenuCommandEventArgs): Promise<void> {
             if (!isTabHeaderContextOk(this.contextedTabHeader)) {
                 console.warn(`[NoteTabs.archiveNote] Could not determine target note`);
                 return;
@@ -147,7 +156,7 @@ const NoteTabsComponent = defineComponent({
             });
         },
 
-        async deleteNote(e: TabViewEventArgs): Promise<void> {
+        async deleteNote(e: ContextMenuCommandEventArgs): Promise<void> {
             if (!isTabHeaderContextOk(this.contextedTabHeader)) {
                 console.warn(`[NoteTabs.deleteNote] Could not determine target note`);
                 return;
@@ -170,6 +179,19 @@ const NoteTabsComponent = defineComponent({
                     this.removeContextedNote();
                 },
             });
+        },
+        async sumbitNoteNameChange(): Promise<void> {
+            (this.$refs.renameOverlay as OverlayPanel).hide();
+            const note = this.notes[this.contextedTabHeader!.index!];
+            await new NotesApi({ apiKey: credentialsManager.getToken() }).setNotesName({ name: this.noteRenameBoxValue || 'Unnamed note'}, note.id); 
+            this.$toast.add({
+                severity: "info",
+                summary: "Note renamed",
+                detail: `Note '${note.name}' has been renamed to '${this.noteRenameBoxValue}'`,
+                life: 5000,
+            });
+            note.name = this.noteRenameBoxValue;
+            console.log(`[NoteTabs.sumbitNoteNameChange] Note '${note.name}' (${note.id}) has been renamed`);
         },
         removeContextedNote(): void {
             this.notes.splice(this.contextedTabHeader!.index!, 1);
@@ -199,6 +221,10 @@ export default NoteTabs;
 }
 .rename-overlay-inline-grid {
     display: inline-grid;
+    .texbox-with-button {
+        display: flex;
+        max-height: 40px;
+    }
 }
 .note-name-input-label {
     margin-bottom: 10px;
