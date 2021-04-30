@@ -205,7 +205,7 @@ export default defineComponent({
                     summary: "Login successfully",
                     life: 3000,
                 });
-                this.$router.push("/workspace");
+                window.location.href = `${redirectUri}/#/workspace`;
             } catch (error) {
                 this.$toast.add({
                     severity: "error",
