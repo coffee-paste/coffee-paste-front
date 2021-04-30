@@ -1,15 +1,51 @@
 'use strict'
 
-// TODO: fetch last swagger spec
+import nodeFetch from 'node-fetch';
+import fs from 'fs';
+import path from 'path';
+import jszip from 'jszip';
 
-// TODO: generate swagger 'typescript-fetch' client api, using https://generator.swagger.io/ API
+// Build API based on develop branch, unless it's build for main branch, then use main branch API.
+const ENV_BRANCH  = process.env.GITHUB_REF !== 'main' ? 'develop' : 'main';
 
-// TODO: unzip and copy only required file
+(async () => {
 
-// TODO: Replace portableFetch with fetch.
+    // 1: fetch last swagger spec
 
-// TOTO: Set BASE_PATH to be envFacade.apiUrl
+    const body = {
+        "lang": "typescript-fetch",
+        "specURL": `https://raw.githubusercontent.com/coffee-paste/coffee-paste-backend/${ENV_BRANCH}/src/swagger.json`,
+        "type": "CLIENT",
+        "codegenVersion": "V3",
+        "options": {
+        }
+    }
 
-// TODO: Add localVarRequestOptions.credentials = 'include'; to all requests in generated api.ts file.
+    const generateClient = {
+        method: 'POST',
+        body: JSON.stringify(body),
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/octet-stream' },
+    };
 
-// TODO: Add localVarRequestOptions.credentials = 'include'; to all requests in generated api.ts file.
+    const genResponse = await nodeFetch('https://generator3.swagger.io/api/generate', generateClient);
+    const buffer = await genResponse.buffer();
+
+    // 2: Extract generated API
+    const generatedZip = await jszip.loadAsync(buffer);
+    const apiFile = await generatedZip.file('api.ts').async('nodebuffer');
+    const configurationFile = await generatedZip.file('configuration.ts').async('nodebuffer');
+    const customDFile = await generatedZip.file('custom.d.ts').async('nodebuffer');
+    fs.writeFileSync(path.join('scripts', 'api.ts'), apiFile);
+    fs.writeFileSync(path.join('scripts', 'configuration.ts'), configurationFile);
+    fs.writeFileSync(path.join('scripts', 'custom.d.ts'), customDFile);
+
+    
+    // TODO: Replace portableFetch with fetch.
+
+    // TOTO: Set BASE_PATH to be envFacade.apiUrl
+
+    // TODO: Add localVarRequestOptions.credentials = 'include'; to all requests in generated api.ts file.
+
+    // TODO: Add localVarRequestOptions.credentials = 'include'; to all requests in generated api.ts file.
+
+})();
