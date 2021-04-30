@@ -79,7 +79,6 @@ export interface IVueMenuItem {
      */
     target?: string;
 
-
     /**
      * Defines the item as a separator
      *
