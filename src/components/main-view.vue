@@ -1,6 +1,6 @@
 <template>
     <div class="main-view">
-        <MainViewToolbar />
+        <MainViewToolbar :status="channelStatus" />
         <NoteTabs
             :key="lastNoteFeedUpdate"
             :notes="notes"
@@ -8,7 +8,6 @@
             @newNote="onNewNote"
         />
         <div class="status-container">
-            CHANNEL STATUS: <strong>{{ status }}</strong> <br />
             MSG STATUS: <strong>{{ msgStatus }}</strong>
         </div>
     </div>
@@ -21,7 +20,19 @@ import { NoteTabs } from "./tabs/note-tabs.vue";
 import { INoteChangedEventArgs, INoteTab } from "./tabs/tab-interfaces";
 import { credentialsManager } from "../infrafstructure/session-management/credential-manager";
 import { MainViewToolbar } from "./toolbar/main-view-toolbar.vue";
+import { IStatus, StatusType } from "./toolbar/menu-interfaces";
 import { NotesSocket } from "../infrafstructure/notes-socket";
+import { NoteStringConstants } from '../string-constants/note-constants';
+
+const channelStatus = {
+    unknown: { status: 'Unknown', statusType: StatusType.Error },
+    loading: { status: 'Loading', statusType: StatusType.Ok },
+    noNotes: { status: 'No notes found', statusType: StatusType.Warning },
+    error: { status: 'Error', statusType: StatusType.Error },
+    workspaceFetchFailed: { status: 'Failed to fetch workspace', statusType: StatusType.Error },
+    open: { status: 'OK', statusType: StatusType.Ok },
+    closed: { status: 'Closed', statusType: StatusType.Error },
+}
 
 let ws: WebSocket;
 
@@ -32,7 +43,7 @@ export default defineComponent({
     },
     data() {
         return {
-            status: "UNKNOWN",
+            channelStatus: channelStatus.unknown as IStatus,
             msgStatus: "UNKNOWN",
             notes: [] as INoteTab[],
             lastNoteFeedUpdate: `${new Date().getTime()}`,
@@ -40,56 +51,44 @@ export default defineComponent({
     },
     methods: {
         async load() {
-            this.status = "LOADING";
+            this.channelStatus = channelStatus.loading;
 
             try {
-                console.log(`Fetching open notes...`);
-                this.notes = (await new NotesApi({
-                    apiKey: credentialsManager.getToken(),
-                }).getOpenNotes()) as INoteTab[];
-                console.log(`Done! Content: ${JSON.stringify(this.notes)}`);
-
+                this.notes = (await new NotesApi({ apiKey: credentialsManager.getToken() }).getOpenNotes()) as INoteTab[];
                 if (this.notes?.length > 0 !== true) {
-                    this.status = "NO NOTES FOUND";
+                    this.channelStatus = channelStatus.noNotes;
                     this.$toast.add({
                         severity: "warn",
-                        summary: "No note found",
-                        detail:
-                            "There is no any note in your workspace, creating a one now...",
+                        summary: channelStatus.noNotes.status,
+                        detail: "There isn't a single note in your workspace! Creating one right... now...",
                         life: 10000,
                     });
-                    await new NotesApi({
-                        apiKey: credentialsManager.getToken(),
-                    }).createNote({
-                        name: "New note",
-                    });
+                    await new NotesApi({ apiKey: credentialsManager.getToken() }).createNote({ name: NoteStringConstants.NewNote });
                     this.$toast.add({
                         severity: "success",
                         summary: "New note created",
-                        detail: "Your first note is ready to use",
+                        detail: "Your very first note is ready for use",
                         life: 6000,
                     });
                     return;
                 }
 
-                const channelKey = await new NotesApi({
-                    apiKey: credentialsManager.getToken(),
-                }).getChannelKey();
+                const channelKey = await new NotesApi({ apiKey: credentialsManager.getToken() }).getChannelKey();
 
                 this.lastNoteFeedUpdate = `${new Date().getTime()}`;
 
                 ws = new NotesSocket(channelKey);
 
                 ws.onopen = () => {
-                    this.status = "OPEN";
+                    this.channelStatus = channelStatus.open;
                 };
 
                 ws.onerror = () => {
-                    this.status = "ERROR";
+                    this.channelStatus = channelStatus.error;
                 };
 
                 ws.onclose = () => {
-                    this.status = "CLOSE";
+                    this.channelStatus = channelStatus.closed;
                     this.load();
                 };
 
@@ -116,10 +115,10 @@ export default defineComponent({
                     changedNote.lastNoteFeedUpdate = `${new Date().getTime()}`;
                 };
             } catch (error) {
-                this.status = "ERROR FETCH WORKSPACE";
+                this.channelStatus = channelStatus.workspaceFetchFailed;
                 this.$toast.add({
                     severity: "error",
-                    summary: "Fetching workspace notes failed",
+                    summary: channelStatus.workspaceFetchFailed.status,
                     detail:
                         "Please check your connection and try again later",
                     life: 10000,
@@ -128,7 +127,6 @@ export default defineComponent({
             }
         },
         onNoteChanged(e: INoteChangedEventArgs): void {
-            console.log(`Note changed: ${JSON.stringify(e)}`);
             if (!ws) {
                 console.error("No websocket open, cannot send update");
                 return;
@@ -144,17 +142,13 @@ export default defineComponent({
         },
         async onNewNote(): Promise<void> {
             try {
-                console.log("Creating new note...");
-                const newNoteId = await new NotesApi({
-                    apiKey: credentialsManager.getToken(),
-                }).createNote({
-                    name: "New note",
-                });
-                this.notes.push({ id: newNoteId });
+                console.log("Creating a new note...");
+                const newNoteId = await new NotesApi({ apiKey: credentialsManager.getToken() }).createNote({ name: NoteStringConstants.NewNote });
+                this.notes.push({ id: newNoteId, name: NoteStringConstants.NewNote });
             } catch (error) {
                 this.$toast.add({
                     severity: "error",
-                    summary: "Creating new note failed",
+                    summary: "Failed to create a new note",
                     detail: "Please try again later",
                     life: 6000,
                 });
