@@ -214,7 +214,7 @@ export default NoteTabs;
 
 <style lang="scss" scope>
 .empty-tab {
-    height: 80vh;
+    height: 77vh;
 }
 .p-contextmenu {
     max-width: 150px;
