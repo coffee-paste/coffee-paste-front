@@ -84,7 +84,7 @@ import {
     OAuth2Service,
     User,
     UsersApi,
-} from "@/infrastructure/api";
+} from "@/infrastructure/generated/api";
 import { credentialsManager } from "@/infrastructure/session-management/credential-manager";
 
 const redirectUri = `${window.location.protocol}//${window.location.hostname}${

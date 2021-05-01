@@ -49,7 +49,7 @@ import { NoteTab } from './single-note-tab.vue';
 import { TabViewEventArgs } from './prime-extension/prime-tabview';
 import { getLocalStorageItem, LocalStorageKey, setLocalStorageItem } from '@/infrastructure/local-storage';
 import { ContextMenuCommandEventArgs, IVueMenuItem } from '../common/interfaces';
-import { NotesApi, NoteStatus } from '@/infrastructure/api';
+import { NotesApi, NoteStatus } from '@/infrastructure/generated/api';
 import { credentialsManager } from '@/infrastructure/session-management/credential-manager';
 
 // An extension of PrimeVue's TabView component. Was missing some events

@@ -57,7 +57,7 @@ import {
     LocalStorageKey,
     removeLocalStorageItem,
 } from "@/infrastructure/local-storage";
-import { AuthenticationApi, User } from "@/infrastructure/api";
+import { AuthenticationApi, User } from "@/infrastructure/generated/api";
 import { credentialsManager } from "@/infrastructure/session-management/credential-manager";
 import { envFacade } from "@/infrastructure/env-facade";
 

@@ -14,7 +14,7 @@
 </template>
 
 <script lang="ts">
-import { NotesApi } from "@/infrastructure/api";
+import { ApiFacade } from "@/infrastructure/generated/proxies/api-proxies";
 import { defineComponent } from "vue";
 import { NoteTabs } from "./tabs/note-tabs.vue";
 import { INoteChangedEventArgs, INoteTab } from "./tabs/tab-interfaces";
@@ -54,7 +54,7 @@ export default defineComponent({
             this.channelStatus = channelStatus.loading;
 
             try {
-                this.notes = (await new NotesApi({ apiKey: credentialsManager.getToken() }).getOpenNotes()) as INoteTab[];
+                this.notes = (await ApiFacade.NotesApi.getOpenNotes()) as INoteTab[];
                 if (this.notes?.length > 0 !== true) {
                     this.channelStatus = channelStatus.noNotes;
                     this.$toast.add({
@@ -63,7 +63,7 @@ export default defineComponent({
                         detail: "There isn't a single note in your workspace! Creating one right... now...",
                         life: 10000,
                     });
-                    await new NotesApi({ apiKey: credentialsManager.getToken() }).createNote({ name: NoteStringConstants.NewNote });
+                    await ApiFacade.NotesApi.createNote({ name: NoteStringConstants.NewNote });
                     this.$toast.add({
                         severity: "success",
                         summary: "New note created",
@@ -73,7 +73,7 @@ export default defineComponent({
                     return;
                 }
 
-                const channelKey = await new NotesApi({ apiKey: credentialsManager.getToken() }).getChannelKey();
+                const channelKey = await ApiFacade.NotesApi.getChannelKey();
 
                 this.lastNoteFeedUpdate = `${new Date().getTime()}`;
 
@@ -143,7 +143,7 @@ export default defineComponent({
         async onNewNote(): Promise<void> {
             try {
                 console.log("Creating a new note...");
-                const newNoteId = await new NotesApi({ apiKey: credentialsManager.getToken() }).createNote({ name: NoteStringConstants.NewNote });
+                const newNoteId = await ApiFacade.NotesApi.createNote({ name: NoteStringConstants.NewNote });
                 this.notes.push({ id: newNoteId, name: NoteStringConstants.NewNote });
             } catch (error) {
                 this.$toast.add({
