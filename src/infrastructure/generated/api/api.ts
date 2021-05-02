@@ -612,7 +612,6 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
-			debugger;
 			localVarRequestOptions.credentials = 'include';
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
 

@@ -136,6 +136,8 @@ async function createApiTs(jsZip) {
 /**
  * Emits a class containing, for each class name in `proxiesToEmit` a static getter returning a dynamic proxy of the API object
  * @description **Note:** This method requires that the output directory already exists. The output file may or may not exist
+ * 
+ * The same could be done by adjusting swagger's typescript-fetch template but that is a bit overkill
  *
  * @param {string[]} proxiesToEmit An array of class names to generate getters for
  */
