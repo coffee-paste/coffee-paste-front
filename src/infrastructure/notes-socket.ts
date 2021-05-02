@@ -1,5 +1,4 @@
 import { envFacade } from "./env-facade";
-import { credentialsManager } from "./session-management/credential-manager";
 
 export class NotesSocket extends WebSocket {
 
