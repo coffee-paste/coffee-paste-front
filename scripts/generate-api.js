@@ -67,37 +67,80 @@ const PROXY_GETTER_STATEMENT_FORMAT = "\
 //#endregion Proxies File
 
 
+/**
+ * Recursively ensures the given directory path exists, creating it as necessary
+ *
+ * @param {string} dirPath The path to ensure
+ * @return {void} 
+ */
 function mkdirRecursive(dirPath) {
 	if (fs.existsSync(dirPath)) { 
-		return true 
+		return; 
 	}
 	const dirname = path.dirname(dirPath)
 	mkdirRecursive(dirname);
 	fs.mkdirSync(dirPath);
 }
 
+/**
+ * Gets a file from the given `jsZip` archive and writes it to the `SWAGGER_API_OUTPUT_PATH`
+ *
+ * @param {JSZip} jsZip The archive containing the file
+ * @param {string} fileName The file's name
+ */
 async function depositFile(jsZip, fileName) {
 	const fileBuffer = await jsZip.file(fileName).async(NODE_BUFFER);
 	fs.writeFileSync(path.join(SWAGGER_API_OUTPUT_PATH, fileName), fileBuffer);
 }
 
+/**
+ * Creates an import statement for including the given 'importNames' from the generated api.ts file
+ *
+ * @param {string[]} importNames An array of entities to import  from 'api.ts'
+ * @return {string[]} 
+ */
 function createImportStatement(importNames) {
 	return `import { ${importNames.join(', ')} } from '../api/api'`;
 }
 
+/**
+ * Creates the `api.ts` file
+ * @description This method reads the `api.ts` from the Swagger generated archive,
+ * amends it to fit our codebase and deposits it into `SWAGGER_API_OUTPUT_PATH`
+ *
+ * @param {JSZip} jsZip The Swagger generated archive containing the `api.ts` file
+ * @return {string[]} An array of the API class names defined in `api.ts`
+ */
 async function createApiTs(jsZip) {
+	// Read the file from the archive
 	let fileContents = (await jsZip.file(API_TS).async(NODE_BUFFER)).toString();
+
+	// Replace 'portableFetch' with regular 'fetch'
 	fileContents = fileContents.replace(PORTABLE_FETCH_REGEX, PORTABLE_FETCH_REWRITE_CONTENT);
+	
+	// Replace the BASE_PATH variable with a reference to envFacade.apiPath
 	fileContents = fileContents.replace(BASE_PATH_REGEX, BASE_PATH_REWRITE_CONTENT);
+
+	// Add the "credentials: 'include'" option to all APIs
 	fileContents = fileContents.replace(INJECT_PARAMS_FIND_REGEX, INJECT_PARAMS_FIND_CONTENT);
+
+	// Write the file to the output path
 	fs.writeFileSync(path.join(SWAGGER_API_OUTPUT_PATH, API_TS), fileContents);
 
+	// Find all class definitions deriving from the BaseAPI class and return their names as an array
 	const apiClasses = fileContents.matchAll(CLASS_DEFS_REGEX);
 	const proxiesToEmit = Array.from(apiClasses).map(match => match.groups['className']);
 	return proxiesToEmit;
 }
 
+/**
+ * Emits a class containing, for each class name in `proxiesToEmit` a static getter returning a dynamic proxy of the API object
+ * @description **Note:** This method requires that the output directory already exists. The output file may or may not exist
+ *
+ * @param {string[]} proxiesToEmit An array of class names to generate getters for
+ */
 function emitProxiesFile(proxiesToEmit) {
+	// Delete the generated file, if it already exists
 	if (fs.existsSync(PROXY_EMISSION_OUTPUT_FILE)) {
 		fs.unlinkSync(PROXY_EMISSION_OUTPUT_FILE);
 	}
@@ -114,7 +157,7 @@ function emitProxiesFile(proxiesToEmit) {
 	// Emit the Facade class's beginning
 	fs.appendFileSync(PROXY_EMISSION_OUTPUT_FILE, FACADE_CLASS_START_STATEMENT);
 
-	// Emit the facade class's accessors
+	// Emit a getter for each proxy
 	for (const proxyToEmit of proxiesToEmit) {
 		fs.appendFileSync(PROXY_EMISSION_OUTPUT_FILE, PROXY_GETTER_STATEMENT_FORMAT.replace(/\{0\}/g, proxyToEmit))
 	}
@@ -149,19 +192,17 @@ function emitProxiesFile(proxiesToEmit) {
     // 2: Extract generated API
     const generatedZip = await jszip.loadAsync(buffer);
 
+	// Make sure the output directory exists
 	mkdirRecursive(SWAGGER_API_OUTPUT_PATH);
+
+	// Drop some of the Swagger generated files as-is
 	await depositFile(generatedZip, CONFIGURATION_TS);
 	await depositFile(generatedZip, CUSTOM_D_TS);
 	await depositFile(generatedZip, INDEX_TS);
+
+	// Modify and drop the api.ts file
 	const apiClassNames = await createApiTs(generatedZip);
+
+	// Emit a Facade class with a getter for every API class in the api.ts file.
 	emitProxiesFile(apiClassNames);
-    
-    // TODO: Replace portableFetch with fetch.
-
-    // TOTO: Set BASE_PATH to be envFacade.apiUrl
-
-    // TODO: Add localVarRequestOptions.credentials = 'include'; to all requests in generated api.ts file.
-
-    // TODO: Add localVarRequestOptions.credentials = 'include'; to all requests in generated api.ts file.
-
 })();
