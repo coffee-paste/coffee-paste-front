@@ -1,4 +1,4 @@
-import { Note } from "@/infrafstructure/api-client";
+import { Note } from "@/infrastructure/generated/api";
 
 enum NoteStringPrefix {
     NewNote = 'New note',

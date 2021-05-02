@@ -47,10 +47,10 @@ import { INoteChangedEventArgs, INoteTab } from './tab-interfaces';
 import { defineComponent, PropType } from 'vue';
 import { NoteTab } from './single-note-tab.vue';
 import { TabViewEventArgs } from './prime-extension/prime-tabview';
-import { getLocalStorageItem, LocalStorageKey, setLocalStorageItem } from '@/infrafstructure/local-storage';
+import { getLocalStorageItem, LocalStorageKey, setLocalStorageItem } from '@/infrastructure/local-storage';
 import { ContextMenuCommandEventArgs, IVueMenuItem } from '../common/interfaces';
-import { NotesApi, NoteStatus } from '@/infrafstructure/api-client';
-import { credentialsManager } from '@/infrafstructure/session-management/credential-manager';
+import { NotesApi, NoteStatus } from '@/infrastructure/generated/api';
+import { credentialsManager } from '@/infrastructure/session-management/credential-manager';
 
 // An extension of PrimeVue's TabView component. Was missing some events
 import TabView from "./prime-extension/prime-tabview";

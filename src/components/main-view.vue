@@ -14,15 +14,15 @@
 </template>
 
 <script lang="ts">
-import { Note, NotesApi } from "@/infrafstructure/api-client";
 import { defineComponent } from "vue";
 import { NoteTabs } from "./tabs/note-tabs.vue";
 import { INoteChangedEventArgs, INoteTab } from "./tabs/tab-interfaces";
-import { credentialsManager } from "../infrafstructure/session-management/credential-manager";
 import { MainViewToolbar } from "./toolbar/main-view-toolbar.vue";
 import { IStatus, StatusType } from "./toolbar/menu-interfaces";
-import { NotesSocket } from "../infrafstructure/notes-socket";
+import { NotesSocket } from '../infrastructure/notes-socket';
 import { generateNewNoteName } from "@/string-constants/note-constants";
+import { ApiFacade } from "@/infrastructure/generated/proxies/api-proxies";
+import { Note } from "@/infrastructure/generated/api";
 
 const channelStatus = {
     unknown: { status: 'Unknown', statusType: StatusType.Error },
@@ -55,9 +55,7 @@ export default defineComponent({
     methods: {
         async openChannel() {
             try {
-                const channelKey = await new NotesApi({
-                    apiKey: credentialsManager.getToken(),
-                }).getChannelKey();
+                const channelKey = await ApiFacade.NotesApi.getChannelKey();
 
                 ws = new NotesSocket(channelKey);
 
@@ -101,9 +99,7 @@ export default defineComponent({
             this.channelStatus = channelStatus.loading;
 
             try {
-                this.notes = (await new NotesApi({
-                    apiKey: credentialsManager.getToken(),
-                }).getOpenNotes()) as INoteTab[];
+                this.notes = (await ApiFacade.NotesApi.getOpenNotes()) as INoteTab[];
                 if (!this.notes?.length) {
                     this.channelStatus = channelStatus.noNotes;
                     this.$toast.add({
@@ -114,9 +110,7 @@ export default defineComponent({
                         life: 10000,
                     });
                     const name = generateNewNoteName([]);
-                    const id = await new NotesApi({
-                        apiKey: credentialsManager.getToken(),
-                    }).createNote({ name });
+                    const id = await ApiFacade.NotesApi.createNote({ name });
                     this.$toast.add({
                         severity: "success",
                         summary: "New note created",
@@ -164,9 +158,7 @@ export default defineComponent({
             try {
                 console.log("Creating a new note...");
                 const newNoteName = generateNewNoteName(this.notes as Note[]);
-                const newNoteId = await new NotesApi({
-                    apiKey: credentialsManager.getToken(),
-                }).createNote({ name: newNoteName });
+                const newNoteId = await ApiFacade.NotesApi.createNote({ name: newNoteName });
                 this.notes.push({ id: newNoteId, name: newNoteName });
             } catch (error) {
                 this.$toast.add({
