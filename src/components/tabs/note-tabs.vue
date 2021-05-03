@@ -17,9 +17,16 @@
             <TabView
                 @tab-click="onTabClick"
                 :activeIndex="activeTabIndex"
-                @tab-header-context-menu="onTabHeaderRightClick"
             >
-                <TabPanel v-for="tab in tabs" :key="tab.id" :header="tab.name">
+                <TabPanel v-for="tab in tabs" :key="tab.id">
+                    <template #header>
+                        <div class="tab-header">
+                            <span>{{tab.name}}</span>
+                            <span class="tab-header-menu"> 
+                                <i class="pi pi-ellipsis-v p-button-icon" @click="onTabHeaderRightClick($event, tab)"></i>
+                            </span>
+                        </div>
+                    </template>
                     <NoteTab
                         :id="tab.id"
                         :content="tab.contentHTML"
@@ -29,7 +36,10 @@
                     />
                 </TabPanel>
 
-                <TabPanel :key="newTabKey" headerContextMenuBehavior="kill-event" header="+">
+                <TabPanel :key="newTabKey" headerContextMenuBehavior="kill-event" >
+                    <template #header>
+                        <i class="pi pi-plus"></i>
+                    </template>
                     <p class="empty-tab" />
                 </TabPanel>
 
@@ -98,7 +108,7 @@ const NoteTabsComponent = defineComponent({
                 { label: "Archive", icon: PrimeIcons.INBOX, command: this.archiveNote },
                 { label: "Delete", icon: PrimeIcons.TRASH, command: this.deleteNote },
             ] as IVueMenuItem[],
-            contextedTabHeader: { index: undefined, note: undefined } as  { index?: number, note?: INoteTab } | undefined,
+            contextedTabHeader: undefined as  INoteTab | undefined,
             noteRenameBoxValue: ''
         };
     },
@@ -113,9 +123,9 @@ const NoteTabsComponent = defineComponent({
                 this.$emit("newNote");
             }
         },
-        onTabHeaderRightClick(e: TabViewEventArgs): void {
-            this.contextedTabHeader = { index: e.index, note: this.tabs[e.index] };
-            (this.$refs.tabPanelContextMenu as ContextMenu).show(e.originalEvent);
+        onTabHeaderRightClick(e: TabViewEventArgs, tab: INoteTab): void {
+            this.contextedTabHeader = tab;
+            (this.$refs.tabPanelContextMenu as ContextMenu).show(e.originalEvent || e);
         },
 
         onNoteRightClick(originalEvent: MouseEvent, note: INoteTab): void {
@@ -123,66 +133,70 @@ const NoteTabsComponent = defineComponent({
         },
 
         async renameNote(e: ContextMenuCommandEventArgs): Promise<void> {
-            if (!isTabHeaderContextOk(this.contextedTabHeader)) {
+            if (!this.contextedTabHeader) {
                 console.warn(`[NoteTabs.renameNote] Could not determine target note`);
                 return;
             }
-            this.noteRenameBoxValue = this.contextedTabHeader?.note?.name || '';
+            this.noteRenameBoxValue = this.contextedTabHeader?.name || '';
             (this.$refs.renameOverlay as OverlayPanel).show(e.originalEvent);
         },
 
         async archiveNote(e: ContextMenuCommandEventArgs): Promise<void> {
-            if (!isTabHeaderContextOk(this.contextedTabHeader)) {
+            if (!this.contextedTabHeader) {
                 console.warn(`[NoteTabs.archiveNote] Could not determine target note`);
                 return;
             }
-
-            const noteName = this.contextedTabHeader?.note?.name || 'un-named note';
+            const id =  this.contextedTabHeader!.id;
+            const noteName = this.contextedTabHeader!.name || 'un-named note';
             this.$confirm.require({
                 target: e.originalEvent.target,
                 message: `Really archive note '${noteName}'?`,
                 icon: PrimeIcons.QUESTION,
                 accept: async () => {
-                    await new NotesApi({ apiKey: credentialsManager.getToken() }).setNotes({status: NoteStatus.BACKLOG }, this.contextedTabHeader!.note!.id);
+                    await new NotesApi({ apiKey: credentialsManager.getToken() }).setNotes({status: NoteStatus.BACKLOG }, this.contextedTabHeader!.id);
                     this.$toast.add({
                         severity: "info",
                         summary: "Note archived",
                         detail: `Note '${noteName}' has been archived`,
                         life: 10000,
                     });
-                    console.log(`[NoteTabs.archiveNote] Note '${noteName}' (${this.contextedTabHeader!.note!.id}) successfully archived`);
-                    this.removeContextedNote();
+                    console.log(`[NoteTabs.archiveNote] Note '${noteName}' (${this.contextedTabHeader!.id}) successfully archived`);
+                    this.removeContextedNote(id);
                 },
             });
         },
 
         async deleteNote(e: ContextMenuCommandEventArgs): Promise<void> {
-            if (!isTabHeaderContextOk(this.contextedTabHeader)) {
+            if (!this.contextedTabHeader) {
                 console.warn(`[NoteTabs.deleteNote] Could not determine target note`);
                 return;
             }
-
-            const noteName = this.contextedTabHeader?.note?.name || 'un-named note';
+            const id =  this.contextedTabHeader!.id;
+            const noteName = this.contextedTabHeader?.name || 'un-named note';
             this.$confirm.require({
                 target: e.originalEvent.target,
                 message: `Really delete note '${noteName}'?`,
                 icon: PrimeIcons.EXCLAMATION_TRIANGLE,
                 accept: async () => {
-                    await new NotesApi({ apiKey: credentialsManager.getToken() }).deleteNotes(this.contextedTabHeader!.note!.id); 
+                    await new NotesApi({ apiKey: credentialsManager.getToken() }).deleteNotes(this.contextedTabHeader!.id); 
                     this.$toast.add({
                         severity: "info",
                         summary: "Note deleted",
                         detail: `Note '${noteName}' has been deleted`,
                         life: 10000,
                     });
-                    console.log(`[NoteTabs.deleteNote] Note '${noteName}' (${this.contextedTabHeader!.note!.id}) has been deleted`);
-                    this.removeContextedNote();
+                    console.log(`[NoteTabs.deleteNote] Note '${noteName}' (${this.contextedTabHeader!.id}) has been deleted`);
+                    this.removeContextedNote(id);
                 },
             });
         },
         async sumbitNoteNameChange(): Promise<void> {
             (this.$refs.renameOverlay as OverlayPanel).hide();
-            const note = this.notes[this.contextedTabHeader!.index!];
+            const note = this.contextedTabHeader as INoteTab;
+            if (!this.contextedTabHeader) {
+                console.warn(`[NoteTabs.sumbitNoteNameChange] Could not determine target note`);
+                return;
+            }
             await new NotesApi({ apiKey: credentialsManager.getToken() }).setNotesName({ name: this.noteRenameBoxValue || 'Unnamed note'}, note.id); 
             this.$toast.add({
                 severity: "info",
@@ -193,19 +207,12 @@ const NoteTabsComponent = defineComponent({
             note.name = this.noteRenameBoxValue;
             console.log(`[NoteTabs.sumbitNoteNameChange] Note '${note.name}' (${note.id}) has been renamed`);
         },
-        removeContextedNote(): void {
-            this.notes.splice(this.contextedTabHeader!.index!, 1);
+        removeContextedNote(noteId : string): void {
+            const index = this.notes.findIndex(note => note.id === noteId);
+            this.notes.splice(index, 1);
         },
     },
 });
-
-function isTabHeaderContextOk(context?: { index?: number, note?: INoteTab }): boolean {
-    const isOk = !!context && context.index !== undefined && !!context.note?.id;
-    if (!isOk) {
-        console.warn('[NoteTabs.isTabHeaderContextOk] Tab header context in incorrect');
-    }
-    return isOk;
-}
 
 export const NoteTabs = NoteTabsComponent;
 export default NoteTabs;
@@ -229,4 +236,11 @@ export default NoteTabs;
 .note-name-input-label {
     margin-bottom: 10px;
 }
+.tab-header {
+    .tab-header-menu {
+        margin-left: 10px;
+        margin-right: -15px;
+    }
+}
+
 </style>
