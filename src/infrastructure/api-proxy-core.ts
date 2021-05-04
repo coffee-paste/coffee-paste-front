@@ -20,7 +20,7 @@ function getGenericFunctionInterceptor<T extends Function>(): ProxyHandler<T> {
 	return handler;
 }
 
- 
+
 /**
  * Gets an array of an ApiObject's functions.
  * @description Context sensitive- function dives relies on the API objects being shallow.
@@ -50,10 +50,14 @@ function getObjectMethods(obj: object): string[] {
  * @param {*} target The object who's methods are to be wrapped
  * @return {*} The given 'target' object, who's function's have been wrapped with a generic interceptor
  */
-function wrapAllMethods(target: any): any {
+export function wrapAllMethods<T extends object>(target: T, interceptor: ProxyHandler<Function>): any {
 	const methods = getObjectMethods(target);
-	for (const methodName of methods) {
-		target[methodName] = new Proxy(target[methodName], getGenericFunctionInterceptor());
+	return wrapObjectMethods(target, interceptor, methods as (keyof T)[]);
+}
+
+export function wrapObjectMethods<T extends object>(target: T, interceptor: ProxyHandler<Function>, methodsToWrap: (keyof T)[]): any {
+	for (const methodName of methodsToWrap) {
+		(target as any)[methodName] = new Proxy((target as any)[methodName], interceptor);
 	}
 	return target;
 }
@@ -66,6 +70,7 @@ function wrapAllMethods(target: any): any {
  * @param {TApi} apiObject An API object instance to wrap
  * @return {*} The given 'apiObject' wrapped with a dynamic proxy
  */
-export function createApiProxy<TApi>(apiObject: TApi): any {
-	return new Proxy(wrapAllMethods(apiObject), getGenericFunctionInterceptor());
+export function createApiProxy<TApi extends object>(apiObject: TApi): any {
+	const stdInterceptor: ProxyHandler<Function> = getGenericFunctionInterceptor();
+	return new Proxy(wrapAllMethods(apiObject, stdInterceptor), stdInterceptor);
 }

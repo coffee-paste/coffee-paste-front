@@ -25,7 +25,8 @@ const INDEX_TS = 'index.ts';
 //#region Output Paths
 const OUTPUT_BASE_PATH = 'src/infrastructure/generated'
 const SWAGGER_API_OUTPUT_PATH = `${OUTPUT_BASE_PATH}/api`;
-const PROXY_EMISSION_OUTPUT_FILE = `${OUTPUT_BASE_PATH}/proxies/api-proxies.ts`
+const PROXY_EMISSION_OUTPUT_DIR = `${OUTPUT_BASE_PATH}/proxies`
+const PROXY_EMISSION_OUTPUT_FILE = `${PROXY_EMISSION_OUTPUT_DIR}/api-proxies.ts`
 //#endregion Output Paths
 
 
@@ -146,6 +147,9 @@ function emitProxiesFile(proxiesToEmit) {
 	if (fs.existsSync(PROXY_EMISSION_OUTPUT_FILE)) {
 		fs.unlinkSync(PROXY_EMISSION_OUTPUT_FILE);
 	}
+
+	// Ensure the output directory exists
+	mkdirRecursive(PROXY_EMISSION_OUTPUT_DIR);
 
 	// Emit static imports
 	fs.appendFileSync(PROXY_EMISSION_OUTPUT_FILE, AUTO_GEN_COMMENT);
