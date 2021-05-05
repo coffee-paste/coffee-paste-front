@@ -20,7 +20,7 @@
             </div>
 
             <Button
-                class="nav-button p-button-icon-only p-button-rounded p-button-info p-button-outlined p-mr-2"
+                class="nav-button p-button-icon-only p-button-rounded p-button-info p-button-outlined p-mr-2 avatar-icon"
                 :icon="avatarBase64 || defaultIcon"
                 @click="onProfileButtonClick"
             >
@@ -164,6 +164,10 @@ export default MainViewToolbar;
     margin-right: 10px;
     justify-content: center;
     color: #e3f2fd !important;
+}
+.avatar-icon {
+    height: 2.5rem !important;
+    width: 2.5rem !important;
 }
 
 .status-indicator {
