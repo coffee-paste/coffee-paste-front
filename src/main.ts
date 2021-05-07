@@ -3,7 +3,6 @@ import App from "./App.vue";
 import router from "./router";
 import ToastService from 'primevue/toastservice';
 import { getLocalStorageItem, LocalStorageKey } from "./infrastructure/local-storage";
-import { Theme } from "./infrastructure/symbols";
 
 import PrimeVue from 'primevue/config';
 import Dialog from 'primevue/dialog';
@@ -18,7 +17,7 @@ import ConfirmationService from 'primevue/confirmationservice';
 // Import theme CSS based 
 (async () => {
     const theme = getLocalStorageItem<string>(LocalStorageKey.Theme, { itemType : 'string' });
-    await import(`primevue/resources/themes/${theme || Theme.Light}/theme.css`);
+    await import(`primevue/resources/themes/${theme ||'md-light-indigo'}/theme.css`);
 })();
 
 import 'primevue/resources/primevue.min.css';
