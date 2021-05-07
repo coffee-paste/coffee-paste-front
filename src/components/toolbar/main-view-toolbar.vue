@@ -1,42 +1,27 @@
 <template>
     <Toolbar class="main-toolbar-style">
         <template #left>
-            <Button
-                class="nav-button p-button-sm p-button p-component p-button-secondary p-button-text"
-                label="Home"
-                @click="$router.push('/')"
-            />
-            <Button
-                class="nav-button p-button-sm p-button p-component p-button-secondary p-button-text"
-                label="About"
-                @click="$router.push('/about')"
-            />
+            <Button class="nav-button p-button-sm p-button p-component p-button-secondary p-button-text" label="Home" @click="$router.push('/')" />
+            <Button class="nav-button p-button-sm p-button p-component p-button-secondary p-button-text" label="About" @click="$router.push('/about')" />
         </template>
 
         <template #right>
+            <div class="theme-selector">
+                <SelectButton class="theme-select-button" @click="selectTheme" v-model="selectedTheme" :options="themes" dataKey="code" optionLabel="name">
+                    <template #option="slotProps">
+                        <span> {{slotProps.option.name}} </span>
+                    </template>
+                </SelectButton>
+            </div>
             <div class="status-indicator">
                 <span class="--label"> Status: </span>
                 <span :class="statusMessageStyle"> {{status.status}} </span>
             </div>
 
-            <Button
-                class="nav-button p-button-icon-only p-button-rounded p-button-info p-button-outlined p-mr-2 avatar-icon"
-                :icon="avatarBase64 || defaultIcon"
-                @click="onProfileButtonClick"
-            >
-                <img
-                    v-if="avatarBase64"
-                    alt="avatar"
-                    :src="avatarBase64"
-                    style="width: 40px"
-                />
+            <Button class="nav-button p-button-icon-only p-button-rounded p-button-info p-button-outlined p-mr-2 avatar-icon" :icon="avatarBase64 || defaultIcon" @click="onProfileButtonClick">
+                <img v-if="avatarBase64" alt="avatar" :src="avatarBase64" style="width: 40px" />
             </Button>
-            <Menu
-                :id="ariaId + '_overlay'"
-                ref="menu"
-                :model="profileMenuItems"
-                :popup="true"
-            />
+            <Menu :id="ariaId + '_overlay'" ref="menu" :model="profileMenuItems" :popup="true" />
         </template>
     </Toolbar>
 </template>
@@ -56,10 +41,17 @@ import {
     getLocalStorageItem,
     LocalStorageKey,
     removeLocalStorageItem,
+    setLocalStorageItem,
 } from "@/infrastructure/local-storage";
 import { AuthenticationApi, User } from "@/infrastructure/generated/api";
 import { credentialsManager } from "@/infrastructure/session-management/credential-manager";
 import { envFacade } from "@/infrastructure/env-facade";
+import { Theme } from "@/infrastructure/symbols";
+
+interface ThemeItem {
+    name: string;
+    code: Theme;
+}
 
 const MainViewToolbarComponent = defineComponent({
     components: { Toolbar, Button, Menu },
@@ -79,13 +71,17 @@ const MainViewToolbarComponent = defineComponent({
             itemType: "object",
         });
         if (profile?.avatarBase64) {
-            this.avatarBase64 = `data:image/jpg;base64,${
-                profile?.avatarBase64 || ""
-            }`;
+            this.avatarBase64 = `data:image/jpg;base64,${profile?.avatarBase64 || ""
+                }`;
         }
     },
     data() {
         return {
+            selectedTheme: { code: getLocalStorageItem<Theme>(LocalStorageKey.Theme, { itemType: 'string' }) || Theme.Light } as ThemeItem,
+            themes: [
+                { name: 'Dark mode', code: Theme.Dark },
+                { name: 'Light mode', code: Theme.Light },
+            ] as ThemeItem[],
             defaultIcon: PrimeIcons.USER_EDIT,
             avatarBase64: "",
             profileMenuItems: [
@@ -110,12 +106,17 @@ const MainViewToolbarComponent = defineComponent({
                     return '--ok-status';
                 case StatusType.Error:
                     return '--error-status';
-               default:
+                default:
                     return '--warning-status';
             }
         }
     },
     methods: {
+        selectTheme() {
+            const theme = this.selectedTheme?.code;
+            setLocalStorageItem<Theme>(LocalStorageKey.Theme, theme, { itemType: 'string' });
+            location.reload();
+        },
         async logout() {
             try {
                 await new AuthenticationApi({
@@ -185,7 +186,10 @@ export default MainViewToolbar;
         color: red;
     }
     .--warning-status {
-        color:yellow;
+        color: yellow;
     }
+}
+.theme-selector {
+    margin-right: 20px;
 }
 </style>

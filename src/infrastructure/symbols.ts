@@ -5,3 +5,8 @@ export interface OAuthProvider {
     icon: string;
     oauthUrl: string;
 }
+
+export enum Theme {
+    Light = 'md-light-indigo',
+    Dark = 'vela-purple',
+}
