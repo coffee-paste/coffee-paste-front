@@ -1,10 +1,7 @@
 <template>
 	<div class="main-view">
-		<MainViewToolbar :status="channelStatus" />
+		<MainViewToolbar :status="channelStatus" :msgStatus="msgStatus" />
 		<NoteTabs :key="lastNoteFeedUpdate" :notes="notes" @noteChanged="onNoteChanged" @newNote="onNewNote" />
-		<!-- <div class="status-container">
-            MSG STATUS: <strong>{{ msgStatus }}</strong>
-        </div> -->
 	</div>
 </template>
 
@@ -20,13 +17,13 @@ import { ApiFacade } from "@/infrastructure/generated/proxies/api-proxies";
 import { ToastDuration, ToastSeverity } from "@/string-constants/prime-constants";
 
 const channelStatus = {
-	unknown: { status: 'Unknown', statusType: StatusType.Error },
-	loading: { status: 'Loading', statusType: StatusType.Ok },
-	noNotes: { status: 'No notes found', statusType: StatusType.Warning },
-	error: { status: 'Error', statusType: StatusType.Error },
-	workspaceFetchFailed: { status: 'Failed to fetch workspace', statusType: StatusType.Error },
-	open: { status: 'OK', statusType: StatusType.Ok },
-	closed: { status: 'Closed', statusType: StatusType.Error },
+	unknown: { status: 'Unknown Issue', statusType: StatusType.Error },
+    loading: { status: 'Connection Initializing', statusType: StatusType.Loading },
+    noNotes: { status: 'No notes found', statusType: StatusType.Warning },
+    error: { status: 'Connection Error', statusType: StatusType.Error },
+    workspaceFetchFailed: { status: 'Failed to fetch workspace', statusType: StatusType.Error },
+    open: { status: 'Connection OK', statusType: StatusType.Ok },
+    closed: { status: 'Connection Closed', statusType: StatusType.Error },
 }
 
 let ws: NotesSocket;
@@ -42,7 +39,7 @@ export default defineComponent({
 	data() {
 		return {
 			channelStatus: channelStatus.unknown as IStatus,
-			msgStatus: "UNKNOWN",
+			msgStatus: null as unknown as Date,
 			notes: [] as INoteTab[],
 			lastNoteFeedUpdate: `${new Date().getTime()}`,
 		};
@@ -71,7 +68,7 @@ export default defineComponent({
 					const { noteId, contentHTML } = JSON.parse(msg.data);
 					console.log(`Incoming message:  ${JSON.stringify(msg.data)}`);
 					this.lastNoteFeedUpdate = `${new Date().getTime()}`;
-					this.msgStatus = `RECIVED AT ${new Date().toString()}`;
+					this.msgStatus = new Date();
 					const changedNote = this.notes.find((n) => n.id === noteId);
 
 					if (!changedNote) {
@@ -139,7 +136,7 @@ export default defineComponent({
 				return;
 			}
 			ws.sendNoteUpdate(e);
-			this.msgStatus = `SENT AT ${new Date().toString()}`;
+			this.msgStatus = new Date();
 		},
 		async onNewNote(newNote: INoteTab): Promise<void> {
 			ws.sendNoteUpdate({ noteId: newNote.id });
@@ -158,5 +155,9 @@ export default defineComponent({
 	.status-container {
 		margin-top: 1em;
 	}
+}
+
+.p-cascadeselect-label {
+    padding: 0.5rem 0.5rem !important;
 }
 </style>

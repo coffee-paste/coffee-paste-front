@@ -6,6 +6,7 @@ export enum LocalStorageKey {
     LoginWith = "LOGIN_WITH",
     ActiveTabIndex = "ACTIVE_TAB_INDEX",
     IsLocalDev = "IS_LOCAL_DEV",
+    Theme = "THEME",
 }
 
 const g = typeof '';
