@@ -1,15 +1,12 @@
 <template>
     <div class="main-view">
-        <MainViewToolbar :status="channelStatus" />
+        <MainViewToolbar :status="channelStatus" :msgStatus="msgStatus" />
         <NoteTabs
             :key="lastNoteFeedUpdate"
             :notes="notes"
             @noteChanged="onNoteChanged"
             @newNote="onNewNote"
         />
-        <!-- <div class="status-container">
-            MSG STATUS: <strong>{{ msgStatus }}</strong>
-        </div> -->
     </div>
 </template>
 
@@ -24,14 +21,14 @@ import { generateNewNoteName } from "@/string-constants/note-constants";
 import { ApiFacade } from "@/infrastructure/generated/proxies/api-proxies";
 import { Note } from "@/infrastructure/generated/api";
 
-const channelStatus = {
-    unknown: { status: 'Unknown', statusType: StatusType.Error },
-    loading: { status: 'Loading', statusType: StatusType.Ok },
+const channelStatus : { [key:string] : { status: string; statusType: StatusType  } } = {
+    unknown: { status: 'Unknown Issue', statusType: StatusType.Error },
+    loading: { status: 'Connection Initializing', statusType: StatusType.Loading },
     noNotes: { status: 'No notes found', statusType: StatusType.Warning },
-    error: { status: 'Error', statusType: StatusType.Error },
+    error: { status: 'Connection Error', statusType: StatusType.Error },
     workspaceFetchFailed: { status: 'Failed to fetch workspace', statusType: StatusType.Error },
-    open: { status: 'OK', statusType: StatusType.Ok },
-    closed: { status: 'Closed', statusType: StatusType.Error },
+    open: { status: 'Connection OK', statusType: StatusType.Ok },
+    closed: { status: 'Connection Closed', statusType: StatusType.Error },
 }
 
 let ws: WebSocket;
@@ -46,8 +43,8 @@ export default defineComponent({
     },
     data() {
         return {
-            channelStatus: channelStatus.unknown as IStatus,
-            msgStatus: "UNKNOWN",
+            channelStatus: channelStatus.closed as IStatus,
+            msgStatus: null as unknown as Date,
             notes: [] as INoteTab[],
             lastNoteFeedUpdate: `${new Date().getTime()}`,
         };
@@ -60,11 +57,11 @@ export default defineComponent({
                 ws = new NotesSocket(channelKey);
 
                 ws.onopen = () => {
-                    this.channelStatus = channelStatus.open;
+                   this.channelStatus = channelStatus.open;
                 };
 
                 ws.onerror = () => {
-                    this.channelStatus = channelStatus.error;
+                   this.channelStatus = channelStatus.error;
                 };
 
                 ws.onclose = () => {
@@ -78,7 +75,7 @@ export default defineComponent({
                         `Incoming message:  ${JSON.stringify(msg.data)}`
                     );
                     this.lastNoteFeedUpdate = `${new Date().getTime()}`;
-                    this.msgStatus = `RECIVED AT ${new Date().toString()}`;
+                    this.msgStatus = new Date();
                     const changedNote = this.notes.find((n) => n.id === noteId);
 
                     if (!changedNote) {
@@ -152,7 +149,7 @@ export default defineComponent({
                     contentText: e.contentText,
                 })
             );
-            this.msgStatus = `SENT AT ${new Date().toString()}`;
+            this.msgStatus = new Date();
         },
         async onNewNote(): Promise<void> {
             try {

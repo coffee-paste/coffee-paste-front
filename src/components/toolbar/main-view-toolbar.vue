@@ -9,9 +9,9 @@
             <div class="theme-selector">
                 <CascadeSelect placeholder="Select theme" @click="initSelectedTheme" v-model="selectedTheme" :options="themeGroups" optionLabel="name" optionGroupLabel="name" @change="selectTheme" dataKey="code" :optionGroupChildren="['themes']" style="minWidth: 10rem" />
             </div>
-            <div class="status-indicator">
-                <span class="--label"> Status: </span>
-                <span :class="statusMessageStyle"> {{status.status}} </span>
+
+            <div :class="`status-indicator ${statusMessageStyle}`">
+                <Avatar :icon="`pi ${statusIcon}`" class="p-mr-2" size="small" shape="circle" v-tooltip.bottom="statusMsg" />
             </div>
 
             <Button class="nav-button p-button-icon-only p-button-rounded p-button-info p-button-outlined p-mr-2 avatar-icon" :icon="avatarBase64 || defaultIcon" @click="onProfileButtonClick">
@@ -58,6 +58,10 @@ const MainViewToolbarComponent = defineComponent({
             required: false,
             default: { status: StatusType.Unknown, statusType: StatusType.Unknown },
         },
+        msgStatus: {
+            type: Date,
+            required: false,
+        }
     },
     created() {
         const profile = getLocalStorageItem<User>(LocalStorageKey.Profile, {
@@ -99,6 +103,28 @@ const MainViewToolbarComponent = defineComponent({
                 default:
                     return '--warning-status';
             }
+        },
+        statusIcon(): string {
+            switch (this.status.statusType) {
+                case StatusType.Ok:
+                    return 'pi-check-circle';
+                case StatusType.Error:
+                    return 'pi-exclamation-circle';
+                case StatusType.Loading:
+                    return 'pi-cloud-download';
+                case StatusType.Unknown:
+                case StatusType.Warning:
+                default:
+                    return 'pi-exclamation-triangle';
+            }
+        },
+        statusMsg(): string {
+            if (!this.msgStatus || this.status.statusType !== StatusType.Ok) {
+                return this.status?.status;
+            }
+
+            const lastMsg = `${this.msgStatus.getHours()}:${this.msgStatus.getMinutes()}:${this.msgStatus.getSeconds()}`
+            return `${this.status?.status}\n\nLast update ${lastMsg}`;
         }
     },
     methods: {
@@ -149,7 +175,7 @@ export default MainViewToolbar;
 .main-toolbar-style {
     height: 60px;
     align-content: center;
-    background-color:  var(--surface-600);
+    background-color: var(--surface-600);
     margin-bottom: 25px;
     border: none;
     border-top-left-radius: 0px;
@@ -169,18 +195,14 @@ export default MainViewToolbar;
     margin-right: 5px;
     padding-right: 10px;
     justify-content: center;
-    .--label {
-        color: #e3f2fd;
-        margin-right: 5px;
+    &.--ok-status {
+        color: var(--primary-color-text);
     }
-    .--ok-status {
-        color: green;
+    &.--error-status {
+        color: var(--pink-600);
     }
-    .--error-status {
-        color: red;
-    }
-    .--warning-status {
-        color: yellow;
+    &.--warning-status {
+        color: var(--yellow-600);
     }
 }
 .theme-selector {
