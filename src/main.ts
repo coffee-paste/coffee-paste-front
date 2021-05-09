@@ -12,6 +12,9 @@ import Button from 'primevue/button';
 import ProgressSpinner from 'primevue/progressspinner';
 import SelectButton from 'primevue/selectbutton';
 import Toast from 'primevue/toast';
+import CascadeSelect from 'primevue/cascadeselect';
+import Avatar from 'primevue/avatar';
+import Tooltip from 'primevue/tooltip';
 import ConfirmationService from 'primevue/confirmationservice';
 
 // Import theme CSS based 
@@ -37,5 +40,9 @@ app.component('Card', Card);
 app.component('Button', Button);
 app.component('ProgressSpinner', ProgressSpinner);
 app.component('SelectButton', SelectButton);
+app.component('CascadeSelect', CascadeSelect);
+app.component('Avatar', Avatar);
+
+app.directive('tooltip', Tooltip);
 
 app.mount("#app");
