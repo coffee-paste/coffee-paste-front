@@ -149,7 +149,7 @@ export default MainViewToolbar;
 .main-toolbar-style {
     height: 60px;
     align-content: center;
-    background-color: #24292e;
+    background-color:  var(--surface-600);
     margin-bottom: 25px;
     border: none;
     border-top-left-radius: 0px;

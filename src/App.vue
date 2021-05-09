@@ -1,6 +1,9 @@
 <template>
-    <Toast position="top-right" />
-    <router-view />
+
+    <body>
+        <Toast position="top-right" />
+        <router-view />
+    </body>
 </template>
 
 <style lang="scss">
@@ -26,5 +29,6 @@
 }
 body {
     margin: 0px;
+    background-color: var(--surface-a);
 }
 </style>
