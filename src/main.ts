@@ -12,6 +12,7 @@ import Button from 'primevue/button';
 import ProgressSpinner from 'primevue/progressspinner';
 import SelectButton from 'primevue/selectbutton';
 import Toast from 'primevue/toast';
+import CascadeSelect from 'primevue/cascadeselect';
 import ConfirmationService from 'primevue/confirmationservice';
 
 // Import theme CSS based 
@@ -37,5 +38,6 @@ app.component('Card', Card);
 app.component('Button', Button);
 app.component('ProgressSpinner', ProgressSpinner);
 app.component('SelectButton', SelectButton);
+app.component('CascadeSelect', CascadeSelect);
 
 app.mount("#app");

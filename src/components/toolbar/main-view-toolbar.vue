@@ -7,11 +7,7 @@
 
         <template #right>
             <div class="theme-selector">
-                <SelectButton class="theme-select-button" @click="selectTheme" v-model="selectedTheme" :options="themes" dataKey="code" optionLabel="name">
-                    <template #option="slotProps">
-                        <span> {{slotProps.option.name}} </span>
-                    </template>
-                </SelectButton>
+                <CascadeSelect placeholder="Select theme" @click="initSelectedTheme" v-model="selectedTheme" :options="themeGroups" optionLabel="name" optionGroupLabel="name" @change="selectTheme" dataKey="code" :optionGroupChildren="['themes']" style="minWidth: 10rem" />
             </div>
             <div class="status-indicator">
                 <span class="--label"> Status: </span>
@@ -46,12 +42,9 @@ import {
 import { AuthenticationApi, User } from "@/infrastructure/generated/api";
 import { credentialsManager } from "@/infrastructure/session-management/credential-manager";
 import { envFacade } from "@/infrastructure/env-facade";
-import { Theme } from "@/infrastructure/symbols";
+import { themeGroups, ThemeItem } from "@/components/common/themes";
 
-interface ThemeItem {
-    name: string;
-    code: Theme;
-}
+
 
 const MainViewToolbarComponent = defineComponent({
     components: { Toolbar, Button, Menu },
@@ -77,11 +70,8 @@ const MainViewToolbarComponent = defineComponent({
     },
     data() {
         return {
-            selectedTheme: { code: getLocalStorageItem<Theme>(LocalStorageKey.Theme, { itemType: 'string' }) || Theme.Light } as ThemeItem,
-            themes: [
-                { name: 'Dark mode', code: Theme.Dark },
-                { name: 'Light mode', code: Theme.Light },
-            ] as ThemeItem[],
+            selectedTheme: null as unknown as ThemeItem,
+            themeGroups,
             defaultIcon: PrimeIcons.USER_EDIT,
             avatarBase64: "",
             profileMenuItems: [
@@ -112,9 +102,13 @@ const MainViewToolbarComponent = defineComponent({
         }
     },
     methods: {
+        // Once the 'CascadeSelect' clicked show the current theme as selected, before the first click just show the placeholder text
+        initSelectedTheme() {
+            this.selectedTheme = { code: getLocalStorageItem<string>(LocalStorageKey.Theme, { itemType: 'string' }) || '' } as ThemeItem;
+        },
         selectTheme() {
             const theme = this.selectedTheme?.code;
-            setLocalStorageItem<Theme>(LocalStorageKey.Theme, theme, { itemType: 'string' });
+            setLocalStorageItem<string>(LocalStorageKey.Theme, theme, { itemType: 'string' });
             location.reload();
         },
         async logout() {

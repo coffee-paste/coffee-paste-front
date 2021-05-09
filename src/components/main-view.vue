@@ -184,4 +184,8 @@ export default defineComponent({
         margin-top: 1em;
     }
 }
+
+.p-cascadeselect-label {
+    padding: 0.5rem 0.5rem !important;
+}
 </style>
