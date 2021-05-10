@@ -1,25 +1,22 @@
 <template>
-    <Toolbar class="main-toolbar-style">
-        <template #left>
-            <Button class="nav-button p-button-sm p-button p-component p-button-secondary p-button-text" label="Home" @click="$router.push('/')" />
-            <Button class="nav-button p-button-sm p-button p-component p-button-secondary p-button-text" label="About" @click="$router.push('/about')" />
+    <Menubar :model="menubarItems" class="main-toolbar-style">
+        <template #start>
+            <!-- <div class="app-icon-container">
+                <Avatar image="https://raw.githubusercontent.com/coffee-paste/coffee-paste-front/develop/src/assets/coffee-paste.png" class="p-mr-2 app-icon" size="large" shape="square" />
+            </div> -->
         </template>
-
-        <template #right>
-            <div class="theme-selector">
-                <CascadeSelect placeholder="Select theme" @click="initSelectedTheme" v-model="selectedTheme" :options="themeGroups" optionLabel="name" optionGroupLabel="name" @change="selectTheme" dataKey="code" :optionGroupChildren="['themes']" style="minWidth: 10rem" />
+        <template #end>
+            <div class="main-toolbar-end-container">
+                <div :class="`status-indicator ${statusMessageStyle}`">
+                    <Avatar :icon="`pi ${statusIcon}`" class="p-mr-2 " size="small" shape="circle" v-tooltip.bottom="statusMsg" />
+                </div>
+                <Button class="nav-button p-button-icon-only p-button-rounded p-button-info p-button-outlined p-mr-2 avatar-icon" :icon="avatarBase64 || defaultIcon" @click="onProfileButtonClick">
+                    <img v-if="avatarBase64" alt="avatar" :src="avatarBase64" style="width: 40px" />
+                </Button>
+                <Menu :id="ariaId + '_overlay'" ref="menu" :model="profileMenuItems" :popup="true" />
             </div>
-
-            <div :class="`status-indicator ${statusMessageStyle}`">
-                <Avatar :icon="`pi ${statusIcon}`" class="p-mr-2" size="small" shape="circle" v-tooltip.bottom="statusMsg" />
-            </div>
-
-            <Button class="nav-button p-button-icon-only p-button-rounded p-button-info p-button-outlined p-mr-2 avatar-icon" :icon="avatarBase64 || defaultIcon" @click="onProfileButtonClick">
-                <img v-if="avatarBase64" alt="avatar" :src="avatarBase64" style="width: 40px" />
-            </Button>
-            <Menu :id="ariaId + '_overlay'" ref="menu" :model="profileMenuItems" :popup="true" />
         </template>
-    </Toolbar>
+    </Menubar>
 </template>
 
 <script lang="ts">
@@ -43,8 +40,29 @@ import { AuthenticationApi, User } from "@/infrastructure/generated/api";
 import { credentialsManager } from "@/infrastructure/session-management/credential-manager";
 import { envFacade } from "@/infrastructure/env-facade";
 import { themeGroups, ThemeItem } from "@/components/common/themes";
+import { MenubarItem } from "../tabs/prime-extension/prime-tabview";
 
+/** On theme selecte keep the selection in the local storage ans reload page */
+function onThemeSelected(e: { item: ThemeItem }) {
+    setLocalStorageItem<string>(LocalStorageKey.Theme, e.item.code, { itemType: 'string' });
+    location.reload();
+}
 
+// Build Menubar menu item from the temes collection
+const themeGroupsMenu: MenubarItem[] = [];
+// For each group in the themes
+for (const themeGroup of themeGroups) {
+    // Create sub menu of the availalbe themes
+    const themeMenuItems: MenubarItem[] = [];
+    for (const theme of themeGroup.themes) {
+        themeMenuItems.push({ ...theme, label: theme.name, command: onThemeSelected } as unknown as MenubarItem)
+    }
+    // Add them group with the sub-menu to the options
+    themeGroupsMenu.push({
+        label: themeGroup.name,
+        items: themeMenuItems
+    });
+}
 
 const MainViewToolbarComponent = defineComponent({
     components: { Toolbar, Button, Menu },
@@ -88,6 +106,23 @@ const MainViewToolbarComponent = defineComponent({
                     command: this.logout,
                 },
             ] as IVueMenuItem[],
+            menubarItems: [
+                {
+                    label: 'Home',
+                    icon: 'pi pi-fw pi-home',
+                    command: () => { this.$router.push('/'); }
+                },
+                {
+                    label: 'Theme',
+                    icon: 'pi pi-fw pi-table',
+                    items: themeGroupsMenu
+                },
+                {
+                    label: 'About',
+                    icon: 'pi pi-fw pi-info',
+                    command: () => { this.$router.push('/about'); }
+                },
+            ]
         };
     },
     computed: {
@@ -173,39 +208,36 @@ export default MainViewToolbar;
 
 <style lang="scss" scoped>
 .main-toolbar-style {
-    height: 60px;
-    align-content: center;
-    background-color: var(--surface-600);
-    margin-bottom: 25px;
-    border: none;
-    border-top-left-radius: 0px;
-    border-top-right-radius: 0px;
-}
-.nav-button {
-    margin-right: 10px;
-    justify-content: center;
-    color: #e3f2fd !important;
-}
-.avatar-icon {
-    height: 2.5rem !important;
-    width: 2.5rem !important;
-}
+    background-color: var(--surface-b);
+    margin-bottom: 15px;
+    .app-icon-container {
+        margin-right: 15px;
+        .app-icon {
+            background-color: var(--bluegray-200);
+        }
+    }
 
-.status-indicator {
-    margin-right: 5px;
-    padding-right: 10px;
-    justify-content: center;
-    &.--ok-status {
-        color: var(--primary-color-text);
+    .main-toolbar-end-container {
+        display: flex;
+        .status-indicator {
+            margin-right: 5px;
+            padding-right: 10px;
+            margin-top: 5px;
+            &.--ok-status {
+                color: var(--primary-color-text);
+            }
+            &.--error-status {
+                color: var(--pink-600);
+            }
+            &.--warning-status {
+                color: var(--yellow-600);
+            }
+        }
     }
-    &.--error-status {
-        color: var(--pink-600);
+
+    .avatar-icon {
+        height: 2.5rem !important;
+        width: 2.5rem !important;
     }
-    &.--warning-status {
-        color: var(--yellow-600);
-    }
-}
-.theme-selector {
-    margin-right: 20px;
 }
 </style>
