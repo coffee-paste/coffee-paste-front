@@ -170,7 +170,7 @@ export const themeGroups: ThemeGroup[] = [
             },
         ]
     }, {
-        name: 'rhea',
+        name: 'Rhea',
         themes: [
             {
                 name: 'Classic',
