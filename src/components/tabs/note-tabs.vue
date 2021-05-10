@@ -1,49 +1,43 @@
 
 <template>
-	<div>
-		<div>
-			<ConfirmPopup />
+    <div>
+        <div>
+            <ConfirmPopup />
 
-			<OverlayPanel ref="renameOverlay" :showCloseIcon="true" :dismissable="true">
-				<div class="p-field rename-overlay-inline-grid">
-					<label class="note-name-input-label" for="newNoteNameInput">New name</label>
-					<span class="texbox-with-button">
-						<InputText ref="renameNoteTextInput" id="newNoteNameInput" class="p-inputtext-lg" type="text" v-model="this.noteRenameBoxValue" />
-						<Button class="pi pi-check p-button-icon" @click="sumbitNoteNameChange" :disabled="!this.noteRenameBoxValue" />
-					</span>
-				</div>
-			</OverlayPanel>
+            <OverlayPanel ref="renameOverlay" :showCloseIcon="true" :dismissable="true">
+                <div class="p-field rename-overlay-inline-grid">
+                    <label class="note-name-input-label" for="newNoteNameInput">New name</label>
+                    <span class="texbox-with-button">
+                        <InputText ref="renameNoteTextInput" id="newNoteNameInput" class="p-inputtext-lg" type="text" v-model="this.noteRenameBoxValue" />
+                        <Button class="pi pi-check p-button-icon" @click="sumbitNoteNameChange" :disabled="!this.noteRenameBoxValue" />
+                    </span>
+                </div>
+            </OverlayPanel>
 
-			<TabView @tab-click="onTabClick" :activeIndex="activeTabIndex">
-				<TabPanel v-for="tab in tabs" :key="tab.id">
-					<template #header>
-						<div class="tab-header">
-							<span>{{tab.name}}</span>
-							<span class="tab-header-menu">
-								<i class="pi pi-ellipsis-v p-button-icon" @click="onTabHeaderRightClick($event, tab)"></i>
-							</span>
-						</div>
-					</template>
-					<NoteTab
-						:id="tab.id" 
-						:content="tab.contentHTML"
-						:lastNoteFeedUpdate="tab.lastNoteFeedUpdate"
-						@noteChanged="onChange"
-						@contextmenu="onNoteRightClick($event, tab)"
-					/>
-				</TabPanel>
+            <TabView @tab-click="onTabClick" :activeIndex="activeTabIndex">
+                <TabPanel v-for="tab in tabs" :key="tab.id">
+                    <template #header>
+                        <div class="tab-header">
+                            <span>{{tab.name}}</span>
+                            <span class="tab-header-menu">
+                                <i class="pi pi-ellipsis-v p-button-icon" @click="onTabHeaderRightClick($event, tab)"></i>
+                            </span>
+                        </div>
+                    </template>
+                    <NoteTab :id="tab.id" :content="tab.contentHTML" :lastNoteFeedUpdate="tab.lastNoteFeedUpdate" @noteChanged="onChange" @contextmenu="onNoteRightClick($event, tab)" />
+                </TabPanel>
 
-				<TabPanel key="createNewTabKey" headerContextMenuBehavior="kill-event">
-					<template #header>
-						<i class="pi pi-plus" @click="createNewNote"></i>
-					</template>
-					<p class="empty-tab" />
-				</TabPanel>
+                <TabPanel key="createNewTabKey" headerContextMenuBehavior="kill-event">
+                    <template #header>
+                        <i class="pi pi-plus" @click="createNewNote"></i>
+                    </template>
+                    <p class="empty-tab" />
+                </TabPanel>
 
-			</TabView>
-		</div>
-	</div>
-	<ContextMenu ref="tabPanelContextMenu" :model="tabPanelContextMenuItems" />
+            </TabView>
+        </div>
+    </div>
+    <ContextMenu ref="tabPanelContextMenu" :model="tabPanelContextMenuItems" />
 </template>
 
 
@@ -59,6 +53,7 @@ import { ContextMenuCommandEventArgs, IVueMenuItem } from '../common/interfaces'
 import { Note, NoteStatus } from '@/infrastructure/generated/api';
 import { generateNewNoteName } from '@/string-constants/note-constants';
 import { ApiFacade } from '@/infrastructure/generated/proxies/api-proxies';
+import { downloadAsText } from '../common/utils';
 import { ToastDuration, ToastSeverity } from '../../string-constants/prime-constants';
 
 // An extension of PrimeVue's TabView component. Was missing some events
@@ -71,163 +66,177 @@ import InputText from 'primevue/inputtext';
 
 
 interface INoteTabPanel extends INoteTab, TabPanelProps {
-	// Joins a note's data and a normal tab panel props
+    // Joins a note's data and a normal tab panel props
 }
 
 const NoteTabsComponent = defineComponent({
-	components: { TabView, TabPanel, NoteTab, ContextMenu, ConfirmPopup, OverlayPanel, InputText },
-	emits: {
-		noteChanged: (e: INoteChangedEventArgs) => !!e.noteId,
-		newNote: (newNote: INoteTab) => newNote?.id,
-		noteRightClick: (e: { originalEvent: MouseEvent; note: INoteTab }) =>
-			e.originalEvent && e.note?.id,
-	},
-	props: {
-		notes: {
-			type: Array as PropType<INoteTab[]>,
-			required: true,
-		},
-	},
-	mounted() {
-		const cachedIndex = getLocalStorageItem<number>(LocalStorageKey.ActiveTabIndex, { itemType: "number", }) || 0;
-		if (cachedIndex >= this.tabs.length) {
-			this.activeTabIndex = this.tabs.length ? this.tabs.length - 1 : 0;
-		} else {
-			this.activeTabIndex = cachedIndex;
-		}
-	},
-	data() {
-		return {
-			tabs: (this.notes || []) as INoteTabPanel[],
-			activeTabIndex: 0,
-			tabPanelContextMenuItems: [
-				{ label: "Rename", icon: PrimeIcons.PENCIL, command: this.renameNote },
-				{ label: "Archive", icon: PrimeIcons.INBOX, command: this.archiveNote },
-				{ label: "Delete", icon: PrimeIcons.TRASH, command: this.deleteNote },
-			] as IVueMenuItem[],
-			contextedTabHeader: undefined as INoteTab | undefined,
-			noteRenameBoxValue: ''
-		};
-	},
-	methods: {
+    components: { TabView, TabPanel, NoteTab, ContextMenu, ConfirmPopup, OverlayPanel, InputText },
+    emits: {
+        noteChanged: (e: INoteChangedEventArgs) => !!e.noteId,
+        newNote: (newNote: INoteTab) => newNote?.id,
+        noteRightClick: (e: { originalEvent: MouseEvent; note: INoteTab }) =>
+            e.originalEvent && e.note?.id,
+    },
+    props: {
+        notes: {
+            type: Array as PropType<INoteTab[]>,
+            required: true,
+        },
+    },
+    mounted() {
+        const cachedIndex = getLocalStorageItem<number>(LocalStorageKey.ActiveTabIndex, { itemType: "number", }) || 0;
+        if (cachedIndex >= this.tabs.length) {
+            this.activeTabIndex = this.tabs.length ? this.tabs.length - 1 : 0;
+        } else {
+            this.activeTabIndex = cachedIndex;
+        }
+    },
+    data() {
+        return {
+            tabs: (this.notes || []) as INoteTabPanel[],
+            activeTabIndex: 0,
+            tabPanelContextMenuItems: [
+                { label: "Rename", icon: PrimeIcons.PENCIL, command: this.renameNote },
+                { label: "Download", icon: PrimeIcons.DOWNLOAD, command: this.downloadNoteAsHTML },
+                { label: "Archive", icon: PrimeIcons.INBOX, command: this.archiveNote },
+                { label: "Delete", icon: PrimeIcons.TRASH, command: this.deleteNote },
+            ] as IVueMenuItem[],
+            contextedTabHeader: undefined as INoteTab | undefined,
+            cachedHtml: {} as { [key: string]: string },
+            noteRenameBoxValue: ''
+        };
+    },
+    methods: {
 
-		onChange(e: INoteChangedEventArgs): void {
-			this.$emit("noteChanged", e);
-		},
+        onChange(e: INoteChangedEventArgs): void {
+			// Keep changes in a cache, to allow download as HTML file
+            this.cachedHtml[e.noteId] = e.contentHTML;
 
-		onTabClick(e: TabViewEventArgs): void {
-			this.activeTabIndex = e.index;
-			setLocalStorageItem<number>(LocalStorageKey.ActiveTabIndex, e.index, { itemType: "number" });
-		},
+            this.$emit("noteChanged", e);
+        },
 
-		onTabHeaderRightClick(e: TabViewEventArgs, tab: INoteTab): void {
-			this.contextedTabHeader = tab;
-			(this.$refs.tabPanelContextMenu as ContextMenu).show(e.originalEvent || e);
-		},
+        onTabClick(e: TabViewEventArgs): void {
+            this.activeTabIndex = e.index;
+            setLocalStorageItem<number>(LocalStorageKey.ActiveTabIndex, e.index, { itemType: "number" });
+        },
 
-		onNoteRightClick(originalEvent: MouseEvent, note: INoteTab): void {
-			this.$emit("noteRightClick", { originalEvent, note });
-		},
+        onTabHeaderRightClick(e: TabViewEventArgs, tab: INoteTab): void {
+            this.contextedTabHeader = tab;
+            (this.$refs.tabPanelContextMenu as ContextMenu).show(e.originalEvent || e);
+        },
 
-		async renameNote(e: ContextMenuCommandEventArgs): Promise<void> {
-			if (!this.contextedTabHeader) {
-				console.warn(`[NoteTabs.renameNote] Could not determine target note`);
-				return;
-			}
-			this.noteRenameBoxValue = this.contextedTabHeader?.name || '';
-			(this.$refs.renameOverlay as OverlayPanel).show(e.originalEvent);
-		},
+        onNoteRightClick(originalEvent: MouseEvent, note: INoteTab): void {
+            this.$emit("noteRightClick", { originalEvent, note });
+        },
 
-		async archiveNote(e: ContextMenuCommandEventArgs): Promise<void> {
-			if (!this.contextedTabHeader) {
-				console.warn(`[NoteTabs.archiveNote] Could not determine target note`);
-				return;
-			}
-			const id = this.contextedTabHeader!.id;
-			const noteName = this.contextedTabHeader!.name || 'un-named note';
-			this.$confirm.require({
-				target: e.originalEvent.target,
-				message: `Really archive note '${noteName}'?`,
-				icon: PrimeIcons.QUESTION,
-				accept: async () => {
-					await ApiFacade.NotesApi.setNotes({ status: NoteStatus.BACKLOG }, this.contextedTabHeader!.id);
-					this.$toast.add({
-						severity: ToastSeverity.Info,
-						summary: "Note archived",
-						detail: `Note '${noteName}' has been archived`,
-						life: ToastDuration.Long,
-					});
-					console.log(`[NoteTabs.archiveNote] Note '${noteName}' (${this.contextedTabHeader!.id}) successfully archived`);
-					this.removeContextedNote(id);
-				},
-			});
-		},
+        async renameNote(e: ContextMenuCommandEventArgs): Promise<void> {
+            if (!this.contextedTabHeader) {
+                console.warn(`[NoteTabs.renameNote] Could not determine target note`);
+                return;
+            }
+            this.noteRenameBoxValue = this.contextedTabHeader?.name || '';
+            (this.$refs.renameOverlay as OverlayPanel).show(e.originalEvent);
+        },
 
-		async deleteNote(e: ContextMenuCommandEventArgs): Promise<void> {
-			if (!this.contextedTabHeader) {
-				console.warn(`[NoteTabs.deleteNote] Could not determine target note`);
-				return;
-			}
-			const id = this.contextedTabHeader!.id;
-			const noteName = this.contextedTabHeader?.name || 'un-named note';
-			this.$confirm.require({
-				target: e.originalEvent.target,
-				message: `Really delete note '${noteName}'?`,
-				icon: PrimeIcons.EXCLAMATION_TRIANGLE,
-				accept: async () => {
-					await ApiFacade.NotesApi.deleteNotes(this.contextedTabHeader!.id);
-					this.$toast.add({
-						severity: ToastSeverity.Info,
-						summary: "Note deleted",
-						detail: `Note '${noteName}' has been deleted`,
-						life: ToastDuration.Long,
-					});
-					console.log(`[NoteTabs.deleteNote] Note '${noteName}' (${this.contextedTabHeader!.id}) has been deleted`);
-					this.removeContextedNote(id);
-				},
-			});
-		},
-		async sumbitNoteNameChange(): Promise<void> {
-			(this.$refs.renameOverlay as OverlayPanel).hide();
-			const note = this.contextedTabHeader as INoteTab;
-			if (!this.contextedTabHeader) {
-				console.warn(`[NoteTabs.sumbitNoteNameChange] Could not determine target note`);
-				return;
-			}
-			await ApiFacade.NotesApi.setNotesName({ name: this.noteRenameBoxValue || 'Unnamed note' }, note.id);
-			this.$toast.add({
-				severity: ToastSeverity.Info,
-				summary: "Note renamed",
-				detail: `Note '${note.name}' has been renamed to '${this.noteRenameBoxValue}'`,
-				life: ToastDuration.Short,
-			});
-			note.name = this.noteRenameBoxValue;
-			console.log(`[NoteTabs.sumbitNoteNameChange] Note '${note.name}' (${note.id}) has been renamed`);
-		},
+        async downloadNoteAsHTML(): Promise<void> {
+            if (!this.contextedTabHeader) {
+                console.warn(`[NoteTabs.archiveNote] Could not determine target note`);
+                return;
+            }
+			const note = this.contextedTabHeader as Note;
+			const html = this.cachedHtml[note.id || ''] || this.tabs.find(t => t.id === note.id)?.contentHTML;
+            downloadAsText(`${note.name}-${new Date().getTime()}.html`, html || '');
+        },
+        async archiveNote(e: ContextMenuCommandEventArgs): Promise<void> {
+            if (!this.contextedTabHeader) {
+                console.warn(`[NoteTabs.archiveNote] Could not determine target note`);
+                return;
+            }
+            const id = this.contextedTabHeader!.id;
+            const noteName = this.contextedTabHeader!.name || 'un-named note';
+            this.$confirm.require({
+                target: e.originalEvent.target,
+                message: `Really archive note '${noteName}'?`,
+                icon: PrimeIcons.QUESTION,
+                accept: async () => {
+                    await ApiFacade.NotesApi.setNotes({ status: NoteStatus.BACKLOG }, this.contextedTabHeader!.id);
+                    this.$toast.add({
+                        severity: ToastSeverity.Info,
+                        summary: "Note archived",
+                        detail: `Note '${noteName}' has been archived`,
+                        life: ToastDuration.Long,
+                    });
+                    console.log(`[NoteTabs.archiveNote] Note '${noteName}' (${this.contextedTabHeader!.id}) successfully archived`);
+                    this.removeContextedNote(id);
+                },
+            });
+        },
 
-		async createNewNote(): Promise<void> {
-			try {
-				const newNoteName = generateNewNoteName(this.notes as Note[]);
-				const newNoteId = await ApiFacade.NotesApi.createNote({ name: newNoteName });
-				console.log(`[NoteTabs.createNewNote] Created a new note with name '${newNoteName}' and ID '${newNoteId}'`);
-				const newNote: INoteTab = { id: newNoteId, name: newNoteName };
-				this.notes.push(newNote);
-				this.$emit("newNote", newNote);
-			} catch (error) {
-				this.$toast.add({
-					severity: ToastSeverity.Error,
-					summary: "Failed to create a new note",
-					detail: "Please try again later",
-					life: ToastDuration.Medium,
-				});
-			}
-		},
-		
+        async deleteNote(e: ContextMenuCommandEventArgs): Promise<void> {
+            if (!this.contextedTabHeader) {
+                console.warn(`[NoteTabs.deleteNote] Could not determine target note`);
+                return;
+            }
+            const id = this.contextedTabHeader!.id;
+            const noteName = this.contextedTabHeader?.name || 'un-named note';
+            this.$confirm.require({
+                target: e.originalEvent.target,
+                message: `Really delete note '${noteName}'?`,
+                icon: PrimeIcons.EXCLAMATION_TRIANGLE,
+                accept: async () => {
+                    await ApiFacade.NotesApi.deleteNotes(this.contextedTabHeader!.id);
+                    this.$toast.add({
+                        severity: ToastSeverity.Info,
+                        summary: "Note deleted",
+                        detail: `Note '${noteName}' has been deleted`,
+                        life: ToastDuration.Long,
+                    });
+                    console.log(`[NoteTabs.deleteNote] Note '${noteName}' (${this.contextedTabHeader!.id}) has been deleted`);
+                    this.removeContextedNote(id);
+                },
+            });
+        },
+        async sumbitNoteNameChange(): Promise<void> {
+            (this.$refs.renameOverlay as OverlayPanel).hide();
+            const note = this.contextedTabHeader as INoteTab;
+            if (!this.contextedTabHeader) {
+                console.warn(`[NoteTabs.sumbitNoteNameChange] Could not determine target note`);
+                return;
+            }
+            await ApiFacade.NotesApi.setNotesName({ name: this.noteRenameBoxValue || 'Unnamed note' }, note.id);
+            this.$toast.add({
+                severity: ToastSeverity.Info,
+                summary: "Note renamed",
+                detail: `Note '${note.name}' has been renamed to '${this.noteRenameBoxValue}'`,
+                life: ToastDuration.Short,
+            });
+            note.name = this.noteRenameBoxValue;
+            console.log(`[NoteTabs.sumbitNoteNameChange] Note '${note.name}' (${note.id}) has been renamed`);
+        },
+
+        async createNewNote(): Promise<void> {
+            try {
+                const newNoteName = generateNewNoteName(this.notes as Note[]);
+                const newNoteId = await ApiFacade.NotesApi.createNote({ name: newNoteName });
+                console.log(`[NoteTabs.createNewNote] Created a new note with name '${newNoteName}' and ID '${newNoteId}'`);
+                const newNote: INoteTab = { id: newNoteId, name: newNoteName };
+                this.notes.push(newNote);
+                this.$emit("newNote", newNote);
+            } catch (error) {
+                this.$toast.add({
+                    severity: ToastSeverity.Error,
+                    summary: "Failed to create a new note",
+                    detail: "Please try again later",
+                    life: ToastDuration.Medium,
+                });
+            }
+        },
+
         removeContextedNote(noteId: string): void {
-			const index = this.notes.findIndex(note => note.id === noteId);
-			this.notes.splice(index, 1);
-		},
-	},
+            const index = this.notes.findIndex(note => note.id === noteId);
+            this.notes.splice(index, 1);
+        },
+    },
 });
 
 export const NoteTabs = NoteTabsComponent;
@@ -237,25 +246,25 @@ export default NoteTabs;
 
 <style lang="scss" scope>
 .empty-tab {
-	height: 77vh;
+    height: 77vh;
 }
 .p-contextmenu {
-	max-width: 150px;
+    max-width: 150px;
 }
 .rename-overlay-inline-grid {
-	display: inline-grid;
-	.texbox-with-button {
-		display: flex;
-		max-height: 40px;
-	}
+    display: inline-grid;
+    .texbox-with-button {
+        display: flex;
+        max-height: 40px;
+    }
 }
 .note-name-input-label {
-	margin-bottom: 10px;
+    margin-bottom: 10px;
 }
 .tab-header {
-	.tab-header-menu {
-		margin-left: 10px;
-		margin-right: -15px;
-	}
+    .tab-header-menu {
+        margin-left: 10px;
+        margin-right: -15px;
+    }
 }
 </style>

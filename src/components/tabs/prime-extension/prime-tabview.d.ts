@@ -1,5 +1,12 @@
 import { VNode } from 'vue';
 
+export interface MenubarItem {
+    label: string;
+    icon?: string;
+    command?: (e: { item: MenubarItem, e: any }) => void;
+    items?: MenubarItem[];
+}
+
 interface TabViewExProps {
     activeIndex?: number;
 }

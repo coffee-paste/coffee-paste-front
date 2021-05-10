@@ -16,6 +16,7 @@ import CascadeSelect from 'primevue/cascadeselect';
 import Avatar from 'primevue/avatar';
 import Tooltip from 'primevue/tooltip';
 import ConfirmationService from 'primevue/confirmationservice';
+import Menubar from 'primevue/menubar';
 
 // Import theme CSS based 
 (async () => {
@@ -42,6 +43,7 @@ app.component('ProgressSpinner', ProgressSpinner);
 app.component('SelectButton', SelectButton);
 app.component('CascadeSelect', CascadeSelect);
 app.component('Avatar', Avatar);
+app.component('Menubar', Menubar);
 
 app.directive('tooltip', Tooltip);
 
