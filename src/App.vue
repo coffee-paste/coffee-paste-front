@@ -31,4 +31,9 @@ body {
     margin: 0px;
     background-color: var(--surface-a);
 }
+
+// WA to make sure the tabs bar will not appere on the opend menu items
+.p-tabview-ink-bar {
+    z-index: 0 !important;
+}
 </style>
