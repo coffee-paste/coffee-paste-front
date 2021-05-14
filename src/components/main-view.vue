@@ -12,9 +12,9 @@ import { INoteChangedEventArgs, INoteTab } from "./tabs/tab-interfaces";
 import { MainViewToolbar } from "./toolbar/main-view-toolbar.vue";
 import { IStatus, StatusType } from "./toolbar/menu-interfaces";
 import { NotesSocket } from '../infrastructure/notes-socket';
-import { generateNewNoteName } from "@/string-constants/note-constants";
+import { generateNewNoteName } from "@/common-constants/note-constants";
 import { ApiFacade } from "@/infrastructure/generated/proxies/api-proxies";
-import { ToastDuration, ToastSeverity } from "@/string-constants/prime-constants";
+import { ToastDuration, ToastSeverity } from "@/common-constants/prime-constants";
 
 const channelStatus = {
 	unknown: { status: 'Unknown Issue', statusType: StatusType.Error },

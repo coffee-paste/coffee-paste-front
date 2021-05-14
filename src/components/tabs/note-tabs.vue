@@ -51,10 +51,10 @@ import { TabViewEventArgs } from './prime-extension/prime-tabview';
 import { getLocalStorageItem, LocalStorageKey, setLocalStorageItem } from '@/infrastructure/local-storage';
 import { ContextMenuCommandEventArgs, IVueMenuItem } from '../common/interfaces';
 import { Note, NoteStatus } from '@/infrastructure/generated/api';
-import { generateNewNoteName } from '@/string-constants/note-constants';
+import { generateNewNoteName } from '@/common-constants/note-constants';
 import { ApiFacade } from '@/infrastructure/generated/proxies/api-proxies';
 import { downloadAsText } from '../common/utils';
-import { ToastDuration, ToastSeverity } from '../../string-constants/prime-constants';
+import { ToastDuration, ToastSeverity } from '../../common-constants/prime-constants';
 
 // An extension of PrimeVue's TabView component. Was missing some events
 import TabView from "./prime-extension/prime-tabview";

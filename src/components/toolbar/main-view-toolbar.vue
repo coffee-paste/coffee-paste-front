@@ -20,16 +20,18 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from "vue";
-import Toolbar from "primevue/toolbar";
-import Button from "primevue/button";
-import Menu from "primevue/menu";
-import { IStatus, StatusType } from "./menu-interfaces";
-import { IVueMenuItem } from "../common/interfaces";
-import { PrimeIcons } from "primevue/api";
+import { defineComponent, PropType } from 'vue';
+import Toolbar from 'primevue/toolbar';
+import Button from 'primevue/button';
+import Menu from 'primevue/menu';
+import OverlayPanel from 'primevue/overlaypanel';
+import NotesArchive from '../notes-archive/notes-archive';
+import { IStatus, StatusType } from './menu-interfaces';
+import { IVueMenuItem } from '../common/interfaces';
+import { PrimeIcons } from 'primevue/api';
 
-/// <reference path="../../shims-vue.d.ts"/>
-import { UniqueComponentId } from "primevue/utils";
+/// <reference path='../../shims-vue.d.ts'/>
+import { UniqueComponentId } from 'primevue/utils';
 import {
     getLocalStorageItem,
     LocalStorageKey,
@@ -65,7 +67,7 @@ for (const themeGroup of themeGroups) {
 }
 
 const MainViewToolbarComponent = defineComponent({
-    components: { Toolbar, Button, Menu },
+    components: { Toolbar, Button, Menu, OverlayPanel, NotesArchive },
     props: {
         profileImageB64: {
             type: String,
@@ -197,9 +199,13 @@ const MainViewToolbarComponent = defineComponent({
             }
         },
 
-        onProfileButtonClick(e: any /* Click event type は何？ */): void {
+        onProfileButtonClick(e: MouseEvent): void {
             (this.$refs.menu as Menu).toggle(e);
         },
+
+		onArchiveButtonClick(e: MouseEvent) {
+			(this.$refs.archiveOverlayRef as OverlayPanel).toggle(e);
+		}
     },
 });
 export const MainViewToolbar = MainViewToolbarComponent;

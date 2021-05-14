@@ -140,6 +140,135 @@ export interface Body3 {
 /**
  * 
  * @export
+ * @enum {string}
+ */
+export enum CollectionOperators {
+    InCollection = <any> 'inCollection',
+    NotInCollection = <any> 'notInCollection'
+}
+/**
+ * 
+ * @export
+ * @interface FilterOptions
+ */
+export interface FilterOptions {
+    /**
+     * 
+     * @type {FilterOptionsMatch}
+     * @memberof FilterOptions
+     */
+    match?: FilterOptionsMatch;
+    /**
+     * 
+     * @type {FilterOptionsRange}
+     * @memberof FilterOptions
+     */
+    range?: FilterOptionsRange;
+    /**
+     * 
+     * @type {FilterOptionsRelation}
+     * @memberof FilterOptions
+     */
+    relation?: FilterOptionsRelation;
+    /**
+     * 
+     * @type {FilterOptionsCollection}
+     * @memberof FilterOptions
+     */
+    collection?: FilterOptionsCollection;
+}
+/**
+ * 
+ * @export
+ * @interface FilterOptionsCollection
+ */
+export interface FilterOptionsCollection {
+    /**
+     * 
+     * @type {CollectionOperators}
+     * @memberof FilterOptionsCollection
+     */
+    collectionOperator: CollectionOperators;
+    /**
+     * 
+     * @type {Array<string | number>}
+     * @memberof FilterOptionsCollection
+     */
+    values: Array<string | number>;
+}
+/**
+ * 
+ * @export
+ * @interface FilterOptionsMatch
+ */
+export interface FilterOptionsMatch {
+    /**
+     * 
+     * @type {MatchOperators}
+     * @memberof FilterOptionsMatch
+     */
+    matchOperator: MatchOperators;
+    /**
+     * 
+     * @type {string}
+     * @memberof FilterOptionsMatch
+     */
+    value: string;
+}
+/**
+ * 
+ * @export
+ * @interface FilterOptionsRange
+ */
+export interface FilterOptionsRange {
+    /**
+     * 
+     * @type {number}
+     * @memberof FilterOptionsRange
+     */
+    to: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof FilterOptionsRange
+     */
+    from: number;
+}
+/**
+ * 
+ * @export
+ * @interface FilterOptionsRelation
+ */
+export interface FilterOptionsRelation {
+    /**
+     * 
+     * @type {RelationOperators}
+     * @memberof FilterOptionsRelation
+     */
+    relationOperator: RelationOperators;
+    /**
+     * 
+     * @type {number}
+     * @memberof FilterOptionsRelation
+     */
+    value: number;
+}
+/**
+ * 
+ * @export
+ * @enum {string}
+ */
+export enum MatchOperators {
+    StartWith = <any> 'startWith',
+    Contains = <any> 'contains',
+    NotContains = <any> 'notContains',
+    EndWith = <any> 'endWith',
+    Equals = <any> 'equals',
+    NotEquals = <any> 'notEquals'
+}
+/**
+ * 
+ * @export
  * @interface Note
  */
 export interface Note {
@@ -198,6 +327,25 @@ export enum NoteStatus {
 /**
  * 
  * @export
+ * @interface NotesPage
+ */
+export interface NotesPage {
+    /**
+     * Page notes
+     * @type {Array<Note>}
+     * @memberof NotesPage
+     */
+    notes: Array<Note>;
+    /**
+     * Total *available* notes
+     * @type {number}
+     * @memberof NotesPage
+     */
+    totalCount: number;
+}
+/**
+ * 
+ * @export
  * @enum {string}
  */
 export enum OAuth2Service {
@@ -229,6 +377,151 @@ export interface OAuth2Session {
      * @memberof OAuth2Session
      */
     oauth2Service: OAuth2Service;
+}
+/**
+ * 
+ * @export
+ * @interface PageRequest
+ */
+export interface PageRequest {
+    /**
+     * 
+     * @type {PageRequestOrderBy}
+     * @memberof PageRequest
+     */
+    orderBy?: PageRequestOrderBy;
+    /**
+     * 
+     * @type {number}
+     * @memberof PageRequest
+     */
+    fromIndex: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof PageRequest
+     */
+    pageSize: number;
+    /**
+     * 
+     * @type {PageRequestFilter}
+     * @memberof PageRequest
+     */
+    filter?: PageRequestFilter;
+}
+/**
+ * 
+ * @export
+ * @interface PageRequestFilter
+ */
+export interface PageRequestFilter {
+    /**
+     * 
+     * @type {FilterOptions}
+     * @memberof PageRequestFilter
+     */
+    name?: FilterOptions;
+    /**
+     * 
+     * @type {FilterOptions}
+     * @memberof PageRequestFilter
+     */
+    creationTime?: FilterOptions;
+    /**
+     * 
+     * @type {FilterOptions}
+     * @memberof PageRequestFilter
+     */
+    lastModifiedTime?: FilterOptions;
+    /**
+     * 
+     * @type {FilterOptions}
+     * @memberof PageRequestFilter
+     */
+    contentText?: FilterOptions;
+}
+/**
+ * Order by note fields
+ * @export
+ * @interface PageRequestOrderBy
+ */
+export interface PageRequestOrderBy {
+    /**
+     * 
+     * @type {string}
+     * @memberof PageRequestOrderBy
+     */
+    name?: PageRequestOrderBy.NameEnum;
+    /**
+     * 
+     * @type {string}
+     * @memberof PageRequestOrderBy
+     */
+    creationTime?: PageRequestOrderBy.CreationTimeEnum;
+    /**
+     * 
+     * @type {string}
+     * @memberof PageRequestOrderBy
+     */
+    lastModifiedTime?: PageRequestOrderBy.LastModifiedTimeEnum;
+    /**
+     * 
+     * @type {string}
+     * @memberof PageRequestOrderBy
+     */
+    contentText?: PageRequestOrderBy.ContentTextEnum;
+}
+
+/**
+ * @export
+ * @namespace PageRequestOrderBy
+ */
+export namespace PageRequestOrderBy {
+    /**
+     * @export
+     * @enum {string}
+     */
+    export enum NameEnum {
+        ASC = <any> 'ASC',
+        DESC = <any> 'DESC'
+    }
+    /**
+     * @export
+     * @enum {string}
+     */
+    export enum CreationTimeEnum {
+        ASC = <any> 'ASC',
+        DESC = <any> 'DESC'
+    }
+    /**
+     * @export
+     * @enum {string}
+     */
+    export enum LastModifiedTimeEnum {
+        ASC = <any> 'ASC',
+        DESC = <any> 'DESC'
+    }
+    /**
+     * @export
+     * @enum {string}
+     */
+    export enum ContentTextEnum {
+        ASC = <any> 'ASC',
+        DESC = <any> 'DESC'
+    }
+}
+/**
+ * 
+ * @export
+ * @enum {string}
+ */
+export enum RelationOperators {
+    Equals = <any> 'equals',
+    NotEquals = <any> 'notEquals',
+    Less = <any> 'less',
+    LessOrEquals = <any> 'lessOrEquals',
+    Greater = <any> 'greater',
+    GreaterOrEquals = <any> 'greaterOrEquals'
 }
 /**
  * 
@@ -559,12 +852,89 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
             };
         },
         /**
+         * 
+         * @param {PageRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getBacklogNotesPage(body: PageRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling getBacklogNotesPage.');
+            }
+            const localVarPath = `/notes/backlog/page`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication jwt required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("authentication")
+					: configuration.apiKey;
+                localVarHeaderParameter["authentication"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+			localVarRequestOptions.credentials = 'include';
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"PageRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * Generating channel key in order to allow open web-socket channel.  The key should append to the WS URL as channelKey param, the channel key is valid for 1 minute only.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         getChannelKey(options: any = {}): FetchArgs {
             const localVarPath = `/notes/channel-key`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication jwt required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("authentication")
+					: configuration.apiKey;
+                localVarHeaderParameter["authentication"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+			localVarRequestOptions.credentials = 'include';
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {string} noteId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getNote(noteId: string, options: any = {}): FetchArgs {
+            // verify required parameter 'noteId' is not null or undefined
+            if (noteId === null || noteId === undefined) {
+                throw new RequiredError('noteId','Required parameter noteId was null or undefined when calling getNote.');
+            }
+            const localVarPath = `/notes/{noteId}`
+                .replace(`{${"noteId"}}`, encodeURIComponent(String(noteId)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
             const localVarHeaderParameter = {} as any;
@@ -821,12 +1191,48 @@ export const NotesApiFp = function(configuration?: Configuration) {
             };
         },
         /**
+         * 
+         * @param {PageRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getBacklogNotesPage(body: PageRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<NotesPage> {
+            const localVarFetchArgs = NotesApiFetchParamCreator(configuration).getBacklogNotesPage(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
          * Generating channel key in order to allow open web-socket channel.  The key should append to the WS URL as channelKey param, the channel key is valid for 1 minute only.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         getChannelKey(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<string> {
             const localVarFetchArgs = NotesApiFetchParamCreator(configuration).getChannelKey(options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @param {string} noteId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getNote(noteId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Note> {
+            const localVarFetchArgs = NotesApiFetchParamCreator(configuration).getNote(noteId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -947,12 +1353,30 @@ export const NotesApiFactory = function (configuration?: Configuration, fetch?: 
             return NotesApiFp(configuration).getBacklogNotes(options)(fetch, basePath);
         },
         /**
+         * 
+         * @param {PageRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getBacklogNotesPage(body: PageRequest, options?: any) {
+            return NotesApiFp(configuration).getBacklogNotesPage(body, options)(fetch, basePath);
+        },
+        /**
          * Generating channel key in order to allow open web-socket channel.  The key should append to the WS URL as channelKey param, the channel key is valid for 1 minute only.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         getChannelKey(options?: any) {
             return NotesApiFp(configuration).getChannelKey(options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @param {string} noteId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getNote(noteId: string, options?: any) {
+            return NotesApiFp(configuration).getNote(noteId, options)(fetch, basePath);
         },
         /**
          * 
@@ -1035,6 +1459,17 @@ export class NotesApi extends BaseAPI {
     }
 
     /**
+     * 
+     * @param {PageRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof NotesApi
+     */
+    public getBacklogNotesPage(body: PageRequest, options?: any) {
+        return NotesApiFp(this.configuration).getBacklogNotesPage(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
      * Generating channel key in order to allow open web-socket channel.  The key should append to the WS URL as channelKey param, the channel key is valid for 1 minute only.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -1042,6 +1477,17 @@ export class NotesApi extends BaseAPI {
      */
     public getChannelKey(options?: any) {
         return NotesApiFp(this.configuration).getChannelKey(options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @param {string} noteId 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof NotesApi
+     */
+    public getNote(noteId: string, options?: any) {
+        return NotesApiFp(this.configuration).getNote(noteId, options)(this.fetch, this.basePath);
     }
 
     /**
