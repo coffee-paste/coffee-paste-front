@@ -25,7 +25,7 @@ const INDEX_TS = 'index.ts';
 //#region Output Paths
 const OUTPUT_BASE_PATH = 'src/infrastructure/generated'
 const SWAGGER_API_OUTPUT_PATH = `${OUTPUT_BASE_PATH}/api`;
-const CHANNEL_SPEC_PATH = `${SWAGGER_API_OUTPUT_PATH}/channel-spec.d.ts`;
+const CHANNEL_SPEC_PATH = `${SWAGGER_API_OUTPUT_PATH}/channel-spec.ts`;
 const PROXY_EMISSION_OUTPUT_DIR = `${OUTPUT_BASE_PATH}/proxies`
 const PROXY_EMISSION_OUTPUT_FILE = `${PROXY_EMISSION_OUTPUT_DIR}/api-proxies.ts`
 //#endregion Output Paths
