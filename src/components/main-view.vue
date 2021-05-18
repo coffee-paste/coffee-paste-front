@@ -12,6 +12,7 @@ import { INoteChangedEventArgs, INoteTab } from "./tabs/tab-interfaces";
 import { MainViewToolbar } from "./toolbar/main-view-toolbar.vue";
 import { IStatus, StatusType } from "./toolbar/menu-interfaces";
 import { NotesSocket } from '../infrastructure/notes-socket';
+import { globalConfig } from './common/global';
 import { generateNewNoteName } from "@/string-constants/note-constants";
 import { ApiFacade } from "@/infrastructure/generated/proxies/api-proxies";
 import { NoteUpdateEvent, OutgoingNoteUpdate } from "@/infrastructure/generated/api/channel-spec";
@@ -31,11 +32,11 @@ let ws: NotesSocket;
 
 export default defineComponent({
     components: { NoteTabs, MainViewToolbar },
-    created() {
+    async created() {
         // Load notes
-        this.loadNotes();
+        await this.loadNotes();
         // Open updated feed channel
-        this.openChannel();
+        await this.openChannel();
     },
     data() {
         return {
@@ -48,10 +49,11 @@ export default defineComponent({
     methods: {
         async openChannel() {
             try {
-                const channelKey = await ApiFacade.NotesApi.getChannelKey();
+                const channelSession = await ApiFacade.NotesApi.getChannelKey();
+                globalConfig.ChannelSession = channelSession;
 
-                ws = new NotesSocket(channelKey);
-
+                ws = new NotesSocket(channelSession);
+                this.channelStatus = channelStatus.loading;
                 ws.onopen = () => {
                     this.channelStatus = channelStatus.open;
                 };
@@ -69,8 +71,10 @@ export default defineComponent({
                     const outgoingNoteUpdate = JSON.parse(msg.data) as OutgoingNoteUpdate;
                     console.log(`Incoming message:  ${JSON.stringify(outgoingNoteUpdate)}`);
 
-                    // TODO: handle all notes updates events
                     if (outgoingNoteUpdate.event !== NoteUpdateEvent.FEED) {
+						// Currently, if the update is not content update, re-render all page.
+						// TODO: chnage only required property (or add/remove the note)
+						this.loadNotes();
                         return;
                     }
 
@@ -126,6 +130,8 @@ export default defineComponent({
                 }
 
                 this.lastNoteFeedUpdate = `${new Date().getTime()}`;
+                this.channelStatus = channelStatus.open;
+
             } catch (error) {
                 this.channelStatus = channelStatus.workspaceFetchFailed;
                 this.$toast.add({
