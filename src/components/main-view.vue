@@ -1,7 +1,12 @@
 <template>
     <div class="main-view">
         <MainViewToolbar :status="channelStatus" :msgStatus="msgStatus" />
-        <NoteTabs :key="lastNoteFeedUpdate" :notes="notes" @noteChanged="onNoteChanged" @newNote="onNewNote" />
+        <div v-if="firstInitialization" class="initialization-loader-conteiner">
+            <ProgressSpinner strokeWidth="3" style="width:150px;height:150px" />
+        </div>
+        <div v-else>
+            <NoteTabs :key="lastNoteFeedUpdate" :notes="notes" @noteChanged="onNoteChanged" @newNote="onNewNote" />
+        </div>
     </div>
 </template>
 
@@ -37,9 +42,12 @@ export default defineComponent({
         await this.loadNotes();
         // Open updated feed channel
         await this.openChannel();
+        // Set first intialization as true
+        this.firstInitialization = false;
     },
     data() {
         return {
+            firstInitialization: true,
             channelStatus: channelStatus.unknown as IStatus,
             msgStatus: null as unknown as Date,
             notes: [] as INoteTab[],
@@ -72,9 +80,9 @@ export default defineComponent({
                     console.log(`Incoming message:  ${JSON.stringify(outgoingNoteUpdate)}`);
 
                     if (outgoingNoteUpdate.event !== NoteUpdateEvent.FEED) {
-						// Currently, if the update is not content update, re-render all page.
-						// TODO: chnage only required property (or add/remove the note)
-						this.loadNotes();
+                        // Currently, if the update is not content update, re-render all page.
+                        // TODO: chnage only required property (or add/remove the note)
+                        this.loadNotes();
                         return;
                     }
 
@@ -165,8 +173,8 @@ export default defineComponent({
     * {
         margin: 0;
     }
-    .status-container {
-        margin-top: 1em;
+    .initialization-loader-conteiner {
+        margin-top: 30vh;
     }
 }
 
