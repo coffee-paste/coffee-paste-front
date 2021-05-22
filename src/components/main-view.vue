@@ -1,7 +1,7 @@
 <template>
     <div class="main-view">
         <MainViewToolbar :status="channelStatus" :msgStatus="msgStatus" />
-        <div v-if="firstInitialization" class="initialization-loader-conteiner">
+        <div v-if="firstInitialization" class="initialization-loader-container">
             <ProgressSpinner strokeWidth="3" style="width:150px;height:150px" />
         </div>
         <div v-else>
@@ -18,10 +18,10 @@ import { MainViewToolbar } from "./toolbar/main-view-toolbar.vue";
 import { IStatus, StatusType } from "./toolbar/menu-interfaces";
 import { NotesSocket } from '../infrastructure/notes-socket';
 import { globalConfig } from './common/global';
-import { generateNewNoteName } from "@/string-constants/note-constants";
 import { ApiFacade } from "@/infrastructure/generated/proxies/api-proxies";
 import { NoteUpdateEvent, OutgoingNoteUpdate } from "@/infrastructure/generated/api/channel-spec";
-import { ToastDuration, ToastSeverity } from "@/string-constants/prime-constants";
+import { ToastDuration, ToastSeverity } from "@/common-constants/prime-constants";
+import { generateNewNoteName } from "@/common-constants/note-constants";
 
 const channelStatus = {
     unknown: { status: 'Unknown Issue', statusType: StatusType.Error },
@@ -173,7 +173,7 @@ export default defineComponent({
     * {
         margin: 0;
     }
-    .initialization-loader-conteiner {
+    .initialization-loader-container {
         margin-top: 30vh;
     }
 }

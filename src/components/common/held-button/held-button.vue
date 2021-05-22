@@ -74,7 +74,7 @@ const heldButton = defineComponent({
 		},
 
 		circleDasharray(): string {
-			const res = `${(this.timeFraction * FULL_DASH_ARRAY).toFixed(0)} 283`;
+			const res = `${(this.timeFraction * FULL_DASH_ARRAY).toFixed(0)} ${FULL_DASH_ARRAY}`;
 			return res;
 		},
 

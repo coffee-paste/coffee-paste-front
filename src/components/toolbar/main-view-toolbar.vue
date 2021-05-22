@@ -17,7 +17,7 @@
             </div>
         </template>
     </Menubar>
-	<OverlayPanel ref="archiveOverlay">
+	<OverlayPanel ref="archiveOverlay" :baseZIndex="-100">
 		<div>
 			<NotesArchive />
 		</div>

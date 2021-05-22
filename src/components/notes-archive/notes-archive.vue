@@ -143,10 +143,11 @@ import { defineComponent } from 'vue';
 import { CollectionOperators, FilterOptions, MatchOperators, Note, NoteStatus, PageRequestFilter, PageRequestOrderBy, RelationOperators } from '@/infrastructure/generated/api';
 import { ApiFacade } from '@/infrastructure/generated/proxies/api-proxies';
 import { PageRequest } from '../../infrastructure/generated/api';
-import { ITableLazyParams, TableFilters } from '../common/interfaces/table-interfaces';
+import { ITableLazyParams, TableFilters, TableFilterValue } from '../common/interfaces/table-interfaces';
 import { StandardDateFormatter } from '../../common-constants/date-formatters';
 import { ToastDuration, ToastSeverity } from '@/common-constants/prime-constants';
 import { FilterMatchMode, PrimeIcons } from 'primevue/api';
+import { Duration, DurationUnits } from 'unitsnet-js';
 
 import OverlayPanel from 'primevue/overlaypanel';
 import DataTable from 'primevue/datatable';
@@ -163,7 +164,32 @@ const CREATION_TIME = 'creationTime';
 const LAST_MODIFIED_TIME = 'lastModifiedTime';
 //#endregion Constants
 
+const MS_PER_DAY: number = 86400000;
 const DEFAULT_NOTE_ORDER: PageRequestOrderBy = { creationTime: PageRequestOrderBy.CreationTimeEnum.DESC };
+
+function isUndefinedOrNull(o: any): boolean {
+	return o === undefined || o === null;
+}
+
+function isValidFilter(fieldName: string, currentFilter: TableFilterValue | undefined): boolean {
+	if (!currentFilter) {
+		console.warn(`[NotesArchive.isValidFilter] Filter field ${fieldName} doesn't exist in the filter list`);
+		return false;
+	}
+	// Empty string is valid
+	if (!currentFilter?.value) {
+		console.debug(`[NotesArchive.isValidFilter] Filter field ${fieldName} doesn't have a value and will be ignored`);
+		return false;
+	}
+
+	if (currentFilter.matchMode === FilterMatchMode.BETWEEN) {
+		const values = (currentFilter.value as unknown) as string[];
+		if (values?.length < 2 || isUndefinedOrNull(values[0]) || isUndefinedOrNull(values[1])) {
+			return false;
+		}
+	}
+	return true;
+}
 
 const notesArchive = defineComponent({
 	components: { OverlayPanel, DataTable, Column, InputText, ConfirmPopup, HeldButton },
@@ -201,7 +227,7 @@ const notesArchive = defineComponent({
 			orderBy: DEFAULT_NOTE_ORDER
 		};
 
-		this.loadLazyData();
+		this.fetchData();
 	},
 
 	watch: {
@@ -224,34 +250,42 @@ const notesArchive = defineComponent({
 			(this.$refs.overlayComponent as OverlayPanel).hide();
 		},
 
-		async loadLazyData() {
-			this.loading = true;
-			console.log(`Request: ${JSON.stringify(this.pagingParams)}`);
-			// Needs optimization- no reason to fetch the same notes over and over- need to cache them UI side
-			const result = await ApiFacade.NotesApi.getBacklogNotesPage(this.pagingParams as PageRequest);
-			this.totalNoteCount = result.totalCount;
-			this.visibleNotes = result.notes;
-			this.loading = false;
+		async fetchData() {
+			try {
+				this.loading = true;
+				console.log(`Request: ${JSON.stringify(this.pagingParams)}`);
+				// Needs optimization- no reason to fetch the same notes over and over- need to cache them UI side
+				const result = await ApiFacade.NotesApi.getBacklogNotesPage(this.pagingParams as PageRequest);
+				this.totalNoteCount = result.totalCount;
+				this.visibleNotes = result.notes;
+			} catch {
+				this.$toast.add({
+					severity: ToastSeverity.Error,
+					summary: "Failed to fetch notes from server",
+					detail: `Failed to fetch notes from the server. Please try again in a bit`,
+					life: ToastDuration.Long,
+				});
+			} finally {
+				this.loading = false;
+			}
 		},
 
 		onPage(event: ITableLazyParams) {
 			this.pagingParams = this.tableEventToPageRequest(event);
-			this.loadLazyData();
+			this.fetchData();
 		},
 
 		onSort(event: ITableLazyParams) {
 			this.pagingParams = this.tableEventToPageRequest(event);
-			this.loadLazyData();
+			this.fetchData();
 		},
 
 		onFilter() {
+			this.pagingParams.filter = {};
 			for (const fieldName in this.filters) {
-				if (!this.pagingParams.filter) {
-					this.pagingParams.filter = {};
-				}
 				this.pagingParams.filter = { ...this.pagingParams.filter, ...this.constructFiterOptions(fieldName as keyof TableFilters) };
 			}
-			this.loadLazyData();
+			this.fetchData();
 		},
 
 		async onFetchContentClick(note: Note): Promise<void> {
@@ -268,21 +302,21 @@ const notesArchive = defineComponent({
 			console.log(`Delete!`);
 			/*
 			 this.$confirm.require({
-                target: event.target,
-                message: `Really delete note '${note.name}'?`,
-                icon: PrimeIcons.EXCLAMATION_TRIANGLE,
-                accept: async () => {
-                    await ApiFacade.NotesApi.deleteNotes(note.id);
-                    this.$toast.add({
-                        severity: ToastSeverity.Info,
-                        summary: "Note deleted",
-                        detail: `Note '${note.name}' has been deleted`,
-                        life: ToastDuration.Long,
-                    });
+				target: event.target,
+				message: `Really delete note '${note.name}'?`,
+				icon: PrimeIcons.EXCLAMATION_TRIANGLE,
+				accept: async () => {
+					await ApiFacade.NotesApi.deleteNotes(note.id);
+					this.$toast.add({
+						severity: ToastSeverity.Info,
+						summary: "Note deleted",
+						detail: `Note '${note.name}' has been deleted`,
+						life: ToastDuration.Long,
+					});
 					this.removeFromVisibleNotes(note.id);
-                    console.log(`[NotesArchive.onDeleteClick] Note '${note.name}' (${note.id}) has been deleted`);
-                },
-            });*/
+					console.log(`[NotesArchive.onDeleteClick] Note '${note.name}' (${note.id}) has been deleted`);
+				},
+			});*/
 		},
 
 		tableEventToPageRequest(event: ITableLazyParams): PageRequest {
@@ -320,15 +354,13 @@ const notesArchive = defineComponent({
 		constructFiterOptions(fieldName: keyof TableFilters): Partial<PageRequestFilter> {
 			const opts: FilterOptions = {};
 			const currentFilter = this.filters[fieldName];
-			if (!currentFilter) {
-				console.warn(`[NotesArchive.constructFiterOptions] Filter field ${fieldName} doesn't exist in the filter list`);
+
+			// isValidFilter handles validation. Adding the second check to quiet down Vetur
+			if (!isValidFilter(fieldName, currentFilter) || !currentFilter) {
 				return {};
 			}
-			if (!currentFilter?.value) {
-				console.debug(`[NotesArchive.constructFiterOptions] Filter field ${fieldName} doesn't have a value and will be ignored`);
-				return {};
-			}
-			switch (currentFilter.matchMode) {
+
+			switch (currentFilter!.matchMode) {
 				case FilterMatchMode.STARTS_WITH:
 					opts.match = { matchOperator: MatchOperators.StartWith, value: currentFilter.value }
 					break;
@@ -367,10 +399,18 @@ const notesArchive = defineComponent({
 					opts.range = { from: parseInt(values[0]), to: parseInt(values[1]) }
 					break;
 				case FilterMatchMode.DATE_IS:
+					const selectedDate = new Date(currentFilter.value);
+					const endOfSelectedDay = new Date(selectedDate.getTime() + MS_PER_DAY);
+					opts.range = { from: selectedDate.getTime(), to: endOfSelectedDay.getTime() };
 				case FilterMatchMode.DATE_IS_NOT:
+					console.log('[UN-IMPLEMENTED] [NotesArchive.constructFiterOptions] DATE_IS_NOT filter is not yet implemented');
+					return {};
 				case FilterMatchMode.DATE_BEFORE:
+					opts.relation = { relationOperator: RelationOperators.Less, value: parseInt(currentFilter.value) };
+					break;
 				case FilterMatchMode.DATE_AFTER:
-					console.log('[UN-IMPLEMENTED] [NotesArchive.constructFiterOptions] Date filters are not implemented');
+					opts.relation = { relationOperator: RelationOperators.Greater, value: parseInt(currentFilter.value) };
+					break;
 				default:
 					console.warn(`[NotesArchive.constructFiterOptions] Unknown filter match mode ${currentFilter.matchMode}`);
 					break;

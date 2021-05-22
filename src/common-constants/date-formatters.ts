@@ -1,5 +1,5 @@
 export const StandardDateFormatter = Intl.DateTimeFormat(
-	'en-US',
+	'en-GB',
 	{
 		year: '2-digit',
 		month: '2-digit',
