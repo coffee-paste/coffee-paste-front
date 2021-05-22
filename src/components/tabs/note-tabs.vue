@@ -53,7 +53,8 @@ import { Note, NoteStatus } from '@/infrastructure/generated/api';
 import { generateNewNoteName } from '@/common-constants/note-constants';
 import { ApiFacade } from '@/infrastructure/generated/proxies/api-proxies';
 import { downloadAsText } from '../common/utils';
-import { ToastDuration, ToastSeverity } from '../../common-constants/prime-constants';
+import { globalConfig } from '../common/global';
+import { ToastDuration, ToastSeverity } from '../../string-constants/prime-constants';
 
 // An extension of PrimeVue's TabView component. Was missing some events
 import TabView from "./prime-extension/prime-tabview";
@@ -157,7 +158,7 @@ const NoteTabsComponent = defineComponent({
                 message: `Really archive note '${noteName}'?`,
                 icon: PrimeIcons.QUESTION,
                 accept: async () => {
-                    await ApiFacade.NotesApi.setNotes({ status: NoteStatus.BACKLOG }, this.contextedTabHeader!.id);
+                    await ApiFacade.NotesApi.setNotes({ status: NoteStatus.BACKLOG }, this.contextedTabHeader!.id, globalConfig.ChannelSession);
                     this.$toast.add({
                         severity: ToastSeverity.Info,
                         summary: "Note archived",
@@ -182,7 +183,7 @@ const NoteTabsComponent = defineComponent({
                 message: `Really delete note '${noteName}'?`,
                 icon: PrimeIcons.EXCLAMATION_TRIANGLE,
                 accept: async () => {
-                    await ApiFacade.NotesApi.deleteNotes(this.contextedTabHeader!.id);
+                    await ApiFacade.NotesApi.deleteNotes(this.contextedTabHeader!.id, globalConfig.ChannelSession);
                     this.$toast.add({
                         severity: ToastSeverity.Info,
                         summary: "Note deleted",
@@ -201,7 +202,7 @@ const NoteTabsComponent = defineComponent({
                 console.warn(`[NoteTabs.sumbitNoteNameChange] Could not determine target note`);
                 return;
             }
-            await ApiFacade.NotesApi.setNotesName({ name: this.noteRenameBoxValue || 'Unnamed note' }, note.id);
+            await ApiFacade.NotesApi.setNotesName({ name: this.noteRenameBoxValue || 'Unnamed note' }, note.id, globalConfig.ChannelSession);
             this.$toast.add({
                 severity: ToastSeverity.Info,
                 summary: "Note renamed",
@@ -215,7 +216,7 @@ const NoteTabsComponent = defineComponent({
         async createNewNote(): Promise<void> {
             try {
                 const newNoteName = generateNewNoteName(this.notes as Note[]);
-                const newNoteId = await ApiFacade.NotesApi.createNote({ name: newNoteName });
+                const newNoteId = await ApiFacade.NotesApi.createNote({ name: newNoteName }, globalConfig.ChannelSession);
                 console.log(`[NoteTabs.createNewNote] Created a new note with name '${newNoteName}' and ID '${newNoteId}'`);
                 const newNote: INoteTab = { id: newNoteId, name: newNoteName };
                 this.notes.push(newNote);
