@@ -17,6 +17,11 @@
             </div>
         </template>
     </Menubar>
+	<OverlayPanel ref="archiveOverlay">
+		<div>
+			<NotesArchive />
+		</div>
+	</OverlayPanel>
 </template>
 
 <script lang="ts">
@@ -27,7 +32,7 @@ import Menu from 'primevue/menu';
 import OverlayPanel from 'primevue/overlaypanel';
 import NotesArchive from '../notes-archive/notes-archive';
 import { IStatus, StatusType } from './menu-interfaces';
-import { IVueMenuItem } from '../common/interfaces';
+import { ContextMenuCommandEventArgs, IVueMenuItem } from '../common/interfaces/base-interfaces';
 import { PrimeIcons } from 'primevue/api';
 
 /// <reference path='../../shims-vue.d.ts'/>
@@ -111,18 +116,23 @@ const MainViewToolbarComponent = defineComponent({
             menubarItems: [
                 {
                     label: 'Home',
-                    icon: 'pi pi-fw pi-home',
+                    icon: PrimeIcons.HOME,
                     command: () => { this.$router.push('/'); }
                 },
                 {
                     label: 'Theme',
-                    icon: 'pi pi-fw pi-table',
+                    icon: PrimeIcons.TABLE,
                     items: themeGroupsMenu
                 },
                 {
                     label: 'About',
-                    icon: 'pi pi-fw pi-info',
+                    icon: PrimeIcons.INFO_CIRCLE,
                     command: () => { this.$router.push('/about'); }
+                },
+				{
+                    label: 'Archive',
+                    icon: PrimeIcons.FOLDER_OPEN,
+                    command: (event: ContextMenuCommandEventArgs) => { (this.$refs.archiveOverlay as OverlayPanel).toggle(event.originalEvent);	}
                 },
             ]
         };
@@ -144,15 +154,15 @@ const MainViewToolbarComponent = defineComponent({
         statusIcon(): string {
             switch (this.status.statusType) {
                 case StatusType.Ok:
-                    return 'pi-check-circle';
+                    return PrimeIcons.CHECK_CIRCLE;
                 case StatusType.Error:
-                    return 'pi-exclamation-circle';
+                    return PrimeIcons.EXCLAMATION_CIRCLE;
                 case StatusType.Loading:
-                    return 'pi-cloud-download';
+                    return PrimeIcons.CLOUD_DOWNLOAD;
                 case StatusType.Unknown:
                 case StatusType.Warning:
                 default:
-                    return 'pi-exclamation-triangle';
+                    return PrimeIcons.EXCLAMATION_TRIANGLE;
             }
         },
         statusMsg(): string {

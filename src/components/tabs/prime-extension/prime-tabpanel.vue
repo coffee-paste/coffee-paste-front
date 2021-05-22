@@ -1,5 +1,7 @@
 <template>
-    <slot></slot>
+	<div>
+		<slot/>
+	</div>
 </template>
 
 <script>
@@ -8,7 +10,8 @@ export default {
     props: {
         header: null,
         disabled: Boolean,
-        headerContextMenuBehavior: String
+        headerContextMenuBehavior: String,
+		routeAllClicks: Boolean
     }
 }
 </script>

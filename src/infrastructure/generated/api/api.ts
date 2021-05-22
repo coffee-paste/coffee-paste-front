@@ -744,12 +744,13 @@ export class AuthenticationApi extends BaseAPI {
 export const NotesApiFetchParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         * 
+         * Create new note in the workspace
          * @param {Body} body 
+         * @param {string} [channelSid] The front session channel, used to skip this channel while updating succeed action via WS
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createNote(body: Body, options: any = {}): FetchArgs {
+        createNote(body: Body, channelSid?: string, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling createNote.');
@@ -768,6 +769,10 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
                 localVarHeaderParameter["authentication"] = localVarApiKeyValue;
             }
 
+            if (channelSid !== undefined && channelSid !== null) {
+                localVarHeaderParameter['channelSid'] = String(channelSid);
+            }
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
@@ -784,12 +789,13 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
             };
         },
         /**
-         * 
+         * Permanently delete note
          * @param {string} noteId 
+         * @param {string} [channelSid] The front session channel, used to skip this channel while updating succeed action via WS
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteNotes(noteId: string, options: any = {}): FetchArgs {
+        deleteNotes(noteId: string, channelSid?: string, options: any = {}): FetchArgs {
             // verify required parameter 'noteId' is not null or undefined
             if (noteId === null || noteId === undefined) {
                 throw new RequiredError('noteId','Required parameter noteId was null or undefined when calling deleteNotes.');
@@ -807,6 +813,10 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
 					? configuration.apiKey("authentication")
 					: configuration.apiKey;
                 localVarHeaderParameter["authentication"] = localVarApiKeyValue;
+            }
+
+            if (channelSid !== undefined && channelSid !== null) {
+                localVarHeaderParameter['channelSid'] = String(channelSid);
             }
 
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
@@ -892,12 +902,12 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
             };
         },
         /**
-         * Generating channel key in order to allow open web-socket channel.  The key should append to the WS URL as channelKey param, the channel key is valid for 1 minute only.
+         * Generating channel session in order to allow open web-socket channel.  The key should append to the WS URL as channelSession param, the channel key is valid for 1 minute only.  Note to keep this session and send it in the REST request channelSid so the current channel will not send update about request sent from this client.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         getChannelKey(options: any = {}): FetchArgs {
-            const localVarPath = `/notes/channel-key`;
+            const localVarPath = `/notes/channel-session`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
             const localVarHeaderParameter = {} as any;
@@ -991,13 +1001,14 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
             };
         },
         /**
-         * 
+         * Move note from/to workspace/archive
          * @param {Body1} body 
          * @param {string} noteId 
+         * @param {string} [channelSid] The front session channel, used to skip this channel while updating succeed action via WS
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setNotes(body: Body1, noteId: string, options: any = {}): FetchArgs {
+        setNotes(body: Body1, noteId: string, channelSid?: string, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling setNotes.');
@@ -1021,6 +1032,10 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
                 localVarHeaderParameter["authentication"] = localVarApiKeyValue;
             }
 
+            if (channelSid !== undefined && channelSid !== null) {
+                localVarHeaderParameter['channelSid'] = String(channelSid);
+            }
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
@@ -1037,13 +1052,14 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
             };
         },
         /**
-         * 
+         * Set note content, (you can use also the WS channel API for that)
          * @param {Body2} body 
          * @param {string} noteId 
+         * @param {string} [channelSid] The front session channel, used to skip this channel while updating succeed action via WS
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setNotesContent(body: Body2, noteId: string, options: any = {}): FetchArgs {
+        setNotesContent(body: Body2, noteId: string, channelSid?: string, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling setNotesContent.');
@@ -1067,6 +1083,10 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
                 localVarHeaderParameter["authentication"] = localVarApiKeyValue;
             }
 
+            if (channelSid !== undefined && channelSid !== null) {
+                localVarHeaderParameter['channelSid'] = String(channelSid);
+            }
+
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
@@ -1083,13 +1103,14 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
             };
         },
         /**
-         * 
+         * Set note name
          * @param {Body3} body 
          * @param {string} noteId 
+         * @param {string} [channelSid] The front session channel, used to skip this channel while updating succeed action via WS
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setNotesName(body: Body3, noteId: string, options: any = {}): FetchArgs {
+        setNotesName(body: Body3, noteId: string, channelSid?: string, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling setNotesName.');
@@ -1111,6 +1132,10 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
 					? configuration.apiKey("authentication")
 					: configuration.apiKey;
                 localVarHeaderParameter["authentication"] = localVarApiKeyValue;
+            }
+
+            if (channelSid !== undefined && channelSid !== null) {
+                localVarHeaderParameter['channelSid'] = String(channelSid);
             }
 
             localVarHeaderParameter['Content-Type'] = 'application/json';
@@ -1138,13 +1163,14 @@ export const NotesApiFetchParamCreator = function (configuration?: Configuration
 export const NotesApiFp = function(configuration?: Configuration) {
     return {
         /**
-         * 
+         * Create new note in the workspace
          * @param {Body} body 
+         * @param {string} [channelSid] The front session channel, used to skip this channel while updating succeed action via WS
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createNote(body: Body, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<string> {
-            const localVarFetchArgs = NotesApiFetchParamCreator(configuration).createNote(body, options);
+        createNote(body: Body, channelSid?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<string> {
+            const localVarFetchArgs = NotesApiFetchParamCreator(configuration).createNote(body, channelSid, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -1156,13 +1182,14 @@ export const NotesApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * 
+         * Permanently delete note
          * @param {string} noteId 
+         * @param {string} [channelSid] The front session channel, used to skip this channel while updating succeed action via WS
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteNotes(noteId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
-            const localVarFetchArgs = NotesApiFetchParamCreator(configuration).deleteNotes(noteId, options);
+        deleteNotes(noteId: string, channelSid?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
+            const localVarFetchArgs = NotesApiFetchParamCreator(configuration).deleteNotes(noteId, channelSid, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -1209,7 +1236,7 @@ export const NotesApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * Generating channel key in order to allow open web-socket channel.  The key should append to the WS URL as channelKey param, the channel key is valid for 1 minute only.
+         * Generating channel session in order to allow open web-socket channel.  The key should append to the WS URL as channelSession param, the channel key is valid for 1 minute only.  Note to keep this session and send it in the REST request channelSid so the current channel will not send update about request sent from this client.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -1261,14 +1288,15 @@ export const NotesApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * 
+         * Move note from/to workspace/archive
          * @param {Body1} body 
          * @param {string} noteId 
+         * @param {string} [channelSid] The front session channel, used to skip this channel while updating succeed action via WS
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setNotes(body: Body1, noteId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
-            const localVarFetchArgs = NotesApiFetchParamCreator(configuration).setNotes(body, noteId, options);
+        setNotes(body: Body1, noteId: string, channelSid?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
+            const localVarFetchArgs = NotesApiFetchParamCreator(configuration).setNotes(body, noteId, channelSid, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -1280,14 +1308,15 @@ export const NotesApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * 
+         * Set note content, (you can use also the WS channel API for that)
          * @param {Body2} body 
          * @param {string} noteId 
+         * @param {string} [channelSid] The front session channel, used to skip this channel while updating succeed action via WS
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setNotesContent(body: Body2, noteId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
-            const localVarFetchArgs = NotesApiFetchParamCreator(configuration).setNotesContent(body, noteId, options);
+        setNotesContent(body: Body2, noteId: string, channelSid?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
+            const localVarFetchArgs = NotesApiFetchParamCreator(configuration).setNotesContent(body, noteId, channelSid, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -1299,14 +1328,15 @@ export const NotesApiFp = function(configuration?: Configuration) {
             };
         },
         /**
-         * 
+         * Set note name
          * @param {Body3} body 
          * @param {string} noteId 
+         * @param {string} [channelSid] The front session channel, used to skip this channel while updating succeed action via WS
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setNotesName(body: Body3, noteId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
-            const localVarFetchArgs = NotesApiFetchParamCreator(configuration).setNotesName(body, noteId, options);
+        setNotesName(body: Body3, noteId: string, channelSid?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
+            const localVarFetchArgs = NotesApiFetchParamCreator(configuration).setNotesName(body, noteId, channelSid, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -1327,22 +1357,24 @@ export const NotesApiFp = function(configuration?: Configuration) {
 export const NotesApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
     return {
         /**
-         * 
+         * Create new note in the workspace
          * @param {Body} body 
+         * @param {string} [channelSid] The front session channel, used to skip this channel while updating succeed action via WS
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createNote(body: Body, options?: any) {
-            return NotesApiFp(configuration).createNote(body, options)(fetch, basePath);
+        createNote(body: Body, channelSid?: string, options?: any) {
+            return NotesApiFp(configuration).createNote(body, channelSid, options)(fetch, basePath);
         },
         /**
-         * 
+         * Permanently delete note
          * @param {string} noteId 
+         * @param {string} [channelSid] The front session channel, used to skip this channel while updating succeed action via WS
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteNotes(noteId: string, options?: any) {
-            return NotesApiFp(configuration).deleteNotes(noteId, options)(fetch, basePath);
+        deleteNotes(noteId: string, channelSid?: string, options?: any) {
+            return NotesApiFp(configuration).deleteNotes(noteId, channelSid, options)(fetch, basePath);
         },
         /**
          * 
@@ -1362,7 +1394,7 @@ export const NotesApiFactory = function (configuration?: Configuration, fetch?: 
             return NotesApiFp(configuration).getBacklogNotesPage(body, options)(fetch, basePath);
         },
         /**
-         * Generating channel key in order to allow open web-socket channel.  The key should append to the WS URL as channelKey param, the channel key is valid for 1 minute only.
+         * Generating channel session in order to allow open web-socket channel.  The key should append to the WS URL as channelSession param, the channel key is valid for 1 minute only.  Note to keep this session and send it in the REST request channelSid so the current channel will not send update about request sent from this client.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -1387,34 +1419,37 @@ export const NotesApiFactory = function (configuration?: Configuration, fetch?: 
             return NotesApiFp(configuration).getOpenNotes(options)(fetch, basePath);
         },
         /**
-         * 
+         * Move note from/to workspace/archive
          * @param {Body1} body 
          * @param {string} noteId 
+         * @param {string} [channelSid] The front session channel, used to skip this channel while updating succeed action via WS
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setNotes(body: Body1, noteId: string, options?: any) {
-            return NotesApiFp(configuration).setNotes(body, noteId, options)(fetch, basePath);
+        setNotes(body: Body1, noteId: string, channelSid?: string, options?: any) {
+            return NotesApiFp(configuration).setNotes(body, noteId, channelSid, options)(fetch, basePath);
         },
         /**
-         * 
+         * Set note content, (you can use also the WS channel API for that)
          * @param {Body2} body 
          * @param {string} noteId 
+         * @param {string} [channelSid] The front session channel, used to skip this channel while updating succeed action via WS
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setNotesContent(body: Body2, noteId: string, options?: any) {
-            return NotesApiFp(configuration).setNotesContent(body, noteId, options)(fetch, basePath);
+        setNotesContent(body: Body2, noteId: string, channelSid?: string, options?: any) {
+            return NotesApiFp(configuration).setNotesContent(body, noteId, channelSid, options)(fetch, basePath);
         },
         /**
-         * 
+         * Set note name
          * @param {Body3} body 
          * @param {string} noteId 
+         * @param {string} [channelSid] The front session channel, used to skip this channel while updating succeed action via WS
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setNotesName(body: Body3, noteId: string, options?: any) {
-            return NotesApiFp(configuration).setNotesName(body, noteId, options)(fetch, basePath);
+        setNotesName(body: Body3, noteId: string, channelSid?: string, options?: any) {
+            return NotesApiFp(configuration).setNotesName(body, noteId, channelSid, options)(fetch, basePath);
         },
     };
 };
@@ -1427,25 +1462,27 @@ export const NotesApiFactory = function (configuration?: Configuration, fetch?: 
  */
 export class NotesApi extends BaseAPI {
     /**
-     * 
+     * Create new note in the workspace
      * @param {Body} body 
+     * @param {string} [channelSid] The front session channel, used to skip this channel while updating succeed action via WS
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof NotesApi
      */
-    public createNote(body: Body, options?: any) {
-        return NotesApiFp(this.configuration).createNote(body, options)(this.fetch, this.basePath);
+    public createNote(body: Body, channelSid?: string, options?: any) {
+        return NotesApiFp(this.configuration).createNote(body, channelSid, options)(this.fetch, this.basePath);
     }
 
     /**
-     * 
+     * Permanently delete note
      * @param {string} noteId 
+     * @param {string} [channelSid] The front session channel, used to skip this channel while updating succeed action via WS
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof NotesApi
      */
-    public deleteNotes(noteId: string, options?: any) {
-        return NotesApiFp(this.configuration).deleteNotes(noteId, options)(this.fetch, this.basePath);
+    public deleteNotes(noteId: string, channelSid?: string, options?: any) {
+        return NotesApiFp(this.configuration).deleteNotes(noteId, channelSid, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -1470,7 +1507,7 @@ export class NotesApi extends BaseAPI {
     }
 
     /**
-     * Generating channel key in order to allow open web-socket channel.  The key should append to the WS URL as channelKey param, the channel key is valid for 1 minute only.
+     * Generating channel session in order to allow open web-socket channel.  The key should append to the WS URL as channelSession param, the channel key is valid for 1 minute only.  Note to keep this session and send it in the REST request channelSid so the current channel will not send update about request sent from this client.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof NotesApi
@@ -1501,39 +1538,42 @@ export class NotesApi extends BaseAPI {
     }
 
     /**
-     * 
+     * Move note from/to workspace/archive
      * @param {Body1} body 
      * @param {string} noteId 
+     * @param {string} [channelSid] The front session channel, used to skip this channel while updating succeed action via WS
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof NotesApi
      */
-    public setNotes(body: Body1, noteId: string, options?: any) {
-        return NotesApiFp(this.configuration).setNotes(body, noteId, options)(this.fetch, this.basePath);
+    public setNotes(body: Body1, noteId: string, channelSid?: string, options?: any) {
+        return NotesApiFp(this.configuration).setNotes(body, noteId, channelSid, options)(this.fetch, this.basePath);
     }
 
     /**
-     * 
+     * Set note content, (you can use also the WS channel API for that)
      * @param {Body2} body 
      * @param {string} noteId 
+     * @param {string} [channelSid] The front session channel, used to skip this channel while updating succeed action via WS
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof NotesApi
      */
-    public setNotesContent(body: Body2, noteId: string, options?: any) {
-        return NotesApiFp(this.configuration).setNotesContent(body, noteId, options)(this.fetch, this.basePath);
+    public setNotesContent(body: Body2, noteId: string, channelSid?: string, options?: any) {
+        return NotesApiFp(this.configuration).setNotesContent(body, noteId, channelSid, options)(this.fetch, this.basePath);
     }
 
     /**
-     * 
+     * Set note name
      * @param {Body3} body 
      * @param {string} noteId 
+     * @param {string} [channelSid] The front session channel, used to skip this channel while updating succeed action via WS
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof NotesApi
      */
-    public setNotesName(body: Body3, noteId: string, options?: any) {
-        return NotesApiFp(this.configuration).setNotesName(body, noteId, options)(this.fetch, this.basePath);
+    public setNotesName(body: Body3, noteId: string, channelSid?: string, options?: any) {
+        return NotesApiFp(this.configuration).setNotesName(body, noteId, channelSid, options)(this.fetch, this.basePath);
     }
 
 }
@@ -1561,6 +1601,80 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
 					? configuration.apiKey("authentication")
 					: configuration.apiKey;
                 localVarHeaderParameter["authentication"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+			localVarRequestOptions.credentials = 'include';
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {string} userId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteUserByAdmin(userId: string, options: any = {}): FetchArgs {
+            // verify required parameter 'userId' is not null or undefined
+            if (userId === null || userId === undefined) {
+                throw new RequiredError('userId','Required parameter userId was null or undefined when calling deleteUserByAdmin.');
+            }
+            const localVarPath = `/users/{userId}`
+                .replace(`{${"userId"}}`, encodeURIComponent(String(userId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'DELETE' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication api_key required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("api_key")
+					: configuration.apiKey;
+                localVarHeaderParameter["api_key"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+			localVarRequestOptions.credentials = 'include';
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {string} userId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getUser(userId: string, options: any = {}): FetchArgs {
+            // verify required parameter 'userId' is not null or undefined
+            if (userId === null || userId === undefined) {
+                throw new RequiredError('userId','Required parameter userId was null or undefined when calling getUser.');
+            }
+            const localVarPath = `/users/{userId}`
+                .replace(`{${"userId"}}`, encodeURIComponent(String(userId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication api_key required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("api_key")
+					: configuration.apiKey;
+                localVarHeaderParameter["api_key"] = localVarApiKeyValue;
             }
 
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
@@ -1605,6 +1719,37 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getUsers(options: any = {}): FetchArgs {
+            const localVarPath = `/users`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication api_key required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("api_key")
+					: configuration.apiKey;
+                localVarHeaderParameter["api_key"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+			localVarRequestOptions.credentials = 'include';
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -1633,11 +1778,64 @@ export const UsersApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @param {string} userId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteUserByAdmin(userId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).deleteUserByAdmin(userId, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response;
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @param {string} userId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getUser(userId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<User> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUser(userId, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         getUserProfile(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<User> {
             const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUserProfile(options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getUsers(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Array<User>> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUsers(options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -1667,11 +1865,37 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
         },
         /**
          * 
+         * @param {string} userId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteUserByAdmin(userId: string, options?: any) {
+            return UsersApiFp(configuration).deleteUserByAdmin(userId, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @param {string} userId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getUser(userId: string, options?: any) {
+            return UsersApiFp(configuration).getUser(userId, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         getUserProfile(options?: any) {
             return UsersApiFp(configuration).getUserProfile(options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getUsers(options?: any) {
+            return UsersApiFp(configuration).getUsers(options)(fetch, basePath);
         },
     };
 };
@@ -1695,12 +1919,44 @@ export class UsersApi extends BaseAPI {
 
     /**
      * 
+     * @param {string} userId 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UsersApi
+     */
+    public deleteUserByAdmin(userId: string, options?: any) {
+        return UsersApiFp(this.configuration).deleteUserByAdmin(userId, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @param {string} userId 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UsersApi
+     */
+    public getUser(userId: string, options?: any) {
+        return UsersApiFp(this.configuration).getUser(userId, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof UsersApi
      */
     public getUserProfile(options?: any) {
         return UsersApiFp(this.configuration).getUserProfile(options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UsersApi
+     */
+    public getUsers(options?: any) {
+        return UsersApiFp(this.configuration).getUsers(options)(this.fetch, this.basePath);
     }
 
 }

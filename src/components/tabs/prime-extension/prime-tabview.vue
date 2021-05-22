@@ -56,7 +56,8 @@ export default {
     },
     methods: {
         onTabClick(event, i) {
-            if (!this.isTabDisabled(this.tabs[i]) && i !== this.d_activeIndex) {
+			const tab = this.tabs[i];
+            if (!this.isTabDisabled(tab) && i !== this.d_activeIndex) {
                 this.d_activeIndex = i;
                 this.$emit('update:activeIndex', this.d_activeIndex);
 
@@ -70,6 +71,12 @@ export default {
                 originalEvent: event,
                 index: i
             });
+
+			// Due to the structure and padding, icon buttons, for instance have a very small click-registering area
+			// Can use the 'routeAllClicks' prop to instruct the TabView component to route all clicks to the tab's click handler
+			if (tab?.props?.routeAllClicks && tab.props.onClick) {
+				tab.props.onClick(event);
+			}
         },
         onTabKeydown(event, i) {
             if (event.which === 13) {
@@ -111,7 +118,7 @@ export default {
         },
         isTabPanel(child) {
             return child.type.name === 'tabpanel'
-        }
+        },
     },
     computed: {
         tabs() {

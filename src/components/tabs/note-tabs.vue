@@ -1,4 +1,3 @@
-
 <template>
     <div>
         <div>
@@ -9,7 +8,7 @@
                     <label class="note-name-input-label" for="newNoteNameInput">New name</label>
                     <span class="texbox-with-button">
                         <InputText ref="renameNoteTextInput" id="newNoteNameInput" class="p-inputtext-lg" type="text" v-model="this.noteRenameBoxValue" />
-                        <Button class="pi pi-check p-button-icon" @click="sumbitNoteNameChange" :disabled="!this.noteRenameBoxValue" />
+                        <Button class="p-button-icon fit-content" icon="pi pi-check" @click="sumbitNoteNameChange" :disabled="!this.noteRenameBoxValue" />
                     </span>
                 </div>
             </OverlayPanel>
@@ -20,16 +19,16 @@
                         <div class="tab-header">
                             <span>{{tab.name}}</span>
                             <span class="tab-header-menu">
-                                <i class="pi pi-ellipsis-v p-button-icon" @click="onTabHeaderRightClick($event, tab)"></i>
+                                <i class="pi pi-ellipsis-v p-button-icon" @click="onTabHeaderMenuClick($event, tab)"></i>
                             </span>
                         </div>
                     </template>
                     <NoteTab :id="tab.id" :content="tab.contentHTML" :lastNoteFeedUpdate="tab.lastNoteFeedUpdate" @noteChanged="onChange" @contextmenu="onNoteRightClick($event, tab)" />
                 </TabPanel>
 
-                <TabPanel key="createNewTabKey" headerContextMenuBehavior="kill-event">
+                <TabPanel key="createNewTabKey" headerContextMenuBehavior="kill-event" :routeAllClicks="true" @click="createNewNote">
                     <template #header>
-                        <i class="pi pi-plus" @click="createNewNote"></i>
+                        <i class="p-button-icon pi pi-plus"/>
                     </template>
                     <p class="empty-tab" />
                 </TabPanel>
@@ -49,7 +48,7 @@ import { defineComponent, PropType } from 'vue';
 import { NoteTab } from './single-note-tab.vue';
 import { TabViewEventArgs } from './prime-extension/prime-tabview';
 import { getLocalStorageItem, LocalStorageKey, setLocalStorageItem } from '@/infrastructure/local-storage';
-import { ContextMenuCommandEventArgs, IVueMenuItem } from '../common/interfaces';
+import { ContextMenuCommandEventArgs, IVueMenuItem } from '../common/interfaces/base-interfaces';
 import { Note, NoteStatus } from '@/infrastructure/generated/api';
 import { generateNewNoteName } from '@/common-constants/note-constants';
 import { ApiFacade } from '@/infrastructure/generated/proxies/api-proxies';
@@ -111,7 +110,6 @@ const NoteTabsComponent = defineComponent({
         onChange(e: INoteChangedEventArgs): void {
 			// Keep changes in a cache, to allow download as HTML file
             this.cachedHtml[e.noteId] = e.contentHTML;
-
             this.$emit("noteChanged", e);
         },
 
@@ -120,7 +118,7 @@ const NoteTabsComponent = defineComponent({
             setLocalStorageItem<number>(LocalStorageKey.ActiveTabIndex, e.index, { itemType: "number" });
         },
 
-        onTabHeaderRightClick(e: TabViewEventArgs, tab: INoteTab): void {
+        onTabHeaderMenuClick(e: TabViewEventArgs, tab: INoteTab): void {
             this.contextedTabHeader = tab;
             (this.$refs.tabPanelContextMenu as ContextMenu).show(e.originalEvent || e);
         },
@@ -235,6 +233,7 @@ const NoteTabsComponent = defineComponent({
         removeContextedNote(noteId: string): void {
             const index = this.notes.findIndex(note => note.id === noteId);
             this.notes.splice(index, 1);
+			this.activeTabIndex = index > 0 ? index - 1 : 0;
         },
     },
 });
@@ -256,6 +255,9 @@ export default NoteTabs;
     .texbox-with-button {
         display: flex;
         max-height: 40px;
+		.fit-content {
+			height: fit-content;
+		}
     }
 }
 .note-name-input-label {
@@ -266,5 +268,8 @@ export default NoteTabs;
         margin-left: 10px;
         margin-right: -15px;
     }
+	&.--no-padding {
+		padding: 0;
+	}
 }
 </style>

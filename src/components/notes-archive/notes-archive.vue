@@ -26,7 +26,7 @@
 					type="text"
 					v-model="filterModel.value"
 					@keydown.enter="filterCallback()"
-					class="p-column-filter"
+					class="p-column-filter filter-input --text-input"
 					placeholder="Search by name" 
 				/>
 			</template>
@@ -46,14 +46,14 @@
 					type="text"
 					v-model="filterModel.value"
 					@keydown.enter="filterCallback()"
-					class="p-column-filter"
+					class="p-column-filter filter-input --text-input"
 					placeholder="Search by content" 
 				/>
 			</template>
 
 			<template #body="slotProps">
 				<div class="content-container-div">
-				<div  class="content-container-div-inner">
+				<div class="content-container-div-inner">
 					<template v-if="!!slotProps.data[CONTENT_TEXT]" >
 						{{slotProps.data[CONTENT_TEXT]}}
 					</template>
@@ -78,7 +78,7 @@
 					type="date" 
 					v-model="filterModel.value"
 					@keydown.enter="filterCallback()" 
-					class="p-column-filter" 
+					class="p-column-filter filter-input --date-input" 
 					placeholder="Search by creation time" 
 				/>
 			</template>
@@ -103,7 +103,7 @@
 					type="date" 
 					v-model="filterModel.value"
 					@keydown.enter="filterCallback()" 
-					class="p-column-filter" 
+					class="p-column-filter filter-input --date-input" 
 					placeholder="Search by modification time" 
 				/>
 			</template>
@@ -118,10 +118,18 @@
 			class="base-column"
 			:sortable="false"
 		>
+			<ConfirmPopup />
 			<template #body="slotProps">
-				<span>
-					<Button label="Restore" @click="onRestoreNoteClick(slotProps.data)" />
-					<Button label="Delete" @click="onDeleteClick(slotProps.data)" />
+				<span class="actions-column">
+					<Button label="Restore"
+						class="p-button-icon-only p-button-raised p-button-rounded p-button-info action-button"
+						icon="pi pi-refresh"
+						@click="onRestoreNoteClick($event, slotProps.data)" />
+
+					<HeldButton label="Delete" 
+						class="p-button-icon-only p-button-raised p-button-rounded p-button-danger action-button"
+						icon="pi pi-trash"
+						@click="onDeleteClick($event, slotProps.data)" />
 				</span>
 			</template>
 
@@ -132,17 +140,20 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { Note } from '@/infrastructure/generated/api';
+import { CollectionOperators, FilterOptions, MatchOperators, Note, NoteStatus, PageRequestFilter, PageRequestOrderBy, RelationOperators } from '@/infrastructure/generated/api';
 import { ApiFacade } from '@/infrastructure/generated/proxies/api-proxies';
 import { PageRequest } from '../../infrastructure/generated/api';
-import { FilterMatchMode } from '../common/interfaces';
+import { ITableLazyParams, TableFilters } from '../common/interfaces/table-interfaces';
 import { StandardDateFormatter } from '../../common-constants/date-formatters';
+import { ToastDuration, ToastSeverity } from '@/common-constants/prime-constants';
+import { FilterMatchMode, PrimeIcons } from 'primevue/api';
 
 import OverlayPanel from 'primevue/overlaypanel';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import InputText from 'primevue/inputtext';
-import Button from 'primevue/button';
+import ConfirmPopup from 'primevue/confirmpopup';
+import HeldButton from '../common/held-button/held-button';
 
 //#region Constants
 const NAME = 'name';
@@ -152,23 +163,10 @@ const CREATION_TIME = 'creationTime';
 const LAST_MODIFIED_TIME = 'lastModifiedTime';
 //#endregion Constants
 
-const DEFAULT_NOTE_ORDER = { [CREATION_TIME]: PageRequest.OrderByEnum.DESC.toString() };
-
-
-interface ITableLazyParams {
-	originalEvent: Event;
-	first: number;
-	rows: number;
-	sortField: string | null;
-	sortOrder: string | null;
-	multiSortMeta: any[];
-	filters: { [key: string]: { value: string, matchMode: string } };
-	filterMatchModes: { [key: string]: FilterMatchMode };
-}
-
+const DEFAULT_NOTE_ORDER: PageRequestOrderBy = { creationTime: PageRequestOrderBy.CreationTimeEnum.DESC };
 
 const notesArchive = defineComponent({
-	components: { OverlayPanel, DataTable, Column, InputText, Button },
+	components: { OverlayPanel, DataTable, Column, InputText, ConfirmPopup, HeldButton },
 	props: {
 		ref: String
 	},
@@ -187,11 +185,10 @@ const notesArchive = defineComponent({
 			filters: {
 				// Initial filter values for the component
 				[NAME]: { value: '', matchMode: FilterMatchMode.STARTS_WITH },
-				[ID]: { value: '', matchMode: FilterMatchMode.CONTAINS },
 				[CONTENT_TEXT]: { value: '', matchMode: FilterMatchMode.CONTAINS },
 				[CREATION_TIME]: { value: '', matchMode: FilterMatchMode.DATE_IS },
 				[LAST_MODIFIED_TIME]: { value: '', matchMode: FilterMatchMode.DATE_IS },
-			}
+			} as TableFilters
 		}
 	},
 
@@ -207,11 +204,11 @@ const notesArchive = defineComponent({
 		this.loadLazyData();
 	},
 
-	 watch: {
-        filters() {
-            this.onFilter();
-        }
-    },
+	watch: {
+		filters() {
+			this.onFilter();
+		}
+	},
 
 	methods: {
 
@@ -248,36 +245,141 @@ const notesArchive = defineComponent({
 		},
 
 		onFilter() {
-			this.loading = true;
-			console.log(`Filters: ${JSON.stringify(this.filters)}`);
+			for (const fieldName in this.filters) {
+				if (!this.pagingParams.filter) {
+					this.pagingParams.filter = {};
+				}
+				this.pagingParams.filter = { ...this.pagingParams.filter, ...this.constructFiterOptions(fieldName as keyof TableFilters) };
+			}
 			this.loadLazyData();
 		},
 
-		onFetchContentClick(note: Note): void {
-			console.warn(`[UN-IMPLEMENTED] [NotesArchive.onFetchContentClick] Should fetch content for note ${note.name} (${note.id})`);
-			//this.visibleNotes[this.visibleNotes.indexOf(note)] = await ApiFacade.NotesApi.
+		async onFetchContentClick(note: Note): Promise<void> {
+			console.debug(`[NotesArchive.onFetchContentClick] Fetching content for note ${note.name} (${note.id})`);
+			this.visibleNotes[this.visibleNotes.indexOf(note)] = await ApiFacade.NotesApi.getNote(note.id);
 		},
 
-		onRestoreNoteClick(note: Note): void {
-
+		async onRestoreNoteClick(event: MouseEvent, note: Note): Promise<void> {
+			await ApiFacade.NotesApi.setNotes({ status: NoteStatus.WORKSPACE }, note.id);
+			this.removeFromVisibleNotes(note.id);
 		},
 
-		onDeleteClick(note: Note): void {
-
+		async onDeleteClick(event: MouseEvent, note: Note): Promise<void> {
+			console.log(`Delete!`);
+			/*
+			 this.$confirm.require({
+                target: event.target,
+                message: `Really delete note '${note.name}'?`,
+                icon: PrimeIcons.EXCLAMATION_TRIANGLE,
+                accept: async () => {
+                    await ApiFacade.NotesApi.deleteNotes(note.id);
+                    this.$toast.add({
+                        severity: ToastSeverity.Info,
+                        summary: "Note deleted",
+                        detail: `Note '${note.name}' has been deleted`,
+                        life: ToastDuration.Long,
+                    });
+					this.removeFromVisibleNotes(note.id);
+                    console.log(`[NotesArchive.onDeleteClick] Note '${note.name}' (${note.id}) has been deleted`);
+                },
+            });*/
 		},
 
 		tableEventToPageRequest(event: ITableLazyParams): PageRequest {
+			let orderBy: PageRequestOrderBy;
+			let orderEnum = event.sortOrder as 'ASC' | 'DESC';
+			switch (event.sortField) {
+				case 'name':
+					orderBy = { [event.sortField]: PageRequestOrderBy.NameEnum[orderEnum] };
+					break;
+				case 'creationTime':
+					orderBy = { [event.sortField]: PageRequestOrderBy.CreationTimeEnum[orderEnum] };
+					break;
+				case 'lastModifiedTime':
+					orderBy = { [event.sortField]: PageRequestOrderBy.LastModifiedTimeEnum[orderEnum] };
+					break;
+				case 'contentText':
+					orderBy = { [event.sortField]: PageRequestOrderBy.ContentTextEnum[orderEnum] };
+					break;
+				default:
+					orderBy = DEFAULT_NOTE_ORDER
+					break;
+			}
+
 			return {
+				orderBy,
 				fromIndex: event.first,
 				pageSize: this.pageSize,
-				orderBy: event.sortField
-					? { [event.sortField]: event.sortOrder || PageRequest.OrderByEnum.DESC.toString() }
-					: DEFAULT_NOTE_ORDER
 			};
 		},
 
 		formatDate(d: number): string {
 			return StandardDateFormatter.format(d);
+		},
+
+		constructFiterOptions(fieldName: keyof TableFilters): Partial<PageRequestFilter> {
+			const opts: FilterOptions = {};
+			const currentFilter = this.filters[fieldName];
+			if (!currentFilter) {
+				console.warn(`[NotesArchive.constructFiterOptions] Filter field ${fieldName} doesn't exist in the filter list`);
+				return {};
+			}
+			if (!currentFilter?.value) {
+				console.debug(`[NotesArchive.constructFiterOptions] Filter field ${fieldName} doesn't have a value and will be ignored`);
+				return {};
+			}
+			switch (currentFilter.matchMode) {
+				case FilterMatchMode.STARTS_WITH:
+					opts.match = { matchOperator: MatchOperators.StartWith, value: currentFilter.value }
+					break;
+				case FilterMatchMode.CONTAINS:
+					opts.match = { matchOperator: MatchOperators.Contains, value: currentFilter.value }
+					break;
+				case FilterMatchMode.NOT_CONTAINS:
+					opts.match = { matchOperator: MatchOperators.NotContains, value: currentFilter.value }
+					break;
+				case FilterMatchMode.ENDS_WITH:
+					opts.match = { matchOperator: MatchOperators.EndWith, value: currentFilter.value }
+					break;
+				case FilterMatchMode.EQUALS:
+					opts.match = { matchOperator: MatchOperators.Equals, value: currentFilter.value }
+					break;
+				case FilterMatchMode.NOT_EQUALS:
+					opts.match = { matchOperator: MatchOperators.NotEquals, value: currentFilter.value }
+					break;
+				case FilterMatchMode.IN:
+					opts.collection = { collectionOperator: CollectionOperators.InCollection, values: (currentFilter.value as unknown) as string[] }
+					break;
+				case FilterMatchMode.LESS_THAN:
+					opts.relation = { relationOperator: RelationOperators.Less, value: parseInt(currentFilter.value) }
+					break;
+				case FilterMatchMode.LESS_THAN_OR_EQUAL_TO:
+					opts.relation = { relationOperator: RelationOperators.LessOrEquals, value: parseInt(currentFilter.value) }
+					break;
+				case FilterMatchMode.GREATER_THAN:
+					opts.relation = { relationOperator: RelationOperators.Greater, value: parseInt(currentFilter.value) }
+					break;
+				case FilterMatchMode.GREATER_THAN_OR_EQUAL_TO:
+					opts.relation = { relationOperator: RelationOperators.GreaterOrEquals, value: parseInt(currentFilter.value) }
+					break;
+				case FilterMatchMode.BETWEEN:
+					const values = (currentFilter.value as unknown) as string[];
+					opts.range = { from: parseInt(values[0]), to: parseInt(values[1]) }
+					break;
+				case FilterMatchMode.DATE_IS:
+				case FilterMatchMode.DATE_IS_NOT:
+				case FilterMatchMode.DATE_BEFORE:
+				case FilterMatchMode.DATE_AFTER:
+					console.log('[UN-IMPLEMENTED] [NotesArchive.constructFiterOptions] Date filters are not implemented');
+				default:
+					console.warn(`[NotesArchive.constructFiterOptions] Unknown filter match mode ${currentFilter.matchMode}`);
+					break;
+			}
+			return { [fieldName]: opts };
+		},
+
+		removeFromVisibleNotes(noteId: string) {
+			this.visibleNotes.splice(this.visibleNotes.findIndex(currNote => currNote.id === noteId), 1); // Remove the note from the archive
 		}
 	}
 });
@@ -288,10 +390,30 @@ export default NotesArchive;
 </script>
 
 <style lang="scss" scoped>
-	.content-container-div {
-		width: 100%;
-		.content-container-div-inner {
-			align-self: center;
-		}
+.filter-input {
+	padding: 0.5rem;
+	&.--text-input {
+		width: 175px;
 	}
+	&.--date-input {
+		width: 175px;
+	}
+}
+.content-container-div {
+	width: 100%;
+	max-width: 20rem;
+	max-height: 16rem;
+	overflow: auto;
+	.content-container-div-inner {
+		align-self: center;
+		text-overflow: ellipsis;
+		word-break: break-word;
+	}
+}
+
+.actions-column {
+	.action-button {
+		margin-right: 12px;
+	}
+}
 </style>
