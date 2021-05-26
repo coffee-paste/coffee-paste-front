@@ -5,6 +5,11 @@ import Login from "../views/Login.vue";
 const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
+    name: "Home",
+    component: Login, // Temporary
+  },
+  {
+    path: "/login",
     name: "Login",
     component: Login,
   },
