@@ -1,26 +1,22 @@
 <template>
-	<div @mousedown="onMouseDown" @mouseup="onMouseUp">
+	<div @mousedown="onMouseDown" @mouseup="onMouseUp" @mouseout="onMouseUp">
 
-		<div class="base-timer">
+		<div class="vectoric-button">
 			<svg viewBox="0 0 42 42" class="doughnut">
-				<g>
-					<circle class="doughnut-hole" :cx="svgCx" :cy="svgCy" :r="svgRadius" fill="#FFF" />
-					<circle class="doughnut-ring" :cx="svgCx" :cy="svgCy" :r="svgRadius" fill="transparent" stroke="#d2d3d4" stroke-width="3" />
-					<circle
-						class="doughnut-segment"
-						fill="transparent"
-						stroke="#ce4b99"
-						stroke-width="3"
-						stroke-dashoffset="0"
-						:stroke-dasharray="relativeFill"
-						:cx="svgCx"
-						:cy="svgCy"
-						:r="svgRadius"
-					/>
-
-					<image x="50%" y="50%" :xlink:href="require('primeicons/raw-svg/trash.svg')" height="200" width="200" />
-				</g>
-			</svg>	
+				<circle class="doughnut-hole" :cx="svgCx" :cy="svgCy" :r="svgRadius" fill="#FFF" />
+				<circle class="doughnut-ring" :cx="svgCx" :cy="svgCy" :r="svgRadius" fill="transparent" stroke="#D2D3D4" stroke-width="3" />
+				<circle
+					class="doughnut-segment"
+					:stroke-dasharray="relativeFill"
+					:cx="svgCx"
+					:cy="svgCy"
+					:r="svgRadius"
+				/>
+				<svg v-if="loadedIconToUse" x="50%" y="50%" class="icon-element">
+					<image :xlink:href="loadedIconToUse" height="27" width="27" transform="translate(-13.5, -13.5)" />
+				</svg>
+				<circle class="doughnut-border" :cx="svgCx" :cy="svgCy" :r="svgRadius + 2.4" fill="transparent" stroke-width="2" />
+			</svg>
 		</div>
 	</div>
 </template>
@@ -39,8 +35,12 @@ const heldButton = defineComponent({
 	props: {
 		holdDurationMs: {
 			type: Number,
-			default: 1000
-		}
+			default: 1500
+		},
+		loadedIconToUse: {
+			type: String,
+			default: undefined
+		},
 	},
 
 	data() {
@@ -56,6 +56,7 @@ const heldButton = defineComponent({
 	},
 
 	computed: {
+
 		timeLeft(): number {
 			return this.holdDurationMs - this.timePassed;
 		},
@@ -65,10 +66,6 @@ const heldButton = defineComponent({
 			const filledPercentage = 100 - remainingPercentage;
 			return `${remainingPercentage} ${filledPercentage}`;
 		},
-
-		doughnutColor() {
-		
-		}
 	},
 
 	methods: {
@@ -110,3 +107,25 @@ export const HeldButton = heldButton;
 export default HeldButton;
 
 </script>
+
+<style lang="scss" scoped>
+
+.vectoric-button {
+
+	.icon-element {
+		overflow: auto;
+	}
+
+	.doughnut-segment {
+		fill: transparent;
+		stroke: var(--pink-400);
+		stroke-width: 3;
+		stroke-dashoffset: 0;
+	}
+
+	.doughnut-border {
+		stroke: var(--blue-500);
+	}
+}
+
+</style>

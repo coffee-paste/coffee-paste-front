@@ -122,14 +122,15 @@
 			<template #body="slotProps">
 				<span class="actions-column">
 					<Button label="Restore"
-						class="p-button-icon-only p-button-raised p-button-rounded p-button-info action-button"
+						:class="restoreButtonClass"
 						icon="pi pi-refresh"
 						@click="onRestoreNoteClick($event, slotProps.data)" />
 
-					<HeldButton label="Delete" 
-						class="p-button-icon-only p-button-raised p-button-rounded p-button-danger action-button"
-						icon="pi pi-trash"
-						@click="onDeleteClick($event, slotProps.data)" />
+					<HeldButton label="Delete"
+						class="action-button"
+						:loadedIconToUse="deleteButtonIcon"
+						@click="onDeleteClick($event, slotProps.data)"
+					/>
 				</span>
 			</template>
 
@@ -146,7 +147,7 @@ import { PageRequest } from '../../infrastructure/generated/api';
 import { ITableLazyParams, TableFilters, TableFilterValue } from '../common/interfaces/table-interfaces';
 import { StandardDateFormatter } from '../../common-constants/date-formatters';
 import { ToastDuration, ToastSeverity } from '@/common-constants/prime-constants';
-import { FilterMatchMode, PrimeIcons } from 'primevue/api';
+import { FilterMatchMode } from 'primevue/api';
 
 import OverlayPanel from 'primevue/overlaypanel';
 import DataTable from 'primevue/datatable';
@@ -213,7 +214,14 @@ const notesArchive = defineComponent({
 				[CONTENT_TEXT]: { value: '', matchMode: FilterMatchMode.CONTAINS },
 				[CREATION_TIME]: { value: '', matchMode: FilterMatchMode.DATE_IS },
 				[LAST_MODIFIED_TIME]: { value: '', matchMode: FilterMatchMode.DATE_IS },
-			} as TableFilters
+			} as TableFilters,
+			isRestoreInProgress: false,
+			deleteButtonIcon: require('primeicons/raw-svg/trash.svg')
+		}
+	},
+	computed: {
+		restoreButtonClass(): string {
+			return `p-button-icon-only p-button-raised p-button-rounded p-button-info action-button${this.isRestoreInProgress ? ' --rotatation-animation' : ''}`;
 		}
 	},
 
@@ -252,7 +260,7 @@ const notesArchive = defineComponent({
 		async fetchData() {
 			try {
 				this.loading = true;
-				console.log(`Request: ${JSON.stringify(this.pagingParams)}`);
+				console.log(`[NotesArchive.fetchData] Sending request payload ${JSON.stringify(this.pagingParams)}`);
 				// Needs optimization- no reason to fetch the same notes over and over- need to cache them UI side
 				const result = await ApiFacade.NotesApi.getBacklogNotesPage(this.pagingParams as PageRequest);
 				this.totalNoteCount = result.totalCount;
@@ -293,8 +301,14 @@ const notesArchive = defineComponent({
 		},
 
 		async onRestoreNoteClick(event: MouseEvent, note: Note): Promise<void> {
-			await ApiFacade.NotesApi.setNotes({ status: NoteStatus.WORKSPACE }, note.id);
-			this.removeFromVisibleNotes(note.id);
+			try {
+				this.isRestoreInProgress = true;
+				await ApiFacade.NotesApi.setNotes({ status: NoteStatus.WORKSPACE }, note.id);
+				this.isRestoreInProgress = false;
+				this.removeFromVisibleNotes(note.id);
+			} catch {
+				this.isRestoreInProgress = false;
+			}
 		},
 
 		async onDeleteClick(event: MouseEvent, note: Note): Promise<void> {
@@ -392,6 +406,7 @@ const notesArchive = defineComponent({
 					const selectedDate = new Date(currentFilter.value);
 					const endOfSelectedDay = new Date(selectedDate.getTime() + MS_PER_DAY);
 					opts.range = { from: selectedDate.getTime(), to: endOfSelectedDay.getTime() };
+					break;
 				case FilterMatchMode.DATE_IS_NOT:
 					console.log('[UN-IMPLEMENTED] [NotesArchive.constructFiterOptions] DATE_IS_NOT filter is not yet implemented');
 					return {};
@@ -444,6 +459,19 @@ export default NotesArchive;
 .actions-column {
 	.action-button {
 		margin-right: 12px;
+
+		&.--rotatation-animation {
+  			animation: rotation 1s infinite linear;
+		}
+	}
+}
+
+@keyframes rotation {
+	from {
+		transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(359deg);
 	}
 }
 </style>

@@ -7,6 +7,7 @@ interface HeldButtonProps {
 	loading?: boolean;
 	loadingIcon?: string;
 	holdDurationMs?: number;
+	loadedIconToUse?: string;
 }
 
 declare class HeldButton {
