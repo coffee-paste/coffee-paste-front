@@ -1,3 +1,5 @@
+import { globalConfig } from "@/components/common/global";
+import { LocalStorageKey, removeLocalStorageItem } from "./local-storage";
 
 /**
  * Gets a generic ProxyHandler who's purpose is to intercept object methods.
@@ -7,13 +9,19 @@
  */
 function getGenericFunctionInterceptor<T extends Function>(): ProxyHandler<T> {
 	const handler: ProxyHandler<T> = {
-		apply(target: T, thisArg: any, argArray: any[]): any {
+		async apply(target: T, thisArg: any, argArray: any[]) {
 			const objName = Object.getPrototypeOf(thisArg)?.constructor?.name || 'N/A';
 			try {
 				console.log(`[${objName}.${target.name}] Invoking ${target.name}`);
-				return target.apply(thisArg, argArray);
+				return await target.apply(thisArg, argArray);
 			} catch (e) {
-				console.log(`[${objName}.${target.name}] Exception intercepted- ${e}`);
+				if(e?.status === 401) {
+					console.log(`[${objName}.${target.name}] User unauthorized, deleting profile & redirecting to login page`);
+					removeLocalStorageItem(LocalStorageKey.Profile);
+					window.location.href = `${globalConfig.BaseDashboardUri}/#/login`;
+				}
+				console.log(`[${objName}.${target.name}] Exception intercepted- ${e?.statusText || e?.message || e}`);
+				throw e;
 			}
 		}
 	}
