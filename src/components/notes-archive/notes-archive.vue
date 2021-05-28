@@ -147,7 +147,6 @@ import { ITableLazyParams, TableFilters, TableFilterValue } from '../common/inte
 import { StandardDateFormatter } from '../../common-constants/date-formatters';
 import { ToastDuration, ToastSeverity } from '@/common-constants/prime-constants';
 import { FilterMatchMode, PrimeIcons } from 'primevue/api';
-import { Duration, DurationUnits } from 'unitsnet-js';
 
 import OverlayPanel from 'primevue/overlaypanel';
 import DataTable from 'primevue/datatable';
@@ -299,24 +298,15 @@ const notesArchive = defineComponent({
 		},
 
 		async onDeleteClick(event: MouseEvent, note: Note): Promise<void> {
-			console.log(`Delete!`);
-			/*
-			 this.$confirm.require({
-				target: event.target,
-				message: `Really delete note '${note.name}'?`,
-				icon: PrimeIcons.EXCLAMATION_TRIANGLE,
-				accept: async () => {
-					await ApiFacade.NotesApi.deleteNotes(note.id);
-					this.$toast.add({
-						severity: ToastSeverity.Info,
-						summary: "Note deleted",
-						detail: `Note '${note.name}' has been deleted`,
-						life: ToastDuration.Long,
-					});
-					this.removeFromVisibleNotes(note.id);
-					console.log(`[NotesArchive.onDeleteClick] Note '${note.name}' (${note.id}) has been deleted`);
-				},
-			});*/
+			await ApiFacade.NotesApi.deleteNotes(note.id);
+			this.$toast.add({
+				severity: ToastSeverity.Info,
+				summary: "Note deleted",
+				detail: `Note '${note.name}' has been deleted`,
+				life: ToastDuration.Long,
+			});
+			this.removeFromVisibleNotes(note.id);
+			console.log(`[NotesArchive.onDeleteClick] Note '${note.name}' (${note.id}) has been deleted`);
 		},
 
 		tableEventToPageRequest(event: ITableLazyParams): PageRequest {
