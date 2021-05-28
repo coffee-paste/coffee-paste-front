@@ -141,6 +141,10 @@ export default defineComponent({
                 this.channelStatus = channelStatus.open;
 
             } catch (error) {
+                // If it's 401, the action already hnalded ny the API proxy
+                if(error?.status === 401) {
+                    return;
+                }
                 this.channelStatus = channelStatus.workspaceFetchFailed;
                 this.$toast.add({
                     severity: ToastSeverity.Error,

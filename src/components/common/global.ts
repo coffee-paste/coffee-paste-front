@@ -1,6 +1,8 @@
 
 class GlobalConfig {
 
+    private baseDashboardUri = `${window.location.protocol}//${window.location.hostname}${location.port ? `:${location.port}` : ""}`;
+
     private channelSession: string;
 
 
@@ -10,6 +12,10 @@ class GlobalConfig {
 
     public set ChannelSession(channelSession: string) {
         this.channelSession = channelSession;
+    }
+
+    public get BaseDashboardUri(): string {
+        return this.baseDashboardUri;
     }
 
 }
