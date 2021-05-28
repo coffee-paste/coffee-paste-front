@@ -1,45 +1,34 @@
 <template>
-	<Button type="button" class="p-px-3" @mousedown="onMouseDown" @mouseup="onMouseUp">
-		<div v-if="loading" class="base-timer">
-			<svg class="base-timer__svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-				<g class="base-timer__circle">
-					<circle class="base-timer__path-elapsed" cx="50" cy="50" r="45"></circle>
-					<path :stroke-dasharray="circleDasharray" class="base-timer__path-remaining" :class="remainingPathColor" d="
-						M 50, 50
-						m -45, 0
-						a 45,45 0 1,0 90,0
-						a 45,45 0 1,0 -90,0
-					" />
+	<div @mousedown="onMouseDown" @mouseup="onMouseUp">
+
+		<div class="base-timer">
+			<svg viewBox="0 0 42 42" class="doughnut">
+				<g>
+					<circle class="doughnut-hole" :cx="svgCx" :cy="svgCy" :r="svgRadius" fill="#FFF" />
+					<circle class="doughnut-ring" :cx="svgCx" :cy="svgCy" :r="svgRadius" fill="transparent" stroke="#d2d3d4" stroke-width="3" />
+					<circle
+						class="doughnut-segment"
+						fill="transparent"
+						stroke="#ce4b99"
+						stroke-width="3"
+						stroke-dashoffset="0"
+						:stroke-dasharray="relativeFill"
+						:cx="svgCx"
+						:cy="svgCy"
+						:r="svgRadius"
+					/>
+
+					<image x="50%" y="50%" :xlink:href="require('primeicons/raw-svg/trash.svg')" height="200" width="200" />
 				</g>
-			</svg>
+			</svg>	
 		</div>
-	</Button>
+	</div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue'
 
 const PRESCISION_TICK_MS = 50;
-
-// A value we had to play with a bit to get right
-const FULL_DASH_ARRAY = 283;
-// When the timer should change from green to orange
-const WARNING_THRESHOLD = 10;
-// When the timer should change from orange to red
-const ALERT_THRESHOLD = 5;// The actual colors to use at the info, warning and alert threshholds
-const COLOR_CODES = {
-	info: {
-		color: "green"
-	},
-	warning: {
-		color: "orange",
-		threshold: WARNING_THRESHOLD
-	},
-	alert: {
-		color: "red",
-		threshold: ALERT_THRESHOLD
-	}
-};
 
 const heldButton = defineComponent({
 
@@ -59,7 +48,10 @@ const heldButton = defineComponent({
 			timerHandle: 0,
 			precisionTimerHandle: 0,
 			timePassed: 0,
-			loading: false
+			loading: false,
+			svgCy: 21,
+			svgCx: 21,
+			svgRadius: 15.91549430918954
 		};
 	},
 
@@ -68,25 +60,14 @@ const heldButton = defineComponent({
 			return this.holdDurationMs - this.timePassed;
 		},
 
-		timeFraction(): number {
-			const rawTimeFraction = this.timeLeft / this.holdDurationMs;
-			return rawTimeFraction - (1 / this.holdDurationMs) * (1 - rawTimeFraction);
+		relativeFill(): string {
+			const remainingPercentage = (this.timeLeft / this.holdDurationMs) * 100;
+			const filledPercentage = 100 - remainingPercentage;
+			return `${remainingPercentage} ${filledPercentage}`;
 		},
 
-		circleDasharray(): string {
-			const res = `${(this.timeFraction * FULL_DASH_ARRAY).toFixed(0)} ${FULL_DASH_ARRAY}`;
-			return res;
-		},
-
-		remainingPathColor() {
-			const { alert, warning, info } = COLOR_CODES;
-			if (this.timeLeft <= alert.threshold) {
-				return alert.color;
-			} else if (this.timeLeft <= warning.threshold) {
-				return warning.color;
-			} else {
-				return info.color;
-			}
+		doughnutColor() {
+		
 		}
 	},
 
