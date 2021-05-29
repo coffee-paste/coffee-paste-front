@@ -8,9 +8,19 @@ import jszip from 'jszip';
 
 //#region Commons
 // Build API based on develop branch, unless it's build for main branch, then use main branch API.
-const ENV_BRANCH  = process.env.GITHUB_REF !== 'main' ? 'develop' : 'main';
+const ENV_BRANCH = process.env.GITHUB_REF !== 'main' ? 'develop' : 'main';
 const SELF_NAME = 'generate-api.js';
 const NODE_BUFFER = 'nodebuffer';
+
+const SWAGGER_GEN_REQUEST_BODY = {
+	"lang": "typescript-fetch",
+	"specURL": `https://raw.githubusercontent.com/coffee-paste/coffee-paste-backend/${ENV_BRANCH}/src/swagger.json`,
+	"type": "CLIENT",
+	"codegenVersion": "V3",
+	"options": {
+		supportsES6: true,
+	}
+};
 //#endregion Commons
 
 
@@ -76,8 +86,8 @@ const PROXY_GETTER_STATEMENT_FORMAT = "\
  * @return {void} 
  */
 function mkdirRecursive(dirPath) {
-	if (fs.existsSync(dirPath)) { 
-		return; 
+	if (fs.existsSync(dirPath)) {
+		return;
 	}
 	const dirname = path.dirname(dirPath)
 	mkdirRecursive(dirname);
@@ -119,7 +129,7 @@ async function createApiTs(jsZip) {
 
 	// Replace 'portableFetch' with regular 'fetch'
 	fileContents = fileContents.replace(PORTABLE_FETCH_REGEX, PORTABLE_FETCH_REWRITE_CONTENT);
-	
+
 	// Replace the BASE_PATH variable with a reference to envFacade.apiPath
 	fileContents = fileContents.replace(BASE_PATH_REGEX, BASE_PATH_REWRITE_CONTENT);
 
@@ -175,29 +185,18 @@ function emitProxiesFile(proxiesToEmit) {
 
 (async () => {
 
-    // 1: fetch last swagger spec
+	// Send a Swagger Generation request
+	const generateClient = {
+		method: 'POST',
+		body: JSON.stringify(SWAGGER_GEN_REQUEST_BODY),
+		headers: { 'Content-Type': 'application/json', 'Accept': 'application/octet-stream' },
+	};
 
-    const body = {
-        "lang": "typescript-fetch",
-        "specURL": `https://raw.githubusercontent.com/coffee-paste/coffee-paste-backend/${ENV_BRANCH}/src/swagger.json`,
-        "type": "CLIENT",
-        "codegenVersion": "V3",
-        "options": {
-			supportsES6: true,	
-        }
-    }
+	const genResponse = await nodeFetch('https://generator3.swagger.io/api/generate', generateClient);
+	const buffer = await genResponse.buffer();
 
-    const generateClient = {
-        method: 'POST',
-        body: JSON.stringify(body),
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/octet-stream' },
-    };
-
-    const genResponse = await nodeFetch('https://generator3.swagger.io/api/generate', generateClient);
-    const buffer = await genResponse.buffer();
-
-    // 2: Extract generated API
-    const generatedZip = await jszip.loadAsync(buffer);
+	// 2: Extract generated API
+	const generatedZip = await jszip.loadAsync(buffer);
 
 	// Make sure the output directory exists
 	mkdirRecursive(SWAGGER_API_OUTPUT_PATH);
@@ -206,10 +205,10 @@ function emitProxiesFile(proxiesToEmit) {
 	await depositFile(generatedZip, CONFIGURATION_TS);
 	await depositFile(generatedZip, CUSTOM_D_TS);
 	await depositFile(generatedZip, INDEX_TS);
-
+	
 	// Modify and drop the api.ts file
 	const apiClassNames = await createApiTs(generatedZip);
-
+	
 	// Emit a Facade class with a getter for every API class in the api.ts file.
 	emitProxiesFile(apiClassNames);
 
