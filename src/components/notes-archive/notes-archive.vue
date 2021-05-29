@@ -127,7 +127,7 @@
 						@click="onRestoreNoteClick($event, slotProps.data)" />
 
 					<HeldButton label="Delete"
-						class="action-button"
+						class="action-button --delete"
 						:loadedIconToUse="deleteButtonIcon"
 						@click="onDeleteClick($event, slotProps.data)"
 					/>
@@ -457,11 +457,18 @@ export default NotesArchive;
 }
 
 .actions-column {
+	display: flex;
+	align-items: center;
+
 	.action-button {
 		margin-right: 12px;
 
 		&.--rotatation-animation {
-  			animation: rotation 1s infinite linear;
+			animation: rotation 1s infinite linear;
+		}
+
+		&.--delete {
+			width: 3.44em;
 		}
 	}
 }
