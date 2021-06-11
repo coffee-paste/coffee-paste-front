@@ -141,7 +141,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { CollectionOperators, FilterOptions, MatchOperators, Note, NoteStatus, PageRequestFilter, PageRequestOrderBy, RelationOperators } from '@/infrastructure/generated/api';
+import { CollectionOperators, FetchPageOptions, FilterOptions, MatchOperators, Note, NoteStatus, PageRequestFilter, PageRequestOrderBy, RelationOperators } from '@/infrastructure/generated/api';
 import { ApiFacade } from '@/infrastructure/generated/proxies/api-proxies';
 import { PageRequest } from '../../infrastructure/generated/api';
 import { ITableLazyParams, TableFilters, TableFilterValue } from '../common/interfaces/table-interfaces';
@@ -262,7 +262,7 @@ const notesArchive = defineComponent({
 				this.loading = true;
 				console.log(`[NotesArchive.fetchData] Sending request payload ${JSON.stringify(this.pagingParams)}`);
 				// Needs optimization- no reason to fetch the same notes over and over- need to cache them UI side
-				const result = await ApiFacade.NotesApi.getBacklogNotesPage(this.pagingParams as PageRequest);
+				const result = await ApiFacade.NotesApi.getNotesPage(this.pagingParams as PageRequest, FetchPageOptions.Backlog );
 				this.totalNoteCount = result.totalCount;
 				this.visibleNotes = result.notes;
 			} catch {
@@ -303,7 +303,7 @@ const notesArchive = defineComponent({
 		async onRestoreNoteClick(event: MouseEvent, note: Note): Promise<void> {
 			try {
 				this.isRestoreInProgress = true;
-				await ApiFacade.NotesApi.setNotes({ status: NoteStatus.WORKSPACE }, note.id);
+				await ApiFacade.NotesApi.setNoteStatus({ status: NoteStatus.WORKSPACE }, note.id);
 				this.isRestoreInProgress = false;
 				this.removeFromVisibleNotes(note.id);
 			} catch {
