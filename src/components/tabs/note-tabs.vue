@@ -158,7 +158,7 @@ const NoteTabsComponent = defineComponent({
                 message: `Really archive note '${noteName}'?`,
                 icon: PrimeIcons.QUESTION,
                 accept: async () => {
-                    await ApiFacade.NotesApi.setNotes({ status: NoteStatus.BACKLOG }, this.contextedTabHeader!.id, globalConfig.ChannelSession);
+                    await ApiFacade.NotesApi.setNoteStatus({ status: NoteStatus.BACKLOG }, this.contextedTabHeader!.id, globalConfig.ChannelSession);
                     this.$toast.add({
                         severity: ToastSeverity.Info,
                         summary: "Note archived",
@@ -202,7 +202,7 @@ const NoteTabsComponent = defineComponent({
                 console.warn(`[NoteTabs.sumbitNoteNameChange] Could not determine target note`);
                 return;
             }
-            await ApiFacade.NotesApi.setNotesName({ name: this.noteRenameBoxValue || 'Unnamed note' }, note.id, globalConfig.ChannelSession);
+            await ApiFacade.NotesApi.setNoteName({ name: this.noteRenameBoxValue || 'Unnamed note' }, note.id, globalConfig.ChannelSession);
             this.$toast.add({
                 severity: ToastSeverity.Info,
                 summary: "Note renamed",
