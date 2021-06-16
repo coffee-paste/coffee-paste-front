@@ -101,5 +101,5 @@ export interface IVueMenuItem {
      * @type {string}
      * @memberof IVueMenuItem
      */
-    class?: string;
+	class?: string;
 }

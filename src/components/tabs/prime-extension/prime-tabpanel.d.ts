@@ -15,6 +15,7 @@ export interface TabPanelProps {
      * @memberof TabPanelProps
      */
     headerContextMenuBehavior?: 'normal' | 'no-event' | 'stop-propagation' | 'stop-immediate-propagation' | 'kill-event';
+	routeAllClicks?: boolean;
 }
 
 declare class TabPanel {
