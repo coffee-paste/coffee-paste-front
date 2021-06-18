@@ -66,7 +66,8 @@
 
 		<Column header="Created"
 			class="base-column"
-			filterMatchMode="dateIs"
+			dataType="date"
+			filterMatchMode="dateAfter"
 			:field="CREATION_TIME"
 			:filterField="CREATION_TIME"
 			:ref="CREATION_TIME"
@@ -91,7 +92,8 @@
 
 		<Column header="Modified"
 			class="base-column"
-			filterMatchMode="dateIs"
+			dataType="date"
+			filterMatchMode="dateAfter"
 			:field="LAST_MODIFIED_TIME"
 			:filterField="LAST_MODIFIED_TIME"
 			:ref="LAST_MODIFIED_TIME"
@@ -146,7 +148,7 @@ import { ApiFacade } from '@/infrastructure/generated/proxies/api-proxies';
 import { PageRequest } from '../../infrastructure/generated/api';
 import { ITableLazyParams, TableFilters, TableFilterValue } from '../common/interfaces/table-interfaces';
 import { StandardDateFormatter } from '../../common-constants/date-formatters';
-import { ToastDuration, ToastSeverity } from '@/common-constants/prime-constants';
+import { ToastDuration, ToastSeverity, dateStringToDate } from '@/common-constants/prime-constants';
 import { FilterMatchMode } from 'primevue/api';
 
 import OverlayPanel from 'primevue/overlaypanel';
@@ -283,7 +285,11 @@ const notesArchive = defineComponent({
 		},
 
 		onSort(event: ITableLazyParams) {
+			// Keep the filters beside, before reseting the paginig
+			const filter = this.pagingParams.filter;
 			this.pagingParams = this.tableEventToPageRequest(event);
+			// Set back the filters
+			this.pagingParams.filter = filter;
 			this.fetchData();
 		},
 
@@ -403,18 +409,20 @@ const notesArchive = defineComponent({
 					opts.range = { from: parseInt(values[0]), to: parseInt(values[1]) }
 					break;
 				case FilterMatchMode.DATE_IS:
-					const selectedDate = new Date(currentFilter.value);
-					const endOfSelectedDay = new Date(selectedDate.getTime() + MS_PER_DAY);
-					opts.range = { from: selectedDate.getTime(), to: endOfSelectedDay.getTime() };
+					const selectedIsDate = dateStringToDate(currentFilter.value);
+					const endOfSelectedIsDay = new Date(selectedIsDate.getTime() + MS_PER_DAY);
+					opts.range = { from: selectedIsDate.getTime(), to: endOfSelectedIsDay.getTime() };
 					break;
 				case FilterMatchMode.DATE_IS_NOT:
-					console.log('[UN-IMPLEMENTED] [NotesArchive.constructFiterOptions] DATE_IS_NOT filter is not yet implemented');
-					return {};
+					const selectedDate = dateStringToDate(currentFilter.value);
+					const endOfSelectedDay = new Date(selectedDate.getTime() + MS_PER_DAY);
+					opts.outRange = { from: selectedDate.getTime(), to: endOfSelectedDay.getTime() };
+					break;
 				case FilterMatchMode.DATE_BEFORE:
-					opts.relation = { relationOperator: RelationOperators.Less, value: parseInt(currentFilter.value) };
+					opts.relation = { relationOperator: RelationOperators.Less, value: dateStringToDate(currentFilter.value).getTime() };
 					break;
 				case FilterMatchMode.DATE_AFTER:
-					opts.relation = { relationOperator: RelationOperators.Greater, value: parseInt(currentFilter.value) };
+					opts.relation = { relationOperator: RelationOperators.Greater, value: dateStringToDate(currentFilter.value).getTime() };
 					break;
 				default:
 					console.warn(`[NotesArchive.constructFiterOptions] Unknown filter match mode ${currentFilter.matchMode}`);

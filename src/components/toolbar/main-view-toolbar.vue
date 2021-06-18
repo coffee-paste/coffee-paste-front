@@ -17,7 +17,8 @@
             </div>
         </template>
     </Menubar>
-	<OverlayPanel ref="archiveOverlay" :baseZIndex="-100">
+    <!-- Off dismissable from outside, otherwaise, click on dropdown will close the modal -->
+	<OverlayPanel ref="archiveOverlay" :baseZIndex="-100" :dismissable="false">
 		<div>
 			<NotesArchive />
 		</div>
