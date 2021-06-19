@@ -37,7 +37,7 @@ export interface ITableLazyParams {
 	first: number;
 	rows: number;
 	sortField: string | null;
-	sortOrder: string | null;
+	sortOrder: number | null;
 	multiSortMeta: any[];
 	filters: { [key: string]: { value: string, matchMode: string } };
 	filterMatchModes: { [key: string]: FilterMatchMode };
