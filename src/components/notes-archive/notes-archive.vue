@@ -331,19 +331,21 @@ const notesArchive = defineComponent({
 
 		tableEventToPageRequest(event: ITableLazyParams): PageRequest {
 			let orderBy: PageRequestOrderBy;
-			let orderEnum = event.sortOrder as 'ASC' | 'DESC';
-			switch (event.sortField) {
+			const sortField = event.sortField as keyof PageRequestOrderBy;
+			let orderEnum = event.sortOrder === 1 ? 'ASC' : 'DESC';
+
+			switch (sortField) {
 				case 'name':
-					orderBy = { [event.sortField]: PageRequestOrderBy.NameEnum[orderEnum] };
+					orderBy = { [sortField]: orderEnum as unknown as PageRequestOrderBy.NameEnum };
 					break;
 				case 'creationTime':
-					orderBy = { [event.sortField]: PageRequestOrderBy.CreationTimeEnum[orderEnum] };
+					orderBy = { [sortField]: orderEnum as unknown as PageRequestOrderBy.CreationTimeEnum };
 					break;
 				case 'lastModifiedTime':
-					orderBy = { [event.sortField]: PageRequestOrderBy.LastModifiedTimeEnum[orderEnum] };
+					orderBy = { [sortField]: orderEnum as unknown as PageRequestOrderBy.LastModifiedTimeEnum };
 					break;
 				case 'contentText':
-					orderBy = { [event.sortField]: PageRequestOrderBy.ContentTextEnum[orderEnum] };
+					orderBy = { [sortField]: orderEnum as unknown as PageRequestOrderBy.ContentTextEnum };
 					break;
 				default:
 					orderBy = DEFAULT_NOTE_ORDER
