@@ -11,6 +11,7 @@
     "prepare": "node scripts/generate-api.js"
   },
   "dependencies": {
+    "base64-js": "^1.5.1",
     "core-js": "^3.6.5",
     "primeicons": "^4.1.0",
     "primevue": "^3.3.5",

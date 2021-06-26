@@ -1,45 +1,45 @@
 <template>
-  <div class="login-page-container">
-    <div class="login-card-container">
-      <div class="login-container">
-        <Card>
-          <template #header>
-            <img alt="coffee paste lopg" src="../assets/coffee-paste.png" />
-          </template>
-          <template #title> Coffee-Paste </template>
-          <template #content>
-            Welcome to the Coffee-Paste workspace.
-            <br />
-            The web-based notepad++ like, but with muscles 😎
-            <br />
-            <br />
-            ☕ IN DEVELOPMENT ☕
-          </template>
-          <template #footer>
-            <div class="login-providers-container">
-              <div v-if="isLogedon" class="login-loader-container">
-                <ProgressSpinner />
-              </div>
-              <div v-else>
-                <div v-for="provider of providers" :key="provider.provider">
-                  <div class="login-provider-container">
-                    <Button @click="login(provider)" type="button" label="Primary" class="p-button-outlined p-button-lg login-button">
-                      <div class="login-provider-icon-container">
-                        <img alt="logo" :src="provider.icon" style="width: 1.4rem" />
-                      </div>
+	<div class="login-page-container">
+		<div class="login-card-container">
+			<div class="login-container">
+				<Card>
+					<template #header>
+						<img alt="coffee paste lopg" src="../assets/coffee-paste.png" />
+					</template>
+					<template #title> Coffee-Paste </template>
+					<template #content>
+						Welcome to the Coffee-Paste workspace.
+						<br />
+						The web-based notepad++ like, but with muscles 😎
+						<br />
+						<br />
+						☕ IN DEVELOPMENT ☕
+					</template>
+					<template #footer>
+						<div class="login-providers-container">
+							<div v-if="isLogedon" class="login-loader-container">
+								<ProgressSpinner />
+							</div>
+							<div v-else>
+								<div v-for="provider of providers" :key="provider.provider">
+									<div class="login-provider-container">
+										<Button @click="login(provider)" type="button" label="Primary" class="p-button-outlined p-button-lg login-button">
+											<div class="login-provider-icon-container">
+												<img alt="logo" :src="provider.icon" style="width: 1.4rem" />
+											</div>
 
-                      <span class="p-ml-2 p-text-bold login-provider-text">Login with
-                        {{ provider.name }}</span>
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </template>
-        </Card>
-      </div>
-    </div>
-  </div>
+											<span class="p-ml-2 p-text-bold login-provider-text">Login with
+												{{ provider.name }}</span>
+										</Button>
+									</div>
+								</div>
+							</div>
+						</div>
+					</template>
+				</Card>
+			</div>
+		</div>
+	</div>
 </template>
 
 <script lang="ts">
@@ -47,146 +47,140 @@ import googleImage from "../assets/providers-logo/google.png";
 import githubImage from "../assets/providers-logo/github.png";
 import gitlabImage from "../assets/providers-logo/gitlab.png";
 import {
-  getLocalStorageItem,
-  setLocalStorageItem,
-  removeLocalStorageItem,
-  LocalStorageKey,
+	getLocalStorageItem,
+	setLocalStorageItem,
+	removeLocalStorageItem,
+	LocalStorageKey,
 } from "../infrastructure/local-storage";
 import { OAuthProvider } from "../infrastructure/symbols";
 import { envFacade } from "../infrastructure/env-facade";
 import { defineComponent } from "vue";
-import {
-  AuthenticationApi,
-  NotesApi,
-  OAuth2Service,
-  User,
-  UsersApi,
-} from "@/infrastructure/generated/api";
+import {OAuth2Service, User } from "@/infrastructure/generated/api";
 import { credentialsManager } from "@/infrastructure/session-management/credential-manager";
 import { globalConfig } from "@/components/common/global";
 import { ApiFacade } from "@/infrastructure/generated/proxies/api-proxies";
 
 const providers: OAuthProvider[] = [
-  {
-    name: "GOOGLE",
-    displayName: "Google",
-    icon: googleImage,
-    oauthUrl: `https://accounts.google.com/o/oauth2/v2/auth?client_id=${envFacade.googleClientId}&response_type=code&scope=https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email&redirect_uri=${globalConfig.BaseDashboardUri}`,
-  },
-  {
-    name: "GITHUB",
-    displayName: "GitHub",
-    icon: githubImage,
-    oauthUrl: `https://github.com/login/oauth/authorize?client_id=${envFacade.githubClientId}`,
-  },
-  {
-    name: "GITLAB",
-    displayName: "GitLab",
-    icon: gitlabImage,
-    oauthUrl: `https://gitlab.com/oauth/authorize?client_id=${envFacade.gitlabClientId}&redirect_uri=${globalConfig.BaseDashboardUri}&response_type=code&state=STATE&scope=read_user`,
-  },
+	{
+		name: "GOOGLE",
+		displayName: "Google",
+		icon: googleImage,
+		oauthUrl: `https://accounts.google.com/o/oauth2/v2/auth?client_id=${envFacade.googleClientId}&response_type=code&scope=https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email&redirect_uri=${globalConfig.BaseDashboardUri}`,
+	},
+	{
+		name: "GITHUB",
+		displayName: "GitHub",
+		icon: githubImage,
+		oauthUrl: `https://github.com/login/oauth/authorize?client_id=${envFacade.githubClientId}`,
+	},
+	{
+		name: "GITLAB",
+		displayName: "GitLab",
+		icon: gitlabImage,
+		oauthUrl: `https://gitlab.com/oauth/authorize?client_id=${envFacade.gitlabClientId}&redirect_uri=${globalConfig.BaseDashboardUri}&response_type=code&state=STATE&scope=read_user`,
+	},
 ];
 
 export default defineComponent({
-  name: "login",
-  data() {
-    return {
-      providers,
-      isLogedon: true,
-    };
-  },
-  created() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get("code");
+	name: "login",
+	data() {
+		return {
+			providers,
+			isLogedon: true,
+		};
+	},
+	created() {
+		const urlParams = new URLSearchParams(window.location.search);
+		const code = urlParams.get("code");
 
-    // If user returned from oauth page, finish login process
-    if (code) {
-      this.auth(code);
-    } else {
-      // If there is a profile, continue to the workspace page (assuming user already logedon)
-      if (
-        getLocalStorageItem<User>(LocalStorageKey.Profile, {
-          itemType: "object",
-        })
-      ) {
-        this.$router.push("/workspace");
-      } else {
-        // Mark user as not logedon if there is no oauth code and no profile detected
-        this.isLogedon = false;
-      }
-    }
-  },
-  methods: {
-    login(provider: OAuthProvider) {
-      // Keep user login oauth provider selection
-      setLocalStorageItem<string>(
-        LocalStorageKey.LoginWith,
-        provider.name,
-        {
-          itemType: "string",
-        }
-      );
-      // Redirect user to the provider
-      window.location.href = provider.oauthUrl;
-    },
-    async auth(code: string) {
-      const providerName = getLocalStorageItem<string>(
-        LocalStorageKey.LoginWith,
-        { itemType: "string" }
-      );
-      // Clean the loginwith cache
-      removeLocalStorageItem<string>(LocalStorageKey.LoginWith);
+		// If user returned from oauth page, finish login process
+		if (code) {
+			this.auth(code);
+		} else {
+			// If there is a profile, continue to the workspace page (assuming user already logedon)
+			if (
+				getLocalStorageItem<User>(LocalStorageKey.Profile, {
+					itemType: "object",
+				})
+			) {
+				this.$router.push("/workspace");
+			} else {
+				// Mark user as not logedon if there is no oauth code and no profile detected
+				this.isLogedon = false;
+			}
+		}
+	},
+	methods: {
+		login(provider: OAuthProvider) {
+			// Keep user login oauth provider selection
+			setLocalStorageItem<string>(
+				LocalStorageKey.LoginWith,
+				provider.name,
+				{
+					itemType: "string",
+				}
+			);
+			// Redirect user to the provider
+			window.location.href = provider.oauthUrl;
+		},
+		async auth(code: string) {
+			const providerName = getLocalStorageItem<string>(
+				LocalStorageKey.LoginWith,
+				{ itemType: "string" }
+			);
+			// Clean the loginwith cache
+			removeLocalStorageItem<string>(LocalStorageKey.LoginWith);
 
-      const provider = providers.find((p) => p.name === providerName);
+			const provider = providers.find((p) => p.name === providerName);
 
-      if (!provider) {
-        window.location.href = globalConfig.BaseDashboardUri;
-        return;
-      }
+			if (!provider) {
+				window.location.href = globalConfig.BaseDashboardUri;
+				return;
+			}
 
-      try {
-        const authResponse = await ApiFacade.AuthenticationApi.authByOAuth({
-          code,
-          redirectUri: globalConfig.BaseDashboardUri,
-          oauth2Service: (provider.name as unknown) as OAuth2Service,
-        });
+			try {
+				const authResponse = await ApiFacade.AuthenticationApi.authByOAuth({
+					code,
+					redirectUri: globalConfig.BaseDashboardUri,
+					oauth2Service: (provider.name as unknown) as OAuth2Service,
+				});
 
-        if (envFacade.isDevMode) {
-          credentialsManager.setToken(
-            authResponse.headers.get("Authentication") || ""
-          );
-        }
+				if (envFacade.isDevMode) {
+					credentialsManager.setToken(
+						authResponse.headers.get("Authentication") || ""
+					);
+				}
 
-        const profile = await ApiFacade.UsersApi.getUserProfile();
+				const profile = await ApiFacade.UsersApi.getUserProfile();
 
-        setLocalStorageItem<User>(LocalStorageKey.Profile, profile, {
-          itemType: "object",
-        });
+				setLocalStorageItem<User>(LocalStorageKey.Profile, profile, {
+					itemType: "object",
+				});
 
-        const workspace = await ApiFacade.NotesApi.getOpenNotes();
+				const workspace = await ApiFacade.NotesApi.getOpenNotes();
 
-        if (workspace.length < 1) {
-          await ApiFacade.NotesApi.createNote({
-            name: "New note",
-          });
-        }
-        this.$toast.add({
-          severity: "success",
-          summary: "Login successfully",
-          life: 3000,
-        });
-        window.location.href = `${globalConfig.BaseDashboardUri}/#/workspace`;
-      } catch (error) {
-        this.$toast.add({
-          severity: "error",
-          summary: "Login failed",
-          detail: "Please try again later",
-          life: 6000,
-        });
-        console.log(error);
-      }
-    },
-  },
+				if (workspace.length < 1) {
+					await ApiFacade.NotesApi.createNote({
+						name: "New note",
+					});
+				}
+				this.$toast.add({
+					severity: "success",
+					summary: "Login successfully",
+					life: 3000,
+				});
+				window.location.href = `${globalConfig.BaseDashboardUri}/#/workspace`;
+			} catch (error) {
+				this.$toast.add({
+					severity: "error",
+					summary: "Login failed",
+					detail: "Please try again later",
+					life: 6000,
+				});
+				console.log(error);
+			}
+		},
+	},
 });
 </script>
 

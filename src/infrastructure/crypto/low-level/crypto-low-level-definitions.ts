@@ -20,10 +20,16 @@ export type AesBlockSize = 128 | 192 | 256;
 
 export type AesGcmTagLength = 32 | 64 | 96 | 104 | 112 | 120 | 128;
 
-export const DEFAULT_AES_GCM_TAG_LENGTH: AesGcmTagLength = 128;
+export const DEFAULT_AES_GCM_TAG_BITS: AesGcmTagLength = 128;
 
-export const DEFAULT_AES_BLOCK: AesBlockSize = 256;
+export const DEFAULT_AES_BLOCK_BITS: AesBlockSize = 256;
 
-export const DEFAULT_AES_IV_LENGTH: number = 96;
+export const DEFAULT_AES_IV_BYTES: number = 96;
+
+//#region PBKDF2
+
+export const DEFAULT_PBKDF2_SALT_BYTES: number = 32;
 
 export const DEFAULT_PBKDF2_ITERATIONS: number = 1000; // Increase after R&D complete!
+
+//#endregion PBKDF2
