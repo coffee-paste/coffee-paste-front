@@ -9,7 +9,7 @@
     "test:e2e": "vue-cli-service test:e2e",
     "lint-vue": "vue-cli-service lint",
     "lint": "eslint . --ext .js,.jsx,.ts,.vue --max-warnings=0",
-    "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings=0 --fix",
+    "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx,.vue --max-warnings=0 --fix",
     "prepare": "node scripts/generate-api.js"
   },
   "dependencies": {

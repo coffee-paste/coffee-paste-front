@@ -57,8 +57,8 @@
 </template>
 
 <script lang="ts">
-import { INoteChangedEventArgs } from './tab-interfaces';
 import { defineComponent } from 'vue';
+import { INoteChangedEventArgs } from './tab-interfaces';
 
 const NoteTabComponent = defineComponent({
 	emits: {

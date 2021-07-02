@@ -46,26 +46,26 @@
 
 <script lang="ts">
 import { PrimeIcons } from 'primevue/api';
-import { INoteChangedEventArgs, INoteTab } from './tab-interfaces';
 import { defineComponent, PropType } from 'vue';
-import { NoteTab } from './single-note-tab.vue';
-import { TabViewEventArgs } from './prime-extension/prime-tabview';
 import { getLocalStorageItem, LocalStorageKey, setLocalStorageItem } from '@/infrastructure/local-storage';
-import { ContextMenuCommandEventArgs, IVueMenuItem } from '../common/interfaces/base-interfaces';
 import { Note, NoteStatus } from '@/infrastructure/generated/api';
 import { generateNewNoteName } from '@/common-constants/note-constants';
 import { ApiFacade } from '@/infrastructure/generated/proxies/api-proxies';
-import { downloadAsText } from '../common/utils';
-import { globalConfig } from '../common/global';
 import { ToastDuration, ToastSeverity } from '@/common-constants/prime-constants';
 
 // An extension of PrimeVue's TabView component. Was missing some events
-import TabView from './prime-extension/prime-tabview';
-import TabPanel, { TabPanelProps } from './prime-extension/prime-tabpanel';
 import ContextMenu from 'primevue/contextmenu';
 import ConfirmPopup from 'primevue/confirmpopup';
 import OverlayPanel from 'primevue/overlaypanel';
 import InputText from 'primevue/inputtext';
+import TabPanel, { TabPanelProps } from './prime-extension/prime-tabpanel';
+import TabView, { TabViewEventArgs } from './prime-extension/prime-tabview';
+import { globalConfig } from '../common/global';
+import { downloadAsText } from '../common/utils';
+import { ContextMenuCommandEventArgs, IVueMenuItem } from '../common/interfaces/base-interfaces';
+
+import { NoteTab } from './single-note-tab.vue';
+import { INoteChangedEventArgs, INoteTab } from './tab-interfaces';
 
 interface INoteTabPanel extends INoteTab, TabPanelProps {
 	// Joins a note's data and a normal tab panel props

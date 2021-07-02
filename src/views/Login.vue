@@ -42,17 +42,17 @@
 </template>
 
 <script lang="ts">
+import { defineComponent } from 'vue';
+import { OAuth2Service, User } from '@/infrastructure/generated/api';
+import { credentialsManager } from '@/infrastructure/session-management/credential-manager';
+import { globalConfig } from '@/components/common/global';
+import { ApiFacade } from '@/infrastructure/generated/proxies/api-proxies';
 import googleImage from '../assets/providers-logo/google.png';
 import githubImage from '../assets/providers-logo/github.png';
 import gitlabImage from '../assets/providers-logo/gitlab.png';
 import { getLocalStorageItem, setLocalStorageItem, removeLocalStorageItem, LocalStorageKey } from '../infrastructure/local-storage';
 import { OAuthProvider } from '../infrastructure/symbols';
 import { envFacade } from '../infrastructure/env-facade';
-import { defineComponent } from 'vue';
-import { OAuth2Service, User } from '@/infrastructure/generated/api';
-import { credentialsManager } from '@/infrastructure/session-management/credential-manager';
-import { globalConfig } from '@/components/common/global';
-import { ApiFacade } from '@/infrastructure/generated/proxies/api-proxies';
 
 const providers: OAuthProvider[] = [
 	{
@@ -92,6 +92,7 @@ export default defineComponent({
 			this.auth(code);
 		} else {
 			// If there is a profile, continue to the workspace page (assuming user already logedon)
+			// eslint-disable-next-line no-lonely-if
 			if (
 				getLocalStorageItem<User>(LocalStorageKey.Profile, {
 					itemType: 'object',
@@ -116,7 +117,7 @@ export default defineComponent({
 		async auth(code: string) {
 			const providerName = getLocalStorageItem<string>(LocalStorageKey.LoginWith, { itemType: 'string' });
 			// Clean the loginwith cache
-			removeLocalStorageItem<string>(LocalStorageKey.LoginWith);
+			removeLocalStorageItem(LocalStorageKey.LoginWith);
 
 			const provider = providers.find((p) => p.name === providerName);
 

@@ -134,9 +134,6 @@ import {
 	RelationOperators,
 } from '@/infrastructure/generated/api';
 import { ApiFacade } from '@/infrastructure/generated/proxies/api-proxies';
-import { PageRequest } from '../../infrastructure/generated/api';
-import { ITableLazyParams, TableFilters, TableFilterValue } from '../common/interfaces/table-interfaces';
-import { StandardDateFormatter } from '../../common-constants/date-formatters';
 import { ToastDuration, ToastSeverity, dateStringToDate } from '@/common-constants/prime-constants';
 import { FilterMatchMode } from 'primevue/api';
 
@@ -145,15 +142,18 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import InputText from 'primevue/inputtext';
 import ConfirmPopup from 'primevue/confirmpopup';
+import { StandardDateFormatter } from '../../common-constants/date-formatters';
+import { ITableLazyParams, TableFilters, TableFilterValue } from '../common/interfaces/table-interfaces';
+import { PageRequest } from '../../infrastructure/generated/api';
 import HeldButton from '../common/held-button/held-button';
 
-//#region Constants
+// #region Constants
 const NAME = 'name';
 const ID = 'id';
 const CONTENT_TEXT = 'contentText';
 const CREATION_TIME = 'creationTime';
 const LAST_MODIFIED_TIME = 'lastModifiedTime';
-//#endregion Constants
+// #endregion Constants
 
 const MS_PER_DAY = 86400000;
 const DEFAULT_NOTE_ORDER: PageRequestOrderBy = { creationTime: PageRequestOrderBy.CreationTimeEnum.DESC };
@@ -193,11 +193,11 @@ const notesArchive = defineComponent({
 			visibleNotes: [] as Note[],
 			totalNoteCount: 0 as number,
 			pagingParams: {} as PageRequest,
-			NAME: NAME,
-			ID: ID,
-			CONTENT_TEXT: CONTENT_TEXT,
-			CREATION_TIME: CREATION_TIME,
-			LAST_MODIFIED_TIME: LAST_MODIFIED_TIME,
+			NAME,
+			ID,
+			CONTENT_TEXT,
+			CREATION_TIME,
+			LAST_MODIFIED_TIME,
 			pageSize: 10,
 			filters: {
 				// Initial filter values for the component
@@ -207,6 +207,7 @@ const notesArchive = defineComponent({
 				[LAST_MODIFIED_TIME]: { value: '', matchMode: FilterMatchMode.DATE_IS },
 			} as TableFilters,
 			isRestoreInProgress: false,
+			// eslint-disable-next-line global-require
 			deleteButtonIcon: require('primeicons/raw-svg/trash.svg'),
 		};
 	},
@@ -274,7 +275,7 @@ const notesArchive = defineComponent({
 
 		onSort(event: ITableLazyParams) {
 			// Keep the filters beside, before reseting the paginig
-			const filter = this.pagingParams.filter;
+			const { filter } = this.pagingParams;
 			this.pagingParams = this.tableEventToPageRequest(event);
 			// Set back the filters
 			this.pagingParams.filter = filter;
@@ -283,6 +284,7 @@ const notesArchive = defineComponent({
 
 		onFilter() {
 			this.pagingParams.filter = {};
+			// eslint-disable-next-line guard-for-in
 			for (const fieldName in this.filters) {
 				this.pagingParams.filter = { ...this.pagingParams.filter, ...this.constructFiterOptions(fieldName as keyof TableFilters) };
 			}
@@ -320,7 +322,7 @@ const notesArchive = defineComponent({
 		tableEventToPageRequest(event: ITableLazyParams): PageRequest {
 			let orderBy: PageRequestOrderBy;
 			const sortField = event.sortField as keyof PageRequestOrderBy;
-			let orderEnum = event.sortOrder === 1 ? 'ASC' : 'DESC';
+			const orderEnum = event.sortOrder === 1 ? 'ASC' : 'DESC';
 
 			switch (sortField) {
 				case 'name':
@@ -383,21 +385,21 @@ const notesArchive = defineComponent({
 					opts.collection = { collectionOperator: CollectionOperators.InCollection, values: currentFilter.value as unknown as string[] };
 					break;
 				case FilterMatchMode.LESS_THAN:
-					opts.relation = { relationOperator: RelationOperators.Less, value: parseInt(currentFilter.value) };
+					opts.relation = { relationOperator: RelationOperators.Less, value: parseInt(currentFilter.value, 10) };
 					break;
 				case FilterMatchMode.LESS_THAN_OR_EQUAL_TO:
-					opts.relation = { relationOperator: RelationOperators.LessOrEquals, value: parseInt(currentFilter.value) };
+					opts.relation = { relationOperator: RelationOperators.LessOrEquals, value: parseInt(currentFilter.value, 10) };
 					break;
 				case FilterMatchMode.GREATER_THAN:
-					opts.relation = { relationOperator: RelationOperators.Greater, value: parseInt(currentFilter.value) };
+					opts.relation = { relationOperator: RelationOperators.Greater, value: parseInt(currentFilter.value, 10) };
 					break;
 				case FilterMatchMode.GREATER_THAN_OR_EQUAL_TO:
-					opts.relation = { relationOperator: RelationOperators.GreaterOrEquals, value: parseInt(currentFilter.value) };
+					opts.relation = { relationOperator: RelationOperators.GreaterOrEquals, value: parseInt(currentFilter.value, 10) };
 					break;
 				case FilterMatchMode.BETWEEN:
 					// eslint-disable-next-line no-case-declarations
 					const rangeValues = currentFilter.value as unknown as string[];
-					opts.range = { from: parseInt(rangeValues[0]), to: parseInt(rangeValues[1]) };
+					opts.range = { from: parseInt(rangeValues[0], 10), to: parseInt(rangeValues[1], 10) };
 					break;
 				case FilterMatchMode.DATE_IS:
 					// eslint-disable-next-line no-case-declarations

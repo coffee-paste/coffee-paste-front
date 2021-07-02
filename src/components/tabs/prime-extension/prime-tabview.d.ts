@@ -1,3 +1,4 @@
+/* eslint-disable import/export */
 import { VNode } from 'vue';
 
 export interface MenubarItem {
@@ -11,7 +12,9 @@ interface TabViewExProps {
 	activeIndex?: number;
 }
 
-export type TabViewEventArgs<T> = { originalEvent: Event; item: T };
+export type TabViewEventArgs = { originalEvent: Event; index: number; item: T };
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export type TabViewEventArgs<T> = { originalEvent: Event; index: number; item: T };
 
 declare class TabViewEx {
 	$props: TabViewExProps;

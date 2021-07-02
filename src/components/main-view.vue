@@ -12,16 +12,16 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
+import { ApiFacade } from '@/infrastructure/generated/proxies/api-proxies';
+import { ToastDuration, ToastSeverity } from '@/common-constants/prime-constants';
+import { generateNewNoteName } from '@/common-constants/note-constants';
+import { NoteUpdateEvent, OutgoingNoteUpdate } from '@/infrastructure/generated/api/channel-spec';
 import { NoteTabs } from './tabs/note-tabs.vue';
 import { INoteChangedEventArgs, INoteTab } from './tabs/tab-interfaces';
 import { MainViewToolbar } from './toolbar/main-view-toolbar.vue';
 import { IStatus, StatusType } from './toolbar/menu-interfaces';
 import { NotesSocket } from '../infrastructure/notes-socket';
 import { globalConfig } from './common/global';
-import { ApiFacade } from '@/infrastructure/generated/proxies/api-proxies';
-import { NoteUpdateEvent, OutgoingNoteUpdate } from '@/infrastructure/generated/api/channel-spec';
-import { ToastDuration, ToastSeverity } from '@/common-constants/prime-constants';
-import { generateNewNoteName } from '@/common-constants/note-constants';
 
 const channelStatus = {
 	unknown: { status: 'Unknown Issue', statusType: StatusType.Error },

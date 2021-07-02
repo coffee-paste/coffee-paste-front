@@ -34,9 +34,6 @@ import { defineComponent, PropType } from 'vue';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
 import OverlayPanel from 'primevue/overlaypanel';
-import NotesArchive from '../notes-archive/notes-archive';
-import { IStatus, StatusType } from './menu-interfaces';
-import { ContextMenuCommandEventArgs, IVueMenuItem } from '../common/interfaces/base-interfaces';
 import { PrimeIcons } from 'primevue/api';
 
 /// <reference path='../../shims-vue.d.ts'/>
@@ -46,12 +43,15 @@ import { AuthenticationApi, User } from '@/infrastructure/generated/api';
 import { credentialsManager } from '@/infrastructure/session-management/credential-manager';
 import { envFacade } from '@/infrastructure/env-facade';
 import { themeGroups, ThemeItem } from '@/components/common/themes';
+import { ContextMenuCommandEventArgs, IVueMenuItem } from '../common/interfaces/base-interfaces';
+import { IStatus, StatusType } from './menu-interfaces';
+import NotesArchive from '../notes-archive/notes-archive';
 import { MenubarItem } from '../tabs/prime-extension/prime-tabview';
 
 /** On theme selecte keep the selection in the local storage ans reload page */
 function onThemeSelected(e: { item: ThemeItem }) {
 	setLocalStorageItem<string>(LocalStorageKey.Theme, e.item.code, { itemType: 'string' });
-	location.reload();
+	window.location.reload();
 }
 
 // Build Menubar menu item from the temes collection
@@ -186,7 +186,7 @@ const MainViewToolbarComponent = defineComponent({
 		selectTheme() {
 			const theme = this.selectedTheme?.code;
 			setLocalStorageItem<string>(LocalStorageKey.Theme, theme, { itemType: 'string' });
-			location.reload();
+			window.location.reload();
 		},
 		async logout() {
 			try {
@@ -196,7 +196,7 @@ const MainViewToolbarComponent = defineComponent({
 				if (envFacade.isDevMode) {
 					credentialsManager.setToken('');
 				}
-				removeLocalStorageItem<User>(LocalStorageKey.Profile);
+				removeLocalStorageItem(LocalStorageKey.Profile);
 				this.$toast.add({
 					severity: 'info',
 					summary: 'Logout successful',

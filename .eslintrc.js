@@ -32,6 +32,7 @@ module.exports = {
 		"no-console": "off",
 		"no-debugger": process.env.NODE_ENV === "production" ? "warn" : "off",
 		"vue/require-valid-default-prop": "off",
+		"import/no-unresolved": "off",
 	},
 	overrides: [
 		{

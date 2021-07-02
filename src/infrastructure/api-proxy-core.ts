@@ -52,16 +52,12 @@ function getObjectMethods(obj: unknown): string[] {
 	});
 }
 
-export function wrapObjectMethods<T extends Record<string, unknown>>(
-	target: T,
-	interceptor: ProxyHandler<() => void>,
-	methodsToWrap: (keyof T)[]
-): Record<string, unknown> {
+export function wrapObjectMethods<T>(target: T, interceptor: ProxyHandler<() => void>, methodsToWrap: (keyof T)[]): T {
 	for (const methodName of methodsToWrap) {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const functions = target as any;
 		// eslint-disable-next-line no-param-reassign
-		functions[methodName] = new Proxy(target[methodName] as Record<string, unknown>, interceptor as unknown as ProxyHandler<Record<string, unknown>>);
+		functions[methodName] = new Proxy(functions[methodName], interceptor as unknown as T);
 	}
 	return target;
 }
@@ -72,7 +68,7 @@ export function wrapObjectMethods<T extends Record<string, unknown>>(
  * @param {*} target The object who's methods are to be wrapped
  * @return {*} The given 'target' object, who's function's have been wrapped with a generic interceptor
  */
-export function wrapAllMethods<T extends Record<string, unknown>>(target: T, interceptor: ProxyHandler<() => void>): Record<string, unknown> {
+export function wrapAllMethods<T>(target: T, interceptor: ProxyHandler<() => void>): T {
 	const methods = getObjectMethods(target);
 	return wrapObjectMethods(target, interceptor, methods as (keyof T)[]);
 }
@@ -85,7 +81,10 @@ export function wrapAllMethods<T extends Record<string, unknown>>(target: T, int
  * @param {TApi} apiObject An API object instance to wrap
  * @return {*} The given 'apiObject' wrapped with a dynamic proxy
  */
-export function createApiProxy<TApi extends Record<string, unknown>>(apiObject: TApi): unknown {
+export function createApiProxy<TApi>(apiObject: TApi): TApi {
 	const stdInterceptor: ProxyHandler<() => unknown> = getGenericFunctionInterceptor();
-	return new Proxy(wrapAllMethods(apiObject, stdInterceptor), stdInterceptor as unknown as ProxyHandler<Record<string, unknown>>);
+	return new Proxy(
+		wrapAllMethods(apiObject, stdInterceptor) as unknown as Record<string, unknown>,
+		stdInterceptor as unknown as ProxyHandler<Record<string, unknown>>
+	) as unknown as TApi;
 }

@@ -110,12 +110,13 @@ export default {
 					event.stopImmediatePropagation();
 					event.preventDefault();
 					break;
+				default:
 			}
 		},
 		updateInkBar() {
-			let tabHeader = this.$refs.nav.children[this.d_activeIndex];
-			this.$refs.inkbar.style.width = DomHandler.getWidth(tabHeader) + 'px';
-			this.$refs.inkbar.style.left = DomHandler.getOffset(tabHeader).left - DomHandler.getOffset(this.$refs.nav).left + 'px';
+			const tabHeader = this.$refs.nav.children[this.d_activeIndex];
+			this.$refs.inkbar.style.width = `${DomHandler.getWidth(tabHeader)}px`;
+			this.$refs.inkbar.style.left = `${DomHandler.getOffset(tabHeader).left - DomHandler.getOffset(this.$refs.nav).left}px`;
 		},
 		getKey(tab, i) {
 			return tab.props && tab.props.header ? tab.props.header : i;
