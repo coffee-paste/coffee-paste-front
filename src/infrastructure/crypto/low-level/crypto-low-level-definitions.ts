@@ -26,10 +26,21 @@ export const DEFAULT_AES_BLOCK_BITS: AesBlockSize = 256;
 
 export const DEFAULT_AES_IV_BYTES: number = 96;
 
+export const DEFAULT_AES_GCM_KEY_USAGES: KeyUsage[] = ['encrypt', 'decrypt', 'wrapKey', 'unwrapKey'];
+
 //#region PBKDF2
 
 export const DEFAULT_PBKDF2_SALT_BYTES: number = 32;
 
 export const DEFAULT_PBKDF2_ITERATIONS: number = 1000; // Increase after R&D complete!
 
+export const DEFAULT_PBKDF2_KEY_USAGES: KeyUsage[] = ['deriveKey', 'deriveBits'];
+
 //#endregion PBKDF2
+
+export interface IAesGcmEncryptedBlob {
+	b64EncryptedData: string;
+	b64Iv: string;
+	b64AdditionalData?: string;
+}
+

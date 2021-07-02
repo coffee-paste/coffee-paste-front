@@ -1,3 +1,4 @@
+import { fromByteArray, toByteArray } from "base64-js";
 import {
 	DEFAULT_PBKDF2_ITERATIONS,
 	BinaryData, SubtleCryptoAlgorithm,
@@ -6,7 +7,11 @@ import {
 	DEFAULT_AES_BLOCK_BITS,
 	AesGcmTagLength,
 	DEFAULT_AES_GCM_TAG_BITS,
-	DEFAULT_PBKDF2_SALT_BYTES
+	DEFAULT_PBKDF2_SALT_BYTES,
+	DEFAULT_PBKDF2_KEY_USAGES,
+	DEFAULT_AES_GCM_KEY_USAGES,
+	IAesGcmEncryptedBlob,
+	DEFAULT_AES_IV_BYTES
 } from "./crypto-low-level-definitions";
 
 const Subtle = window?.crypto.subtle;
@@ -24,23 +29,41 @@ export function getPbkdf2Salt(): Uint8Array {
 }
 
 export async function generateAesGcmMasterKey(exportable: boolean, length: AesBlockSize = DEFAULT_AES_BLOCK_BITS): Promise<CryptoKey> {
-	return await generateAesGcmKey(exportable, length, ['encrypt', 'decrypt', 'wrapKey', 'unwrapKey']);
+	return await generateAesGcmKey(exportable, length);
 }
 
 export async function generateAesGcmKey(
 	exportable: boolean,
 	length: AesBlockSize = DEFAULT_AES_BLOCK_BITS,
-	keyUsages: KeyUsage[]
+	keyUsages: KeyUsage[] = DEFAULT_AES_GCM_KEY_USAGES
 ): Promise<CryptoKey> {
 
 	return await Subtle.generateKey({ length, name: 'AES-GCM' }, exportable, keyUsages);
 }
 
-export async function importStringAsKey(toImport: string, keyUsage: KeyUsage[] = ['deriveKey', 'deriveBits']) {
+export async function importKeyForPbkdf2(toImport: BinaryData, keyUsage: KeyUsage[] = DEFAULT_PBKDF2_KEY_USAGES) {
 	return await Subtle.importKey(
-		"raw",
-		new TextEncoder().encode(toImport),
-		SubtleCryptoAlgorithm.PBKDF2,
+		'raw',
+		toImport,
+		{ name: SubtleCryptoAlgorithm.PBKDF2 },
+		false,
+		keyUsage
+	);
+}
+
+export async function importBase64KeyForPbkdf2(toImport: string, keyUsage: KeyUsage[] = DEFAULT_PBKDF2_KEY_USAGES) {
+	return await importKeyForPbkdf2(toByteArray(toImport), keyUsage);
+}
+
+export async function importStringKeyForPbkdf2(toImport: string, keyUsage: KeyUsage[] = DEFAULT_PBKDF2_KEY_USAGES) {
+	return await importKeyForPbkdf2(new TextEncoder().encode(toImport), keyUsage);
+}
+
+export async function importBase64AesGcmKey(toImport: string, exportable: boolean, keyUsage = DEFAULT_AES_GCM_KEY_USAGES): Promise<CryptoKey> {
+	return await Subtle.importKey(
+		'raw',
+		toByteArray(toImport),
+		{ name: SubtleCryptoAlgorithm.AesGcm },
 		false,
 		keyUsage
 	);
@@ -51,10 +74,11 @@ export async function deriveAesGcmKey(
 	salt: BinaryData,
 	exportable: boolean = false,
 	blockSize: AesBlockSize = DEFAULT_AES_BLOCK_BITS,
-	keyUsages: KeyUsage[] = ['encrypt', 'decrypt', 'wrapKey', 'unwrapKey'],
+	keyUsages: KeyUsage[] = DEFAULT_AES_GCM_KEY_USAGES,
 	hash: ShaType = ShaType.Sha512,
 	iterations: number = DEFAULT_PBKDF2_ITERATIONS
 ): Promise<CryptoKey> {
+
 	const opts: Pbkdf2Params = {
 		hash,
 		salt,
@@ -64,7 +88,7 @@ export async function deriveAesGcmKey(
 
 	return await Subtle.deriveKey(
 		opts,
-		await importStringAsKey(password),
+		await importStringKeyForPbkdf2(password),
 		{ name: SubtleCryptoAlgorithm.AesGcm, length: blockSize },
 		exportable,
 		keyUsages
@@ -75,10 +99,10 @@ export async function deriveAesGcmSubKey(
 	masterKey: CryptoKey,
 	salt: BinaryData,
 	info: BinaryData,
-	exportable: boolean = true,
+	exportable: boolean = false,
 	hash: ShaType = ShaType.Sha512,
 	targetBlockSize: AesBlockSize = DEFAULT_AES_BLOCK_BITS,
-	keyUsages: KeyUsage[] = ['encrypt', 'decrypt']
+	keyUsages: KeyUsage[] = DEFAULT_AES_GCM_KEY_USAGES
 ) {
 
 	const opts: HkdfParams = {
@@ -100,10 +124,14 @@ export async function deriveAesGcmSubKey(
 export async function encryptAesGcm(
 	key: CryptoKey,
 	data: BinaryData,
-	iv: BinaryData,
 	additionalData?: BinaryData,
+	iv?: BinaryData,
 	tagLength: AesGcmTagLength = DEFAULT_AES_GCM_TAG_BITS
-): Promise<ArrayBuffer> {
+): Promise<IAesGcmEncryptedBlob> {
+
+	if (!iv) {
+		iv = getSecureRandomBytes(DEFAULT_AES_IV_BYTES);
+	}
 
 	const opts: AesGcmParams = {
 		name: SubtleCryptoAlgorithm.AesGcm,
@@ -115,40 +143,42 @@ export async function encryptAesGcm(
 		opts.additionalData = additionalData;
 	}
 
-	return await Subtle.encrypt(opts, key, data);
+	return {
+		b64EncryptedData: fromByteArray(new Uint8Array(await Subtle.encrypt(opts, key, data))),
+		b64AdditionalData: additionalData ? fromByteArray(additionalData as Uint8Array) : undefined,
+		b64Iv: fromByteArray(iv as Uint8Array)
+	};
 }
 
 export async function decryptAesGcm(
+	encryptedKeyBlob: IAesGcmEncryptedBlob,
 	key: CryptoKey,
-	data: BinaryData,
-	iv: BinaryData,
-	additionalData?: BinaryData,
 	tagLength: AesGcmTagLength = DEFAULT_AES_GCM_TAG_BITS
 
 ): Promise<ArrayBuffer> {
 
 	const opts: AesGcmParams = {
 		name: SubtleCryptoAlgorithm.AesGcm,
-		iv,
+		iv: toByteArray(encryptedKeyBlob.b64Iv),
 		tagLength
 	};
 
-	if (additionalData) {
-		opts.additionalData = additionalData;
+	if (encryptedKeyBlob.b64AdditionalData) {
+		opts.additionalData = toByteArray(encryptedKeyBlob.b64AdditionalData);
 	}
 
-	return await Subtle.decrypt(opts, key, data);
+	return await Subtle.decrypt(opts, key, toByteArray(encryptedKeyBlob.b64EncryptedData));
 }
 
-export async function exportJwk(
+export async function exportJwkAesGcm(
 	keyToExport: CryptoKey,
 	kek: CryptoKey,
-	iv: BinaryData,
 	additionalData?: BinaryData,
 	tagLength: AesGcmTagLength = DEFAULT_AES_GCM_TAG_BITS
 
-): Promise<ArrayBuffer> {
+): Promise<IAesGcmEncryptedBlob> {
 
+	const iv = getSecureRandomBytes(DEFAULT_AES_IV_BYTES);
 	const wrapAlgorithm: AesGcmParams = {
 		name: SubtleCryptoAlgorithm.AesGcm,
 		iv,
@@ -159,10 +189,45 @@ export async function exportJwk(
 		wrapAlgorithm.additionalData = additionalData;
 	}
 
-	return await Subtle.wrapKey(
+	const binaryJwk = await Subtle.wrapKey(
 		'jwk',
 		keyToExport,
 		kek,
 		wrapAlgorithm
+	);
+
+	return {
+		b64Iv: fromByteArray(iv),
+		b64EncryptedData: fromByteArray(new Uint8Array(binaryJwk)),
+		b64AdditionalData: additionalData ? fromByteArray(additionalData as Uint8Array) : undefined
+	};
+}
+
+export async function importJwkAesGcm(
+	encryptedKeyBlob: IAesGcmEncryptedBlob,
+	kek: CryptoKey,
+	exportable: boolean = false,
+	keyUsages: KeyUsage[] = DEFAULT_AES_GCM_KEY_USAGES,
+	tagLength: AesGcmTagLength = DEFAULT_AES_GCM_TAG_BITS
+): Promise<CryptoKey> {
+
+	const wrapAlgorithm: AesGcmParams = {
+		name: SubtleCryptoAlgorithm.AesGcm,
+		iv: toByteArray(encryptedKeyBlob.b64Iv),
+		tagLength
+	};
+
+	if (encryptedKeyBlob.b64AdditionalData) {
+		wrapAlgorithm.additionalData = toByteArray(encryptedKeyBlob.b64AdditionalData);
+	}
+
+	return await Subtle.unwrapKey(
+		'jwk',
+		toByteArray(encryptedKeyBlob.b64EncryptedData),
+		kek,
+		wrapAlgorithm,
+		{ name: SubtleCryptoAlgorithm.AesGcm },
+		exportable,
+		keyUsages
 	);
 }

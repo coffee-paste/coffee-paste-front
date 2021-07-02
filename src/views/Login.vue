@@ -59,6 +59,7 @@ import {OAuth2Service, User } from "@/infrastructure/generated/api";
 import { credentialsManager } from "@/infrastructure/session-management/credential-manager";
 import { globalConfig } from "@/components/common/global";
 import { ApiFacade } from "@/infrastructure/generated/proxies/api-proxies";
+import { CryptoCore } from "@/infrastructure/crypto/core/aes-gcm/crypto-core-aes-gcm";
 
 const providers: OAuthProvider[] = [
 	{
@@ -111,7 +112,11 @@ export default defineComponent({
 		}
 	},
 	methods: {
-		login(provider: OAuthProvider) {
+		async login(provider: OAuthProvider) {
+
+			await new CryptoCore().createAndStoreEncryptedKey('passw00rd', 'LGfZOnKwrOIAmIgrkmm6eKt8j3ovxSedqiYaFMo7XDo=');
+			debugger;
+
 			// Keep user login oauth provider selection
 			setLocalStorageItem<string>(
 				LocalStorageKey.LoginWith,

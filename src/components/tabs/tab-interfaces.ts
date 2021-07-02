@@ -4,7 +4,7 @@ export interface INoteChangedEventArgs {
     contentText: string;
 }
 
-export interface INoteTab {
+export interface INote {
     id: string;
     name?: string;
     contentHTML?: string;
