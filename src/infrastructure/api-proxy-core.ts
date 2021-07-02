@@ -1,21 +1,22 @@
-import { globalConfig } from "@/components/common/global";
-import { LocalStorageKey, removeLocalStorageItem } from "./local-storage";
+import { globalConfig } from '@/components/common/global';
+import { LocalStorageKey, removeLocalStorageItem } from './local-storage';
 
 /**
  * Gets a generic ProxyHandler who's purpose is to intercept object methods.
- * 
+ *
  * @template T The type of object being proxied
  * @return {*}  {ProxyHandler<T>}
  */
-function getGenericFunctionInterceptor<T extends Function>(): ProxyHandler<T> {
+function getGenericFunctionInterceptor<T extends () => void>(): ProxyHandler<T> {
 	const handler: ProxyHandler<T> = {
-		async apply(target: T, thisArg: any, argArray: any[]) {
+		async apply(target: T, thisArg: unknown, argArray: []) {
 			const objName = Object.getPrototypeOf(thisArg)?.constructor?.name || 'N/A';
 			try {
 				console.log(`[${objName}.${target.name}] Invoking ${target.name}`);
+				// eslint-disable-next-line @typescript-eslint/return-await
 				return await target.apply(thisArg, argArray);
 			} catch (e) {
-				if(e?.status === 401) {
+				if (e?.status === 401) {
 					console.log(`[${objName}.${target.name}] User unauthorized, deleting profile & redirecting to login page`);
 					removeLocalStorageItem(LocalStorageKey.Profile);
 					window.location.href = `${globalConfig.BaseDashboardUri}/#/login`;
@@ -23,11 +24,10 @@ function getGenericFunctionInterceptor<T extends Function>(): ProxyHandler<T> {
 				console.log(`[${objName}.${target.name}] Exception intercepted- ${e?.statusText || e?.message || e}`);
 				throw e;
 			}
-		}
-	}
+		},
+	};
 	return handler;
 }
-
 
 /**
  * Gets an array of an ApiObject's functions.
@@ -37,19 +37,33 @@ function getGenericFunctionInterceptor<T extends Function>(): ProxyHandler<T> {
  * @param {object} obj The API object to get the methods of
  * @return {*}  {string[]}
  */
-function getObjectMethods(obj: object): string[] {
-	let properties = new Set<string>()
-	let currentObj = obj
+function getObjectMethods(obj: unknown): string[] {
+	const properties = new Set<string>();
+	let currentObj = obj;
 	for (let i = 0; i < 2; i++) {
-		Object.getOwnPropertyNames(currentObj).map(item => properties.add(item));
+		Object.getOwnPropertyNames(currentObj).map((item) => properties.add(item));
 		currentObj = Object.getPrototypeOf(currentObj);
 	}
 
 	// Filter all props and return only relevant functions
-	return [...properties.keys()].filter(item => {
-		const propType = typeof (obj as any)[item]
+	return [...properties.keys()].filter((item) => {
+		const propType = typeof (obj as Record<string, unknown>)[item];
 		return propType === 'function' && item !== 'fetch' && item !== 'constructor';
 	});
+}
+
+export function wrapObjectMethods<T extends Record<string, unknown>>(
+	target: T,
+	interceptor: ProxyHandler<() => void>,
+	methodsToWrap: (keyof T)[]
+): Record<string, unknown> {
+	for (const methodName of methodsToWrap) {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const functions = target as any;
+		// eslint-disable-next-line no-param-reassign
+		functions[methodName] = new Proxy(target[methodName] as Record<string, unknown>, interceptor as unknown as ProxyHandler<Record<string, unknown>>);
+	}
+	return target;
 }
 
 /**
@@ -58,16 +72,9 @@ function getObjectMethods(obj: object): string[] {
  * @param {*} target The object who's methods are to be wrapped
  * @return {*} The given 'target' object, who's function's have been wrapped with a generic interceptor
  */
-export function wrapAllMethods<T extends object>(target: T, interceptor: ProxyHandler<Function>): any {
+export function wrapAllMethods<T extends Record<string, unknown>>(target: T, interceptor: ProxyHandler<() => void>): Record<string, unknown> {
 	const methods = getObjectMethods(target);
 	return wrapObjectMethods(target, interceptor, methods as (keyof T)[]);
-}
-
-export function wrapObjectMethods<T extends object>(target: T, interceptor: ProxyHandler<Function>, methodsToWrap: (keyof T)[]): any {
-	for (const methodName of methodsToWrap) {
-		(target as any)[methodName] = new Proxy((target as any)[methodName], interceptor);
-	}
-	return target;
 }
 
 /**
@@ -78,7 +85,7 @@ export function wrapObjectMethods<T extends object>(target: T, interceptor: Prox
  * @param {TApi} apiObject An API object instance to wrap
  * @return {*} The given 'apiObject' wrapped with a dynamic proxy
  */
-export function createApiProxy<TApi extends object>(apiObject: TApi): any {
-	const stdInterceptor: ProxyHandler<Function> = getGenericFunctionInterceptor();
-	return new Proxy(wrapAllMethods(apiObject, stdInterceptor), stdInterceptor);
+export function createApiProxy<TApi extends Record<string, unknown>>(apiObject: TApi): unknown {
+	const stdInterceptor: ProxyHandler<() => unknown> = getGenericFunctionInterceptor();
+	return new Proxy(wrapAllMethods(apiObject, stdInterceptor), stdInterceptor as unknown as ProxyHandler<Record<string, unknown>>);
 }

@@ -1,11 +1,11 @@
-import { Note } from "@/infrastructure/generated/api";
+import { Note } from '@/infrastructure/generated/api';
 
 enum NoteStringPrefix {
-    NewNote = 'New note',
+	NewNote = 'New note',
 }
 
 function formatNewNoteName(newNoteIndex: number) {
-    return `${NoteStringPrefix.NewNote} (${newNoteIndex})`;
+	return `${NoteStringPrefix.NewNote} (${newNoteIndex})`;
 }
 
 /**
@@ -14,16 +14,18 @@ function formatNewNoteName(newNoteIndex: number) {
  * @returns The suggested new note name.
  */
 export function generateNewNoteName(notes: Note[]): string {
+	// Filter out all notes that not match prefix, then map to names to string array, and sort by string value
+	const relevantNames = notes
+		.filter((n) => n.name?.startsWith(NoteStringPrefix.NewNote))
+		.map((n) => n.name)
+		.sort();
 
-    // Filter out all notes that not match prefix, then map to names to string array, and sort by string value
-    const relevantNames = notes.filter(n => n.name?.startsWith(NoteStringPrefix.NewNote)).map(n => n.name).sort();
+	let newNoteIndex = 1;
 
-    let newNoteIndex = 1;
+	// Increase index till found not in use index;
+	while (relevantNames.includes(formatNewNoteName(newNoteIndex))) {
+		newNoteIndex++;
+	}
 
-    // Increase index till found not in use index;
-    while (relevantNames.includes(formatNewNoteName(newNoteIndex))) {
-        newNoteIndex++;
-    }
-
-    return formatNewNoteName(newNoteIndex);
+	return formatNewNoteName(newNoteIndex);
 }

@@ -1,32 +1,23 @@
 <template>
 	<div @mousedown="onMouseDown" @mouseup="onMouseUp" @mouseout="onMouseUp">
-
 		<div class="vectoric-button">
 			<svg viewBox="0 0 42 42" class="doughnut">
 				<circle class="doughnut-hole" :cx="svgCx" :cy="svgCy" :r="svgRadius" />
 				<circle class="doughnut-ring" :cx="svgCx" :cy="svgCy" :r="svgRadius" :stroke="doughnutRingColor" />
-				<circle
-					class="doughnut-segment"
-					:stroke="doughnutSegmentColor"
-					:stroke-dasharray="relativeFill"
-					:cx="svgCx"
-					:cy="svgCy"
-					:r="svgRadius"
-				/>
+				<circle class="doughnut-segment" :stroke="doughnutSegmentColor" :stroke-dasharray="relativeFill" :cx="svgCx" :cy="svgCy" :r="svgRadius" />
 
 				<svg v-if="loadedIconToUse" x="50%" y="50%" class="icon-element">
 					<image :xlink:href="loadedIconToUse" height="27" width="27" transform="translate(-13.5, -13.5)" />
 				</svg>
 
 				<circle class="doughnut-border" :stroke="doughnutBorderColor" :cx="svgCx" :cy="svgCy" :r="svgRadius + 2.4" />
-
 			</svg>
 		</div>
 	</div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
+import { defineComponent } from 'vue';
 
 const PRESCISION_TICK_MS = 50;
 
@@ -36,9 +27,8 @@ let DEFAULT_COMPLETED_PATH_COLOR: string;
 let DEFAULT_BORDER_COLOR: string;
 
 const heldButton = defineComponent({
-
 	emits: {
-		click: (event: MouseEvent) => !!event
+		click: (event: MouseEvent) => !!event,
 	},
 
 	beforeMount(): void {
@@ -52,24 +42,24 @@ const heldButton = defineComponent({
 	props: {
 		holdDurationMs: {
 			type: Number,
-			default: 1500
+			default: 1500,
 		},
 		loadedIconToUse: {
 			type: String,
-			default: undefined
+			default: undefined,
 		},
 		completedPathColor: {
 			type: String,
-			default: undefined!  // '#D2D3D4'
+			default: undefined, // '#D2D3D4'
 		},
 		remainingPathColor: {
 			type: String,
-			default: undefined!
+			default: undefined,
 		},
 		borderColor: {
 			type: String,
-			default: undefined!
-		}
+			default: undefined,
+		},
 	},
 
 	data() {
@@ -80,12 +70,11 @@ const heldButton = defineComponent({
 			loading: false,
 			svgCy: 21,
 			svgCx: 21,
-			svgRadius: 15.91549430918954
+			svgRadius: 15.91549430918954,
 		};
 	},
 
 	computed: {
-
 		timeLeft(): number {
 			return this.holdDurationMs - this.timePassed;
 		},
@@ -97,26 +86,28 @@ const heldButton = defineComponent({
 		},
 
 		doughnutRingColor(): string {
-			return this.completedPathColor || DEFAULT_COMPLETED_PATH_COLOR!; // '#D2D3D4' is a decent default as well
+			return this.completedPathColor || DEFAULT_COMPLETED_PATH_COLOR; // '#D2D3D4' is a decent default as well
 		},
 
 		doughnutSegmentColor(): string {
-			return this.remainingPathColor || DEFAULT_REMAINING_PATH_COLOR!;
+			return this.remainingPathColor || DEFAULT_REMAINING_PATH_COLOR;
 		},
 
 		doughnutBorderColor(): string {
-			return this.borderColor || DEFAULT_BORDER_COLOR!;
-		}
+			return this.borderColor || DEFAULT_BORDER_COLOR;
+		},
 	},
 
 	methods: {
-
 		onMouseDown(event: MouseEvent): void {
-			this.timerHandle = setInterval(() => { this.onDurationElapsed(event) }, this.holdDurationMs);
+			this.timerHandle = setInterval(() => {
+				this.onDurationElapsed(event);
+			}, this.holdDurationMs);
 			this.precisionTimerHandle = setInterval(this.onPresicionTick, PRESCISION_TICK_MS);
 			this.loading = true;
 		},
 
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		onMouseUp(event: MouseEvent): void {
 			this.stopTimers();
 			this.loading = false;
@@ -136,7 +127,7 @@ const heldButton = defineComponent({
 			clearInterval(this.timerHandle);
 			clearInterval(this.precisionTimerHandle);
 			this.timePassed = 0;
-		}
+		},
 	},
 
 	unmounted(): void {
@@ -146,7 +137,6 @@ const heldButton = defineComponent({
 
 export const HeldButton = heldButton;
 export default HeldButton;
-
 </script>
 
 <style lang="scss" scoped>
