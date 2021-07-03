@@ -111,7 +111,7 @@ export default defineComponent({
 		}
 	},
 	methods: {
-		async login(provider: OAuthProvider) {
+		login(provider: OAuthProvider) {
 
 			// Keep user login oauth provider selection
 			setLocalStorageItem<string>(
