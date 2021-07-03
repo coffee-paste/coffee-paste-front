@@ -4,9 +4,14 @@ export interface INoteChangedEventArgs {
     contentText: string;
 }
 
-export interface INote {
+export interface INoteTab {
     id: string;
     name?: string;
     contentHTML?: string;
     lastNoteFeedUpdate?: string;
+}
+
+export enum NoteEncryption {
+	None,
+	AesGcm
 }
