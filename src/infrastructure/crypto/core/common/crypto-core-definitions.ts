@@ -1,4 +1,4 @@
-import { LocalStorageKey } from "@/infrastructure/local-storage";
+import { LocalStorageKey } from '@/infrastructure/local-storage';
 
 /**
  * Describes a high level cryptographic services provider
@@ -7,7 +7,6 @@ import { LocalStorageKey } from "@/infrastructure/local-storage";
  * @interface ICryptoCore
  */
 export interface ICryptoCore {
-
 	/**
 	 * Indicates whether the instance is ready for use (i.e. a master key has been loaded)
 	 *
@@ -54,14 +53,14 @@ export interface ICryptoCore {
 	/**
 	 *  Create a sub-key from the loaded master key
 	 *
-	 * @param {string} saltB64 The Base64 encoded salt for the operation 
+	 * @param {string} saltB64 The Base64 encoded salt for the operation
 	 * @param {string} contextPermutation A context permuter. Used to deterministically generate a sub-key in a reproducible way
 	 * @param {('base64' | 'text')} contextType The `contextPermutation` type- Base64 or plain string
 	 * @return {*} {Promise<CryptoKey>} A promise, that, when resolved, contains a `CryptoKey` object wrapping the new sub-key
 	 * @memberof ICryptoCore
 	 */
 	createSubKey(saltB64: string, contextPermutation: string, contextType: 'base64' | 'text'): Promise<CryptoKey>;
-	
+
 	/**
 	 * Encrypts the given text using the given key
 	 *
@@ -70,7 +69,7 @@ export interface ICryptoCore {
 	 * @return {*} {Promise<string>} A promise, that, when resolved, contains a stringified encrypted data blob
 	 * @memberof ICryptoCore
 	 */
-	encryptText(key: CryptoKey,	text: string): Promise<string>;
+	encryptText(key: CryptoKey, text: string): Promise<string>;
 
 	/**
 	 * Decrypts the given blob using the given key

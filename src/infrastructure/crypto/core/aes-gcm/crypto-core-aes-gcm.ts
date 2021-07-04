@@ -1,8 +1,8 @@
-import { getLocalStorageItem, LocalStorageKey, setLocalStorageItem } from "@/infrastructure/local-storage";
-import { IAesGcmEncryptedBlob } from "../../low-level/crypto-low-level-definitions";
-import { ICryptoCore } from "../common/crypto-core-definitions";
+import { getLocalStorageItem, LocalStorageKey, setLocalStorageItem } from '@/infrastructure/local-storage';
 import { toByteArray } from 'base64-js';
-import { Encryption } from "@/infrastructure/generated/api";
+import { Encryption } from '@/infrastructure/generated/api';
+import { IAesGcmEncryptedBlob } from '../../low-level/crypto-low-level-definitions';
+import { ICryptoCore } from '../common/crypto-core-definitions';
 import {
 	decryptAesGcm,
 	deriveAesGcmKey,
@@ -12,24 +12,22 @@ import {
 	getPbkdf2Salt,
 	importBase64AesGcmKey,
 	importJwkAesGcm,
-	isCryptographyAvailable
-} from "../../low-level/crypto-low-level";
-
+	isCryptographyAvailable,
+} from '../../low-level/crypto-low-level';
 
 /**
  * A CryptoCore designed to work with PBKDF2-AES-GCM
- * 
+ *
  * @description Refer to the documentation for `ICryptoCore` for more information
  *
  * @class CryptoCoreAesGcm
  * @implements {ICryptoCore}
  */
 class CryptoCoreAesGcm implements ICryptoCore {
-
-	private _masterKey: CryptoKey;
+	private masterKey: CryptoKey;
 
 	public get isReady(): boolean {
-		return !!this._masterKey;
+		return !!this.masterKey;
 	}
 
 	public get isSupported(): boolean {
@@ -58,9 +56,8 @@ class CryptoCoreAesGcm implements ICryptoCore {
 				return false;
 			}
 			const kek = await importBase64AesGcmKey(serverKekB64, false);
-			this._masterKey = await importJwkAesGcm(encryptedKeyBlob, kek)
+			this.masterKey = await importJwkAesGcm(encryptedKeyBlob, kek);
 			return true;
-
 		} catch (err) {
 			console.error(`[CryptoCoreAesGcm.loadMasterKey] Failed to load the a master key- ${err}`);
 			return false;
@@ -71,13 +68,11 @@ class CryptoCoreAesGcm implements ICryptoCore {
 		if (!this.isReady) {
 			throw new Error('CryptoCoreAesGcm instance is not ready');
 		}
-		return await deriveAesGcmSubKey(
-			this._masterKey,
+		return deriveAesGcmSubKey(
+			this.masterKey,
 			toByteArray(saltB64),
-			contextType === 'base64'
-				? toByteArray(contextPermutation)
-				: new TextEncoder().encode(contextPermutation)
-			);
+			contextType === 'base64' ? toByteArray(contextPermutation) : new TextEncoder().encode(contextPermutation)
+		);
 	}
 
 	public async encryptText(key: CryptoKey, text: string): Promise<string> {
@@ -109,6 +104,6 @@ export function getCryptoCore(encryptionType: Encryption): ICryptoCore {
 		case Encryption.CERTIFICATE:
 			throw new Error('Certificate-based encryption is not yet available');
 		default:
-			throw new Error(`Unknown encryption type ${encryptionType}`)
+			throw new Error(`Unknown encryption type ${encryptionType}`);
 	}
 }

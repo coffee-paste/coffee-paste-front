@@ -1,7 +1,6 @@
 interface HeldButtonProps {
-
 	/**
-	 * The number of milliseconds the button needs to be held before a `click` event is raised 
+	 * The number of milliseconds the button needs to be held before a `click` event is raised
 	 *
 	 * @type {number}
 	 * @memberof HeldButtonProps
