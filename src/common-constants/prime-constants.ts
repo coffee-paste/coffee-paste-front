@@ -1,8 +1,8 @@
 export enum ToastSeverity {
 	Success = 'success',
-    Info = 'info',
-    Warn = 'warn',
-    Error = 'error'
+	Info = 'info',
+	Warn = 'warn',
+	Error = 'error',
 }
 
 export enum ToastDuration {
@@ -18,12 +18,12 @@ export enum ToastDuration {
  * @param dateAsYearMonthDate The prime date format
  * @returns The Date object
  */
-export function dateStringToDate(dateAsYearMonthDate: string) : Date {
+export function dateStringToDate(dateAsYearMonthDate: string): Date {
 	// Do not convert date by new Date() sinse it's not converting by UTC, but by local time.
 	const [yearString, monthString, dateString] = dateAsYearMonthDate?.split('-');
-	const year = parseInt(yearString);
+	const year = parseInt(yearString, 10);
 	// Decrease the month, since the mothes starts with 0.
-	const month = parseInt(monthString) - 1;
-	const date = parseInt(dateString);
+	const month = parseInt(monthString, 10) - 1;
+	const date = parseInt(dateString, 10);
 	return new Date(year, month, date);
 }

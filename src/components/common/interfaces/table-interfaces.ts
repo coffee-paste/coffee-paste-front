@@ -1,10 +1,10 @@
-import { PageRequestFilter } from "@/infrastructure/generated/api";
+import { PageRequestFilter } from '@/infrastructure/generated/api';
 
-export type TableFilterValue = { value: string, matchMode: FilterMatchMode };
+export type TableFilterValue = { value: string; matchMode: FilterMatchMode };
 
 export type TableFilters = {
-	[Property in keyof PageRequestFilter]: TableFilterValue
-}
+	[Property in keyof PageRequestFilter]: TableFilterValue;
+};
 
 /**
  * Filter match mode for DataTable and possibly similar components
@@ -29,7 +29,7 @@ export enum FilterMatchMode {
 	DATE_IS = 'dateIs',
 	DATE_IS_NOT = 'dateIsNot',
 	DATE_BEFORE = 'dateBefore',
-	DATE_AFTER = 'dateAfter'
+	DATE_AFTER = 'dateAfter',
 }
 
 export interface ITableLazyParams {
@@ -38,7 +38,7 @@ export interface ITableLazyParams {
 	rows: number;
 	sortField: string | null;
 	sortOrder: number | null;
-	multiSortMeta: any[];
-	filters: { [key: string]: { value: string, matchMode: string } };
+	multiSortMeta: unknown[];
+	filters: { [key: string]: { value: string; matchMode: string } };
 	filterMatchModes: { [key: string]: FilterMatchMode };
 }

@@ -1,8 +1,5 @@
-import { createApp } from "vue";
-import App from "./App.vue";
-import router from "./router";
+import { createApp } from 'vue';
 import ToastService from 'primevue/toastservice';
-import { getLocalStorageItem, LocalStorageKey } from "./infrastructure/local-storage";
 
 import PrimeVue from 'primevue/config';
 import Dialog from 'primevue/dialog';
@@ -17,15 +14,18 @@ import Avatar from 'primevue/avatar';
 import Tooltip from 'primevue/tooltip';
 import ConfirmationService from 'primevue/confirmationservice';
 import Menubar from 'primevue/menubar';
-
-// Import theme CSS based 
-(async () => {
-    const theme = getLocalStorageItem<string>(LocalStorageKey.Theme, { itemType : 'string' });
-    await import(`primevue/resources/themes/${theme ||'md-light-indigo'}/theme.css`);
-})();
+import { getLocalStorageItem, LocalStorageKey } from './infrastructure/local-storage';
+import router from './router';
+import App from './App.vue';
 
 import 'primevue/resources/primevue.min.css';
 import 'primeicons/primeicons.css';
+
+// Import theme CSS based
+(async () => {
+	const theme = getLocalStorageItem<string>(LocalStorageKey.Theme, { itemType: 'string' });
+	await import(`primevue/resources/themes/${theme || 'md-light-indigo'}/theme.css`);
+})();
 
 const app = createApp(App);
 
@@ -47,4 +47,4 @@ app.component('Menubar', Menubar);
 
 app.directive('tooltip', Tooltip);
 
-app.mount("#app");
+app.mount('#app');
