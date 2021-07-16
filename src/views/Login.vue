@@ -143,6 +143,7 @@ export default defineComponent({
 					itemType: 'object',
 				});
 
+				// No need to map to NoteWrapper here as this just handles initial workspace setup
 				const workspace = await ApiFacade.NotesApi.getOpenNotes();
 
 				if (workspace.length < 1) {

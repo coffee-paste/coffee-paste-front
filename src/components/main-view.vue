@@ -15,7 +15,8 @@ import { defineComponent } from 'vue';
 import { ApiFacade } from '@/infrastructure/generated/proxies/api-proxies';
 import { ToastDuration, ToastSeverity } from '@/common-constants/prime-constants';
 import { generateNewNoteName } from '@/common-constants/note-constants';
-import { NoteUpdateEvent, OutgoingNoteUpdate } from '@/infrastructure/generated/api/channel-spec';
+import { NoteUpdateEvent } from '@/infrastructure/generated/api/channel-spec';
+import { NoteWrapper } from '@/infrastructure/note-wrapper';
 import { NoteTabs } from './tabs/note-tabs.vue';
 import { INoteChangedEventArgs, INoteTab } from './tabs/tab-interfaces';
 import { MainViewToolbar } from './toolbar/main-view-toolbar.vue';
@@ -38,10 +39,12 @@ let ws: NotesSocket;
 export default defineComponent({
 	components: { NoteTabs, MainViewToolbar },
 	async created() {
-		// Load notes
-		await this.loadNotes();
 		// Open updated feed channel
 		await this.openChannel();
+
+		// Load notes
+		await this.loadNotes();
+
 		// Set first intialization as true
 		this.firstInitialization = false;
 	},
@@ -62,24 +65,23 @@ export default defineComponent({
 
 				ws = new NotesSocket(channelSession);
 				this.channelStatus = channelStatus.loading;
-				ws.onopen = () => {
+				ws.opened.attach(() => {
 					this.channelStatus = channelStatus.open;
-				};
+				});
 
-				ws.onerror = () => {
+				ws.error.attach(() => {
 					this.channelStatus = channelStatus.error;
-				};
+				});
 
-				ws.onclose = () => {
+				ws.closed.attach(() => {
 					this.channelStatus = channelStatus.closed;
 					this.openChannel();
-				};
+				});
 
-				ws.onmessage = (msg) => {
-					const outgoingNoteUpdate = JSON.parse(msg.data) as OutgoingNoteUpdate;
-					console.log(`Incoming message:  ${JSON.stringify(outgoingNoteUpdate)}`);
+				ws.message.attach((sender, messagePayload) => {
+					console.log(`Incoming message:  ${JSON.stringify(messagePayload)}`);
 
-					if (outgoingNoteUpdate.event !== NoteUpdateEvent.FEED) {
+					if (messagePayload.event !== NoteUpdateEvent.FEED) {
 						// Currently, if the update is not content update, re-render all page.
 						// TODO: chnage only required property (or add/remove the note)
 						this.loadNotes();
@@ -88,7 +90,7 @@ export default defineComponent({
 
 					this.lastNoteFeedUpdate = `${new Date().getTime()}`;
 					this.msgStatus = new Date();
-					const changedNote = this.notes.find((n) => n.id === outgoingNoteUpdate.noteId);
+					const changedNote = this.notes.find((n) => n.id === messagePayload.noteId);
 
 					if (!changedNote) {
 						// Thre is a new note, so rload notes
@@ -96,9 +98,9 @@ export default defineComponent({
 						return;
 					}
 
-					changedNote.contentHTML = outgoingNoteUpdate.contentHTML;
+					changedNote.contentHTML = messagePayload.contentHTML;
 					changedNote.lastNoteFeedUpdate = `${new Date().getTime()}`;
-				};
+				});
 			} catch (error) {
 				this.channelStatus = channelStatus.workspaceFetchFailed;
 				console.log(error);
@@ -108,7 +110,8 @@ export default defineComponent({
 			this.channelStatus = channelStatus.loading;
 
 			try {
-				this.notes = (await ApiFacade.NotesApi.getOpenNotes()) as INoteTab[];
+				this.notes = (await ApiFacade.NotesApi.getOpenNotes()).map((note) => new NoteWrapper(note, ws));
+
 				if (!this.notes?.length) {
 					this.channelStatus = channelStatus.noNotes;
 					this.$toast.add({

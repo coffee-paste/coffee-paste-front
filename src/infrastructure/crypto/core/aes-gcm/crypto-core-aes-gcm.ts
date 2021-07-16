@@ -2,14 +2,13 @@ import { getLocalStorageItem, LocalStorageKey, setLocalStorageItem } from '@/inf
 import { toByteArray } from 'base64-js';
 import { Encryption } from '@/infrastructure/generated/api';
 import { IAesGcmEncryptedBlob } from '../../low-level/crypto-low-level-definitions';
-import { ICryptoCore } from '../common/crypto-core-definitions';
+import { ICryptoCore, IServerSideEncryptionSettings } from '../common/crypto-core-definitions';
 import {
 	decryptAesGcm,
 	deriveAesGcmKey,
 	deriveAesGcmSubKey,
 	encryptAesGcm,
 	exportJwkAesGcm,
-	getPbkdf2Salt,
 	importBase64AesGcmKey,
 	importJwkAesGcm,
 	isCryptographyAvailable,
@@ -34,13 +33,17 @@ class CryptoCoreAesGcm implements ICryptoCore {
 		return isCryptographyAvailable();
 	}
 
-	public async createAndStoreMasterKey(password: string, serverKekB64: string, localStorageKey: LocalStorageKey = LocalStorageKey.MasterKey): Promise<void> {
-		// Create a master key from the given password.
-		// We don't need to save the salt- password comparisons are not needed
-		const masterKey = await deriveAesGcmKey(password, getPbkdf2Salt(), true);
+	public async createAndStoreMasterKey(
+		password: string,
+		settings: IServerSideEncryptionSettings,
+		localStorageKey: LocalStorageKey = LocalStorageKey.MasterKey
+	): Promise<void> {
+		// Run the password though PBKDF2 using the server-provided salt and settings
+		const { saltB64, blockSize, pbkdf2Iterations } = settings.aesGcm;
+		const masterKey = await deriveAesGcmKey(password, toByteArray(saltB64), true, blockSize, pbkdf2Iterations);
 
 		// Import the KEK provided by the server
-		const kek = await importBase64AesGcmKey(serverKekB64, false);
+		const kek = await importBase64AesGcmKey(settings.kekB64, false);
 
 		// Export the master key and encrypt it via the KEK
 		const encryptedKeyBlob = await exportJwkAesGcm(masterKey, kek);
@@ -95,7 +98,7 @@ const cryptoCoreAesGcm = new CryptoCoreAesGcm();
  *
  * @export
  * @param {Encryption} encryptionType The `Encryption` type for which to get a suitable `CryptoCore`
- * @return {*}  {ICryptoCore}
+ * @return {*} {ICryptoCore}
  */
 export function getCryptoCore(encryptionType: Encryption): ICryptoCore {
 	switch (encryptionType) {

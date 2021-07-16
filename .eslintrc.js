@@ -63,6 +63,9 @@ module.exports = {
 				"no-continue": "off",
 				"no-plusplus": "off",
 				"no-console": "off",
+				"no-underscore-dangle": ["error", { "allowAfterThis": true }],
+				"no-trailing-spaces": "error",
+				"spaced-comment": ["error", "always", { "exceptions": ["#region", "#endregion"] }]
 			}
 		},
 		{

@@ -1,4 +1,5 @@
 import { LocalStorageKey } from '@/infrastructure/local-storage';
+import { AesBlockSize } from '../../low-level/crypto-low-level-definitions';
 
 /**
  * Describes a high level cryptographic services provider
@@ -29,14 +30,14 @@ export interface ICryptoCore {
 	 * Creates, encrypts and stores a master key from the given passwords
 	 *
 	 * @param {string} password The password to derive the master key from
-	 * @param {string} serverKekB64 A Base64-encoded Key Encryption Key provided by the server.
+	 * @param {IServerSideEncryptionSettings} settings The settings object provided by the server. Controls encryption behavior and provides other data
 	 *
 	 * Used to encrypt the master key before storing it in the local storage
 	 * @param {LocalStorageKey} localStorageKey The local storage key under which to store the encrypted master key
 	 * @return {*} {Promise<void>} A promise that is resolved when a master key has been generated, encrypted and stored in the local storage
 	 * @memberof ICryptoCore
 	 */
-	createAndStoreMasterKey(password: string, serverKekB64: string, localStorageKey: LocalStorageKey): Promise<void>;
+	createAndStoreMasterKey(password: string, settings: IServerSideEncryptionSettings, localStorageKey: LocalStorageKey): Promise<void>;
 
 	/**
 	 * Loads a previously encrypted master key from the given local storage location
@@ -80,4 +81,48 @@ export interface ICryptoCore {
 	 * @memberof ICryptoCore
 	 */
 	decryptText(key: CryptoKey, encryptedB64KeyBlob: string): Promise<string>;
+}
+
+/**
+ * A structure containing encryption settings and parameters provided by the server
+ *
+ * @export
+ * @interface IServerSideEncryptionSettings
+ */
+export interface IServerSideEncryptionSettings {
+	/**
+	 * The server's Key Encryption Key (KEK) as a Base64 string.
+	 *
+	 * Used to encrypt/decrypt local-storage blobs
+	 *
+	 * @type {string}
+	 * @memberof IServerSideEncryptionSettings
+	 */
+	kekB64: string;
+
+	/**
+	 * COntains parameters and options relevant to the split-key AES-GCM encryption scheme
+	 */
+	aesGcm: {
+		/**
+		 * A Base64 Salt to use with the key derivation part of the AES-GCM scheme
+		 *
+		 * @type {string}
+		 */
+		saltB64: string;
+
+		/**
+		 * The number of PBKDF2 iterations to use. Affects the security of the stored password hash
+		 *
+		 * @type {number}
+		 */
+		pbkdf2Iterations?: number;
+
+		/**
+		 * The AES block size to use
+		 *
+		 * @type {AesBlockSize}
+		 */
+		blockSize: AesBlockSize;
+	};
 }

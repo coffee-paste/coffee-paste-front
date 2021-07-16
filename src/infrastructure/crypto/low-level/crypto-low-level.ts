@@ -62,9 +62,9 @@ export async function deriveAesGcmKey(
 	salt: BinaryData,
 	exportable = false,
 	blockSize: AesBlockSize = DEFAULT_AES_BLOCK_BITS,
+	iterations: number = DEFAULT_PBKDF2_ITERATIONS,
 	keyUsages: KeyUsage[] = DEFAULT_AES_GCM_KEY_USAGES,
-	hash: ShaType = ShaType.Sha512,
-	iterations: number = DEFAULT_PBKDF2_ITERATIONS
+	hash: ShaType = ShaType.Sha512
 ): Promise<CryptoKey> {
 	const opts: Pbkdf2Params = {
 		hash,
