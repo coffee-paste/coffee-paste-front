@@ -6,6 +6,7 @@ import { NotesSocket } from './notes-socket';
 import { NoteUpdateEvent, OutgoingNoteUpdate } from './generated/api/channel-spec';
 import { Encryption, Note } from './generated/api';
 import { ApiFacade } from './generated/proxies/api-proxies';
+import { IDisposable } from './common-interfaces.ts/disposable';
 
 const DEFAULT_UPDATE_DEBOUNCE_MS = 500;
 
@@ -16,7 +17,7 @@ type NoteContents = { contentText: string; contentHTML: string };
 
 // No getter for contentText
 
-export class NoteWrapper implements Omit<Note, 'randomNoteSalt' | 'contentText'> {
+export class NoteWrapper implements Omit<Note, 'randomNoteSalt' | 'contentText'>, IDisposable {
 	// #region Members
 
 	private _key: CryptoKey;
@@ -26,6 +27,10 @@ export class NoteWrapper implements Omit<Note, 'randomNoteSalt' | 'contentText'>
 	private _note: Note;
 
 	private _socket: NotesSocket;
+
+	private _disposed: boolean;
+
+	private _onSocketMessage = this.onSocketMessage.bind(this);
 
 	// #endregion Members
 
@@ -89,6 +94,10 @@ export class NoteWrapper implements Omit<Note, 'randomNoteSalt' | 'contentText'>
 		return this._note.encryption !== Encryption.NONE;
 	}
 
+	public get disposed(): boolean {
+		return this._disposed;
+	}
+
 	// #endregion Accessors
 
 	public constructor(noteData: Note, updateSocket: NotesSocket) {
@@ -98,12 +107,7 @@ export class NoteWrapper implements Omit<Note, 'randomNoteSalt' | 'contentText'>
 
 		this._note = noteData;
 		this._socket = updateSocket;
-
-		this._socket.message.attach((sender, e) => {
-			// Use a lambda to bind the 'this'
-			this.onSocketMessage(sender, e);
-		});
-
+		this._socket.message.attachWeak(this._onSocketMessage);
 		this.initializeEncryption();
 	}
 
@@ -127,6 +131,10 @@ export class NoteWrapper implements Omit<Note, 'randomNoteSalt' | 'contentText'>
 				this._socket.ChannelKey
 			);
 		}, DEFAULT_UPDATE_DEBOUNCE_MS)(contents);
+	}
+
+	public dispose(): void {
+		this._socket.message.detach(this._onSocketMessage);
 	}
 
 	// #endregion Public Methods

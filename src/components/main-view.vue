@@ -65,6 +65,9 @@ export default defineComponent({
 
 				ws = new NotesSocket(channelSession);
 				this.channelStatus = channelStatus.loading;
+
+				// These may be leaky- channel may get closed/opened intermittently and these events may leak.
+				// Verify!
 				ws.opened.attach(() => {
 					this.channelStatus = channelStatus.open;
 				});
@@ -166,7 +169,7 @@ export default defineComponent({
 		},
 
 		async onNewNote(newNote: INoteTab): Promise<void> {
-			console.log(newNote);
+			// Placeholder
 		},
 	},
 });
