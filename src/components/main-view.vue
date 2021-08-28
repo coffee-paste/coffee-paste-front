@@ -169,7 +169,7 @@ export default defineComponent({
 		},
 
 		async onNewNote(newNote: INoteTab): Promise<void> {
-			// Placeholder
+			console.log(`[MainView.onNewNote] New note ${newNote.name} (${newNote.id}) created`);
 		},
 	},
 });
