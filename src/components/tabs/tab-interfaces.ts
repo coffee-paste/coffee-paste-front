@@ -8,7 +8,7 @@ export interface INoteTab {
 	id: string;
 	name?: string;
 	contentHTML?: string;
-	lastNoteFeedUpdate?: string;
+	lastModifiedTime?: string;
 }
 
 export enum NoteEncryption {

@@ -1,37 +1,37 @@
-import { envFacade } from './env-facade';
-import { ITypedEvent, TypedEvent } from './events/typed-event-handler';
-import { IncomingNoteUpdate, OutgoingNoteUpdate } from './generated/api/channel-spec';
+import { ITypedEvent, WeakEvent } from 'ts-events/dist/lib';
+import { envFacade } from '../env-facade';
+import { IncomingNoteUpdate, OutgoingNoteUpdate } from '../generated/api/channel-spec';
 
 export class NotesSocket {
 	private _socket: WebSocket;
 
-	private channelKey: string;
+	private _channelKey: string;
 
-	public get ChannelKey(): string {
-		return this.channelKey;
+	public get channelKey(): string {
+		return this._channelKey;
 	}
 
 	//  #region Events
 
-	private _opened: TypedEvent<NotesSocket, void> = new TypedEvent<NotesSocket, void>();
+	private _opened: WeakEvent<NotesSocket, void> = new WeakEvent<NotesSocket, void>();
 
 	public get opened(): ITypedEvent<NotesSocket, void> {
 		return this._opened;
 	}
 
-	private _error: TypedEvent<NotesSocket, unknown> = new TypedEvent<NotesSocket, unknown>();
+	private _error: WeakEvent<NotesSocket, unknown> = new WeakEvent<NotesSocket, unknown>();
 
 	public get error(): ITypedEvent<NotesSocket, unknown> {
 		return this._error;
 	}
 
-	private _closed: TypedEvent<NotesSocket, void> = new TypedEvent<NotesSocket, void>();
+	private _closed: WeakEvent<NotesSocket, void> = new WeakEvent<NotesSocket, void>();
 
 	public get closed(): ITypedEvent<NotesSocket, void> {
 		return this._closed;
 	}
 
-	private _message: TypedEvent<NotesSocket, OutgoingNoteUpdate> = new TypedEvent<NotesSocket, OutgoingNoteUpdate>();
+	private _message: WeakEvent<NotesSocket, OutgoingNoteUpdate> = new WeakEvent<NotesSocket, OutgoingNoteUpdate>();
 
 	public get message(): ITypedEvent<NotesSocket, OutgoingNoteUpdate> {
 		return this._message;
@@ -41,7 +41,7 @@ export class NotesSocket {
 
 	public constructor(channelKey: string) {
 		this._socket = new WebSocket(`${envFacade.apiUrl.replace('http', 'ws')}/notes?channelKey=${channelKey}`);
-		this.channelKey = channelKey;
+		this._channelKey = channelKey;
 
 		this._socket.onopen = () => {
 			this._opened.invokeAsync(this);

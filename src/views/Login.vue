@@ -21,7 +21,7 @@
 								<ProgressSpinner />
 							</div>
 							<div v-else>
-								<div v-for="provider of providers" :key="provider.provider">
+								<div v-for="provider of providers" :key="provider.name">
 									<div class="login-provider-container">
 										<Button @click="login(provider)" type="button" label="Primary" class="p-button-outlined p-button-lg login-button">
 											<div class="login-provider-icon-container">
@@ -47,6 +47,7 @@ import { OAuth2Service, User } from '@/infrastructure/generated/api';
 import { credentialsManager } from '@/infrastructure/session-management/credential-manager';
 import { globalConfig } from '@/components/common/global';
 import { ApiFacade } from '@/infrastructure/generated/proxies/api-proxies';
+import { noteManager } from '@/infrastructure/notes/note-manager';
 import googleImage from '../assets/providers-logo/google.png';
 import githubImage from '../assets/providers-logo/github.png';
 import gitlabImage from '../assets/providers-logo/gitlab.png';
@@ -144,10 +145,10 @@ export default defineComponent({
 				});
 
 				// No need to map to NoteWrapper here as this just handles initial workspace setup
-				const workspace = await ApiFacade.NotesApi.getOpenNotes();
+				const workspace = await noteManager.getOpenNotes();
 
 				if (workspace.length < 1) {
-					await ApiFacade.NotesApi.createNote({
+					await noteManager.createNote({
 						name: 'New note',
 					});
 				}

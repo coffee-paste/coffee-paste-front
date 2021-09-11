@@ -73,7 +73,7 @@ const NoteTabComponent = defineComponent({
 			type: String,
 			required: false,
 		},
-		lastNoteFeedUpdate: {
+		lastModifiedTime: {
 			type: String,
 			required: false,
 		},
@@ -86,7 +86,7 @@ const NoteTabComponent = defineComponent({
 	},
 	computed: {
 		lastNoteUpdate(): string {
-			return `${this.lastNoteInternalUpdate}:${this.lastNoteFeedUpdate}`;
+			return `${this.lastNoteInternalUpdate}:${this.lastModifiedTime}`;
 		},
 	},
 	methods: {

@@ -26,7 +26,7 @@
 					<NoteTab
 						:id="tab.id"
 						:content="tab.contentHTML"
-						:lastNoteFeedUpdate="tab.lastNoteFeedUpdate"
+						:lastModifiedTime="tab.lastModifiedTime"
 						@noteChanged="onChange"
 						@contextmenu="onNoteRightClick($event, tab)"
 					/>
@@ -48,9 +48,7 @@
 import { PrimeIcons } from 'primevue/api';
 import { defineComponent, PropType } from 'vue';
 import { getLocalStorageItem, LocalStorageKey, setLocalStorageItem } from '@/infrastructure/local-storage';
-import { Note, NoteStatus } from '@/infrastructure/generated/api';
 import { generateNewNoteName } from '@/common-constants/note-constants';
-import { ApiFacade } from '@/infrastructure/generated/proxies/api-proxies';
 import { ToastDuration, ToastSeverity } from '@/common-constants/prime-constants';
 
 // An extension of PrimeVue's TabView component. Was missing some events
@@ -58,29 +56,31 @@ import ContextMenu from 'primevue/contextmenu';
 import ConfirmPopup from 'primevue/confirmpopup';
 import OverlayPanel from 'primevue/overlaypanel';
 import InputText from 'primevue/inputtext';
+import { INote } from '@/infrastructure/notes/note-interfaces';
+import { noteManager } from '@/infrastructure/notes/note-manager';
 import TabPanel, { TabPanelProps } from './prime-extension/prime-tabpanel';
 import TabView, { TabViewEventArgs } from './prime-extension/prime-tabview';
-import { globalConfig } from '../common/global';
 import { downloadAsText } from '../common/utils';
 import { ContextMenuCommandEventArgs, IVueMenuItem } from '../common/interfaces/base-interfaces';
 
 import { NoteTab } from './single-note-tab.vue';
-import { INoteChangedEventArgs, INoteTab } from './tab-interfaces';
+import { INoteChangedEventArgs } from './tab-interfaces';
 
-interface INoteTabPanel extends INoteTab, TabPanelProps {
+interface INotePanel extends INote, TabPanelProps {
 	// Joins a note's data and a normal tab panel props
+	lastModifiedTime: number;
 }
 
 const NoteTabsComponent = defineComponent({
 	components: { TabView, TabPanel, NoteTab, ContextMenu, ConfirmPopup, OverlayPanel, InputText },
 	emits: {
 		noteChanged: (e: INoteChangedEventArgs) => !!e.noteId,
-		newNote: (newNote: INoteTab) => newNote?.id,
-		noteRightClick: (e: { originalEvent: MouseEvent; note: INoteTab }) => e.originalEvent && e.note?.id,
+		newNote: (newNote: INote) => newNote?.id,
+		noteRightClick: (e: { originalEvent: MouseEvent; note: INote }) => e.originalEvent && e.note?.id,
 	},
 	props: {
 		notes: {
-			type: Array as PropType<INoteTab[]>,
+			type: Array as PropType<INote[]>,
 			required: true,
 		},
 	},
@@ -94,7 +94,7 @@ const NoteTabsComponent = defineComponent({
 	},
 	data() {
 		return {
-			tabs: (this.notes || []) as INoteTabPanel[],
+			tabs: (this.notes || []) as INotePanel[],
 			activeTabIndex: 0,
 			tabPanelContextMenuItems: [
 				{ label: 'Rename', icon: PrimeIcons.PENCIL, command: this.renameNote },
@@ -102,7 +102,7 @@ const NoteTabsComponent = defineComponent({
 				{ label: 'Archive', icon: PrimeIcons.INBOX, command: this.archiveNote },
 				{ label: 'Delete', icon: PrimeIcons.TRASH, command: this.deleteNote },
 			] as IVueMenuItem[],
-			contextedTabHeader: undefined as INoteTab | undefined,
+			contextedTabHeader: undefined as INote | undefined,
 			cachedHtml: {} as { [key: string]: string },
 			noteRenameBoxValue: '',
 		};
@@ -119,12 +119,12 @@ const NoteTabsComponent = defineComponent({
 			setLocalStorageItem<number>(LocalStorageKey.ActiveTabIndex, e.index, { itemType: 'number' });
 		},
 
-		onTabHeaderMenuClick(e: TabViewEventArgs, tab: INoteTab): void {
+		onTabHeaderMenuClick(e: TabViewEventArgs, tab: INote): void {
 			this.contextedTabHeader = tab;
 			(this.$refs.tabPanelContextMenu as ContextMenu).show(e.originalEvent || e);
 		},
 
-		onNoteRightClick(originalEvent: MouseEvent, note: INoteTab): void {
+		onNoteRightClick(originalEvent: MouseEvent, note: INote): void {
 			this.$emit('noteRightClick', { originalEvent, note });
 		},
 
@@ -142,7 +142,7 @@ const NoteTabsComponent = defineComponent({
 				console.warn(`[NoteTabs.archiveNote] Could not determine target note`);
 				return;
 			}
-			const note = this.contextedTabHeader as Note;
+			const note = this.contextedTabHeader as INote;
 			const html = this.cachedHtml[note.id || ''] || this.tabs.find((t) => t.id === note.id)?.contentHTML;
 			downloadAsText(`${note.name}-${new Date().getTime()}.html`, html || '');
 		},
@@ -158,7 +158,7 @@ const NoteTabsComponent = defineComponent({
 				message: `Really archive note '${noteName}'?`,
 				icon: PrimeIcons.QUESTION,
 				accept: async () => {
-					await ApiFacade.NotesApi.setNoteStatus({ status: NoteStatus.BACKLOG }, this.contextedTabHeader?.id || '', globalConfig.ChannelSession);
+					await noteManager.archiveNoteById(this.contextedTabHeader?.id || '');
 					this.$toast.add({
 						severity: ToastSeverity.Info,
 						summary: 'Note archived',
@@ -183,7 +183,7 @@ const NoteTabsComponent = defineComponent({
 				message: `Really delete note '${noteName}'?`,
 				icon: PrimeIcons.EXCLAMATION_TRIANGLE,
 				accept: async () => {
-					await ApiFacade.NotesApi.deleteNotes(this.contextedTabHeader?.id || '', globalConfig.ChannelSession);
+					await noteManager.deleteNoteById(this.contextedTabHeader?.id || '');
 					this.$toast.add({
 						severity: ToastSeverity.Info,
 						summary: 'Note deleted',
@@ -197,12 +197,12 @@ const NoteTabsComponent = defineComponent({
 		},
 		async sumbitNoteNameChange(): Promise<void> {
 			(this.$refs.renameOverlay as OverlayPanel).hide();
-			const note = this.contextedTabHeader as INoteTab;
+			const note = this.contextedTabHeader as INote;
 			if (!this.contextedTabHeader) {
 				console.warn(`[NoteTabs.sumbitNoteNameChange] Could not determine target note`);
 				return;
 			}
-			await ApiFacade.NotesApi.setNoteName({ name: this.noteRenameBoxValue || 'Unnamed note' }, note.id, globalConfig.ChannelSession);
+			note.name = this.noteRenameBoxValue || 'Unnamed note';
 			this.$toast.add({
 				severity: ToastSeverity.Info,
 				summary: 'Note renamed',
@@ -215,10 +215,9 @@ const NoteTabsComponent = defineComponent({
 
 		async createNewNote(): Promise<void> {
 			try {
-				const newNoteName = generateNewNoteName(this.notes as Note[]);
-				const newNoteId = await ApiFacade.NotesApi.createNote({ name: newNoteName }, globalConfig.ChannelSession);
-				console.log(`[NoteTabs.createNewNote] Created a new note with name '${newNoteName}' and ID '${newNoteId}'`);
-				const newNote: INoteTab = { id: newNoteId, name: newNoteName };
+				const newNoteName = generateNewNoteName(this.notes as INote[]);
+				const newNote = await noteManager.createNote({ name: newNoteName });
+				console.log(`[NoteTabs.createNewNote] Created a new note with name '${newNote.name}' and ID '${newNote.id}'`);
 				// eslint-disable-next-line vue/no-mutating-props
 				this.notes.push(newNote);
 				this.$emit('newNote', newNote);

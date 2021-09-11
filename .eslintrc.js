@@ -65,7 +65,9 @@ module.exports = {
 				"no-console": "off",
 				"no-underscore-dangle": ["error", { "allowAfterThis": true }],
 				"no-trailing-spaces": "error",
-				"spaced-comment": ["error", "always", { "exceptions": ["#region", "#endregion"] }]
+				"spaced-comment": ["error", "always", { "exceptions": ["#region", "#endregion"] }],
+				"no-return-await": "off",
+				"@typescript-eslint/return-await": "off"
 			}
 		},
 		{

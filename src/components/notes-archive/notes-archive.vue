@@ -127,13 +127,11 @@ import {
 	FetchPageOptions,
 	FilterOptions,
 	MatchOperators,
-	Note,
 	NoteStatus,
 	PageRequestFilter,
 	PageRequestOrderBy,
 	RelationOperators,
 } from '@/infrastructure/generated/api';
-import { ApiFacade } from '@/infrastructure/generated/proxies/api-proxies';
 import { ToastDuration, ToastSeverity, dateStringToDate } from '@/common-constants/prime-constants';
 import { FilterMatchMode } from 'primevue/api';
 
@@ -142,6 +140,8 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import InputText from 'primevue/inputtext';
 import ConfirmPopup from 'primevue/confirmpopup';
+import { INote } from '@/infrastructure/notes/note-interfaces';
+import { noteManager } from '@/infrastructure/notes/note-manager';
 import { StandardDateFormatter } from '../../common-constants/date-formatters';
 import { ITableLazyParams, TableFilters, TableFilterValue } from '../common/interfaces/table-interfaces';
 import { PageRequest } from '../../infrastructure/generated/api';
@@ -190,7 +190,7 @@ const notesArchive = defineComponent({
 	data() {
 		return {
 			loading: false,
-			visibleNotes: [] as Note[],
+			visibleNotes: [] as INote[],
 			totalNoteCount: 0 as number,
 			pagingParams: {} as PageRequest,
 			NAME,
@@ -253,7 +253,7 @@ const notesArchive = defineComponent({
 				this.loading = true;
 				console.log(`[NotesArchive.fetchData] Sending request payload ${JSON.stringify(this.pagingParams)}`);
 				// Needs optimization- no reason to fetch the same notes over and over- need to cache them UI side
-				const result = await ApiFacade.NotesApi.getNotesPage(this.pagingParams as PageRequest, FetchPageOptions.Backlog);
+				const result = await noteManager.getNotesPage(this.pagingParams as PageRequest, FetchPageOptions.Backlog);
 				this.totalNoteCount = result.totalCount;
 				this.visibleNotes = result.notes;
 			} catch {
@@ -291,15 +291,15 @@ const notesArchive = defineComponent({
 			this.fetchData();
 		},
 
-		async onFetchContentClick(note: Note): Promise<void> {
+		async onFetchContentClick(note: INote): Promise<void> {
 			console.debug(`[NotesArchive.onFetchContentClick] Fetching content for note ${note.name} (${note.id})`);
-			this.visibleNotes[this.visibleNotes.indexOf(note)] = await ApiFacade.NotesApi.getNote(note.id);
+			this.visibleNotes[this.visibleNotes.indexOf(note)] = await noteManager.getNote(note.id);
 		},
 
-		async onRestoreNoteClick(event: MouseEvent, note: Note): Promise<void> {
+		async onRestoreNoteClick(event: MouseEvent, note: INote): Promise<void> {
 			try {
 				this.isRestoreInProgress = true;
-				await ApiFacade.NotesApi.setNoteStatus({ status: NoteStatus.WORKSPACE }, note.id);
+				note.setStatus({ status: NoteStatus.WORKSPACE });
 				this.isRestoreInProgress = false;
 				this.removeFromVisibleNotes(note.id);
 			} catch {
@@ -307,8 +307,8 @@ const notesArchive = defineComponent({
 			}
 		},
 
-		async onDeleteClick(event: MouseEvent, note: Note): Promise<void> {
-			await ApiFacade.NotesApi.deleteNotes(note.id);
+		async onDeleteClick(event: MouseEvent, note: INote): Promise<void> {
+			await note.delete();
 			this.$toast.add({
 				severity: ToastSeverity.Info,
 				summary: 'Note deleted',
@@ -317,6 +317,7 @@ const notesArchive = defineComponent({
 			});
 			this.removeFromVisibleNotes(note.id);
 			console.log(`[NotesArchive.onDeleteClick] Note '${note.name}' (${note.id}) has been deleted`);
+			note.dispose();
 		},
 
 		tableEventToPageRequest(event: ITableLazyParams): PageRequest {

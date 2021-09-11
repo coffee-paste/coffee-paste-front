@@ -5,24 +5,22 @@
 			<ProgressSpinner strokeWidth="3" style="width: 150px; height: 150px" />
 		</div>
 		<div v-else>
-			<NoteTabs :key="lastNoteFeedUpdate" :notes="notes" @noteChanged="onNoteChanged" @newNote="onNewNote" />
+			<NoteTabs :key="lastModifiedTime" :notes="notes" @noteChanged="onNoteChanged" @newNote="onNewNote" />
 		</div>
 	</div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { ApiFacade } from '@/infrastructure/generated/proxies/api-proxies';
 import { ToastDuration, ToastSeverity } from '@/common-constants/prime-constants';
 import { generateNewNoteName } from '@/common-constants/note-constants';
 import { NoteUpdateEvent } from '@/infrastructure/generated/api/channel-spec';
-import { NoteWrapper } from '@/infrastructure/note-wrapper';
+import { noteManager } from '@/infrastructure/notes/note-manager';
+import { INote } from '@/infrastructure/notes/note-interfaces';
 import { NoteTabs } from './tabs/note-tabs.vue';
-import { INoteChangedEventArgs, INoteTab } from './tabs/tab-interfaces';
+import { INoteTab } from './tabs/tab-interfaces';
 import { MainViewToolbar } from './toolbar/main-view-toolbar.vue';
 import { IStatus, StatusType } from './toolbar/menu-interfaces';
-import { NotesSocket } from '../infrastructure/notes-socket';
-import { globalConfig } from './common/global';
 
 const channelStatus = {
 	unknown: { status: 'Unknown Issue', statusType: StatusType.Error },
@@ -34,13 +32,12 @@ const channelStatus = {
 	closed: { status: 'Connection Closed', statusType: StatusType.Error },
 };
 
-let ws: NotesSocket;
-
 export default defineComponent({
 	components: { NoteTabs, MainViewToolbar },
 	async created() {
+		await noteManager.initialize();
 		// Open updated feed channel
-		await this.openChannel();
+		await this.attachChannelHandlers();
 
 		// Load notes
 		await this.loadNotes();
@@ -53,35 +50,29 @@ export default defineComponent({
 			firstInitialization: true,
 			channelStatus: channelStatus.unknown as IStatus,
 			msgStatus: null as unknown as Date,
-			notes: [] as INoteTab[],
-			lastNoteFeedUpdate: `${new Date().getTime()}`,
+			notes: [] as INote[],
+			lastModifiedTime: `${new Date().getTime()}`,
 		};
 	},
 	methods: {
-		async openChannel() {
+		async attachChannelHandlers() {
 			try {
-				const channelSession = await ApiFacade.NotesApi.getChannelKey();
-				globalConfig.ChannelSession = channelSession;
-
-				ws = new NotesSocket(channelSession);
-				this.channelStatus = channelStatus.loading;
-
 				// These may be leaky- channel may get closed/opened intermittently and these events may leak.
 				// Verify!
-				ws.opened.attach(() => {
+				noteManager.socket.opened.attach(() => {
 					this.channelStatus = channelStatus.open;
 				});
 
-				ws.error.attach(() => {
+				noteManager.socket.error.attach(() => {
 					this.channelStatus = channelStatus.error;
 				});
 
-				ws.closed.attach(() => {
+				noteManager.socket.closed.attach(() => {
 					this.channelStatus = channelStatus.closed;
-					this.openChannel();
+					this.attachChannelHandlers();
 				});
 
-				ws.message.attach((sender, messagePayload) => {
+				noteManager.socket.message.attach((sender, messagePayload) => {
 					console.log(`Incoming message:  ${JSON.stringify(messagePayload)}`);
 
 					if (messagePayload.event !== NoteUpdateEvent.FEED) {
@@ -91,18 +82,14 @@ export default defineComponent({
 						return;
 					}
 
-					this.lastNoteFeedUpdate = `${new Date().getTime()}`;
+					this.lastModifiedTime = `${new Date().getTime()}`;
 					this.msgStatus = new Date();
-					const changedNote = this.notes.find((n) => n.id === messagePayload.noteId);
 
+					const changedNote = this.notes.find((n) => n.id === messagePayload.noteId);
 					if (!changedNote) {
 						// Thre is a new note, so rload notes
 						this.loadNotes();
-						return;
 					}
-
-					changedNote.contentHTML = messagePayload.contentHTML;
-					changedNote.lastNoteFeedUpdate = `${new Date().getTime()}`;
 				});
 			} catch (error) {
 				this.channelStatus = channelStatus.workspaceFetchFailed;
@@ -113,7 +100,7 @@ export default defineComponent({
 			this.channelStatus = channelStatus.loading;
 
 			try {
-				this.notes = (await ApiFacade.NotesApi.getOpenNotes()).map((note) => new NoteWrapper(note, ws));
+				this.notes = await noteManager.getOpenNotes();
 
 				if (!this.notes?.length) {
 					this.channelStatus = channelStatus.noNotes;
@@ -124,7 +111,7 @@ export default defineComponent({
 						life: ToastDuration.Long,
 					});
 					const name = generateNewNoteName([]);
-					const id = await ApiFacade.NotesApi.createNote({ name });
+					const newNote = await noteManager.createNote({ name });
 					this.$toast.add({
 						severity: ToastSeverity.Success,
 						summary: 'New note created',
@@ -132,17 +119,10 @@ export default defineComponent({
 						life: ToastDuration.Medium,
 					});
 
-					this.notes = [
-						{
-							id,
-							name,
-							contentHTML: '',
-							lastNoteFeedUpdate: `${new Date().getTime()}`,
-						},
-					];
+					this.notes = [newNote];
 				}
 
-				this.lastNoteFeedUpdate = `${new Date().getTime()}`;
+				this.lastModifiedTime = `${new Date().getTime()}`;
 				this.channelStatus = channelStatus.open;
 			} catch (error) {
 				// If it's 401, the action already hnalded ny the API proxy
@@ -159,12 +139,8 @@ export default defineComponent({
 				console.log(error);
 			}
 		},
-		onNoteChanged(e: INoteChangedEventArgs): void {
-			if (!ws) {
-				console.error('No websocket open, cannot send update');
-				return;
-			}
-			ws.sendNoteUpdate(e);
+		onNoteChanged(/* e: INoteChangedEventArgs */): void {
+			// noteManager.sendNoteUpdate(e); Test whether this is needed  now...
 			this.msgStatus = new Date();
 		},
 
