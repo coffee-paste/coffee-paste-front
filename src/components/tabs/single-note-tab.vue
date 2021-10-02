@@ -58,41 +58,40 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
+import { INote } from '@/infrastructure/notes/note-interfaces';
 import { INoteChangedEventArgs } from './tab-interfaces';
 
 const NoteTabComponent = defineComponent({
 	emits: {
 		noteChanged: (e: INoteChangedEventArgs) => !!e.noteId,
 	},
+
 	props: {
-		id: {
-			type: String,
+		note: {
+			type: Object as () => INote,
 			required: true,
 		},
-		content: {
-			type: String,
-			required: false,
-		},
-		lastModifiedTime: {
-			type: String,
-			required: false,
-		},
 	},
+
 	data() {
 		return {
-			contentHTML: this.content,
+			contentHTML: this.note.contentHTML,
 			lastNoteInternalUpdate: `${new Date().getTime()}`,
 		};
 	},
+
 	computed: {
 		lastNoteUpdate(): string {
-			return `${this.lastNoteInternalUpdate}:${this.lastModifiedTime}`;
+			return `${this.lastNoteInternalUpdate}:${this.note?.lastModifiedTime}`;
 		},
 	},
+
 	methods: {
 		onChange(e: { htmlValue: string; textValue: string }): void {
+			this.note.setContents({ contentHTML: e.htmlValue, contentText: e.textValue });
+
 			this.$emit('noteChanged', {
-				noteId: this.id,
+				noteId: this.note.id,
 				contentHTML: e.htmlValue,
 				contentText: e.textValue,
 			});

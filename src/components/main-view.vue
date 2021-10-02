@@ -101,7 +101,6 @@ export default defineComponent({
 
 			try {
 				this.notes = await noteManager.getOpenNotes();
-
 				if (!this.notes?.length) {
 					this.channelStatus = channelStatus.noNotes;
 					this.$toast.add({

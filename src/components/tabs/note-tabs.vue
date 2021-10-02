@@ -14,22 +14,16 @@
 			</OverlayPanel>
 
 			<TabView @tab-click="onTabClick" :activeIndex="activeTabIndex">
-				<TabPanel v-for="tab in tabs" :key="tab.id">
+				<TabPanel v-for="note in notes" :key="note.id">
 					<template #header>
 						<div class="tab-header">
-							<span>{{ tab.name }}</span>
+							<span>{{ note.name }}</span>
 							<span class="tab-header-menu">
-								<i class="pi pi-ellipsis-v p-button-icon" @click="onTabHeaderMenuClick($event, tab)"></i>
+								<i class="pi pi-ellipsis-v p-button-icon" @click="onTabHeaderMenuClick($event, note)"></i>
 							</span>
 						</div>
 					</template>
-					<NoteTab
-						:id="tab.id"
-						:content="tab.contentHTML"
-						:lastModifiedTime="tab.lastModifiedTime"
-						@noteChanged="onChange"
-						@contextmenu="onNoteRightClick($event, tab)"
-					/>
+					<NoteTab :note="note" @noteChanged="onChange" @contextmenu="onNoteRightClick($event, note)" />
 				</TabPanel>
 
 				<TabPanel key="createNewTabKey" headerContextMenuBehavior="kill-event" :routeAllClicks="true" @click="createNewNote">
@@ -58,7 +52,7 @@ import OverlayPanel from 'primevue/overlaypanel';
 import InputText from 'primevue/inputtext';
 import { INote } from '@/infrastructure/notes/note-interfaces';
 import { noteManager } from '@/infrastructure/notes/note-manager';
-import TabPanel, { TabPanelProps } from './prime-extension/prime-tabpanel';
+import TabPanel from './prime-extension/prime-tabpanel';
 import TabView, { TabViewEventArgs } from './prime-extension/prime-tabview';
 import { downloadAsText } from '../common/utils';
 import { ContextMenuCommandEventArgs, IVueMenuItem } from '../common/interfaces/base-interfaces';
@@ -66,35 +60,33 @@ import { ContextMenuCommandEventArgs, IVueMenuItem } from '../common/interfaces/
 import { NoteTab } from './single-note-tab.vue';
 import { INoteChangedEventArgs } from './tab-interfaces';
 
-interface INotePanel extends INote, TabPanelProps {
-	// Joins a note's data and a normal tab panel props
-	lastModifiedTime: number;
-}
-
 const NoteTabsComponent = defineComponent({
 	components: { TabView, TabPanel, NoteTab, ContextMenu, ConfirmPopup, OverlayPanel, InputText },
+
 	emits: {
 		noteChanged: (e: INoteChangedEventArgs) => !!e.noteId,
 		newNote: (newNote: INote) => newNote?.id,
 		noteRightClick: (e: { originalEvent: MouseEvent; note: INote }) => e.originalEvent && e.note?.id,
 	},
+
 	props: {
 		notes: {
 			type: Array as PropType<INote[]>,
 			required: true,
 		},
 	},
+
 	mounted() {
 		const cachedIndex = getLocalStorageItem<number>(LocalStorageKey.ActiveTabIndex, { itemType: 'number' }) || 0;
-		if (cachedIndex >= this.tabs.length) {
-			this.activeTabIndex = this.tabs.length ? this.tabs.length - 1 : 0;
+		if (cachedIndex >= this.notes.length) {
+			this.activeTabIndex = this.notes.length ? this.notes.length - 1 : 0;
 		} else {
 			this.activeTabIndex = cachedIndex;
 		}
 	},
+
 	data() {
 		return {
-			tabs: (this.notes || []) as INotePanel[],
 			activeTabIndex: 0,
 			tabPanelContextMenuItems: [
 				{ label: 'Rename', icon: PrimeIcons.PENCIL, command: this.renameNote },
@@ -107,6 +99,7 @@ const NoteTabsComponent = defineComponent({
 			noteRenameBoxValue: '',
 		};
 	},
+
 	methods: {
 		onChange(e: INoteChangedEventArgs): void {
 			// Keep changes in a cache, to allow download as HTML file
@@ -142,10 +135,11 @@ const NoteTabsComponent = defineComponent({
 				console.warn(`[NoteTabs.archiveNote] Could not determine target note`);
 				return;
 			}
-			const note = this.contextedTabHeader as INote;
-			const html = this.cachedHtml[note.id || ''] || this.tabs.find((t) => t.id === note.id)?.contentHTML;
-			downloadAsText(`${note.name}-${new Date().getTime()}.html`, html || '');
+			const contextNote = this.contextedTabHeader as INote;
+			const html = this.cachedHtml[contextNote.id || ''] || this.notes.find((note) => note.id === contextNote.id)?.contentHTML;
+			downloadAsText(`${contextNote.name}-${new Date().getTime()}.html`, html || '');
 		},
+
 		async archiveNote(e: ContextMenuCommandEventArgs): Promise<void> {
 			if (!this.contextedTabHeader) {
 				console.warn(`[NoteTabs.archiveNote] Could not determine target note`);
@@ -195,6 +189,7 @@ const NoteTabsComponent = defineComponent({
 				},
 			});
 		},
+
 		async sumbitNoteNameChange(): Promise<void> {
 			(this.$refs.renameOverlay as OverlayPanel).hide();
 			const note = this.contextedTabHeader as INote;

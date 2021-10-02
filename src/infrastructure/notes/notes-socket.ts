@@ -1,4 +1,4 @@
-import { ITypedEvent, WeakEvent } from 'ts-events/dist/lib';
+import { ITypedEvent, WeakEvent } from 'weak-event';
 import { envFacade } from '../env-facade';
 import { IncomingNoteUpdate, OutgoingNoteUpdate } from '../generated/api/channel-spec';
 

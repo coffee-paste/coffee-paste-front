@@ -11,25 +11,6 @@ import { INote, INoteContents } from './note-interfaces';
 
 const DEFAULT_UPDATE_DEBOUNCE_MS = 500;
 
-/* eslint-disable @typescript-eslint/ban-types */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable no-param-reassign */
-
-function RequireWriteAccess(target: NoteWrapper, propertyKey: string, descriptor: PropertyDescriptor) {
-	const originalMethod: Function = descriptor.value;
-
-	descriptor.value = (...args: any[]) => {
-		if (target.isReadOnly) {
-			throw new Error(`Note ${target.name} (${target.id}) is readonly`);
-		}
-		originalMethod.apply(args);
-	};
-}
-
-// eslint-enable @typescript-eslint/ban-types
-// eslint-enable @typescript-eslint/no-explicit-any
-// eslint-enable no-param-reassign
-
 // Set contents should receive NoteContents.
 // No individual setters for contentText/contentHtml!
 
@@ -133,20 +114,17 @@ export class NoteWrapper implements INote, IDisposable {
 
 	// #region Public Methods
 
-	@RequireWriteAccess
 	public setContents(contents: INoteContents): void {
+		this.assertWriteAccess();
+
 		this._note.contentText = contents.contentText;
 		this._note.contentHTML = contents.contentHTML;
-
-		if (!this.isEncrypted) {
-			return;
-		}
 
 		debounce(async (debounceContents: INoteContents): Promise<void> => {
 			await ApiFacade.NotesApi.setNoteContent(
 				{
-					contentText: await this._cryptoCore.encryptText(this._key, debounceContents.contentText),
-					contentHTML: await this._cryptoCore.encryptText(this._key, debounceContents.contentHTML),
+					contentText: this.isEncrypted ? await this._cryptoCore.encryptText(this._key, debounceContents.contentText) : debounceContents.contentText,
+					contentHTML: this.isEncrypted ? await this._cryptoCore.encryptText(this._key, debounceContents.contentHTML) : debounceContents.contentHTML,
 				},
 				this._note.id,
 				this._socket?.channelKey
@@ -154,13 +132,15 @@ export class NoteWrapper implements INote, IDisposable {
 		}, DEFAULT_UPDATE_DEBOUNCE_MS)(contents);
 	}
 
-	@RequireWriteAccess
 	public async setStatus(status: StatusNoteIdBody): Promise<void> {
+		this.assertWriteAccess();
+
 		await ApiFacade.NotesApi.setNoteStatus(status, this.id, this._socket?.channelKey);
 	}
 
-	@RequireWriteAccess
 	public async delete(): Promise<void> {
+		this.assertWriteAccess();
+
 		await ApiFacade.NotesApi.deleteNotes(this.id);
 		// Detach the handler from the socket- note will be deleted so
 		// no further updates are required
@@ -175,21 +155,24 @@ export class NoteWrapper implements INote, IDisposable {
 
 	// #region Private Methods
 
-	@RequireWriteAccess
 	private setName(value: string): void {
+		this.assertWriteAccess();
+
 		this._note.name = value;
 		debounce(async (name: string): Promise<void> => {
 			await ApiFacade.NotesApi.setNoteName({ name }, this.id, this._socket?.channelKey);
 		}, DEFAULT_UPDATE_DEBOUNCE_MS)(value);
 	}
 
-	@RequireWriteAccess
 	private setEncryption(value: Encryption): void {
+		this.assertWriteAccess();
+
 		throw new Error(`Encryption setter not yet implemented (value ${value})`);
 	}
 
-	@RequireWriteAccess
 	private setTags(value: string[]): void {
+		this.assertWriteAccess();
+
 		this._note.tags = value || [];
 		debounce(async (tags: string[]): Promise<void> => {
 			await ApiFacade.NotesApi.setNoteTags(tags || [], this.id, this._socket?.channelKey);
@@ -223,6 +206,12 @@ export class NoteWrapper implements INote, IDisposable {
 
 	private detachSocket(): void {
 		this._socket?.message.detach(this._onSocketMessage);
+	}
+
+	private assertWriteAccess(): void {
+		if (this.isReadOnly) {
+			throw new Error("Operation requires Note 'Write' access");
+		}
 	}
 
 	// #endregion Private Methods
