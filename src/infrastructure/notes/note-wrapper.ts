@@ -9,7 +9,7 @@ import { ApiFacade } from '../generated/proxies/api-proxies';
 import { IDisposable } from '../common-interfaces.ts/disposable';
 import { INote, INoteContents } from './note-interfaces';
 
-const DEFAULT_UPDATE_DEBOUNCE_MS = 500;
+const DEFAULT_UPDATE_DEBOUNCE_MS = 1500;
 
 // Set contents should receive NoteContents.
 // No individual setters for contentText/contentHtml!
@@ -30,6 +30,29 @@ export class NoteWrapper implements INote, IDisposable {
 	private _disposed: boolean;
 
 	private _onSocketMessage = this.onSocketMessage.bind(this);
+
+	private _setContentsDebounced = debounce(async (debounceContents: INoteContents): Promise<void> => {
+		await ApiFacade.NotesApi.setNoteContent(
+			{
+				contentText: this.isEncrypted ? await this._cryptoCore.encryptText(this._key, debounceContents.contentText) : debounceContents.contentText,
+				contentHTML: this.isEncrypted ? await this._cryptoCore.encryptText(this._key, debounceContents.contentHTML) : debounceContents.contentHTML,
+			},
+			this._note.id,
+			this._socket?.channelKey
+		);
+	}, DEFAULT_UPDATE_DEBOUNCE_MS);
+
+	private _setNameDebounced = debounce(async (name: string): Promise<void> => {
+		await ApiFacade.NotesApi.setNoteName({ name }, this.id, this._socket?.channelKey);
+	}, DEFAULT_UPDATE_DEBOUNCE_MS);
+
+	private _setTagsDebounced = debounce(async (tags: string[]): Promise<void> => {
+		await ApiFacade.NotesApi.setNoteTags(tags || [], this.id, this._socket?.channelKey);
+	}, DEFAULT_UPDATE_DEBOUNCE_MS);
+
+	private _decryptTextDebounced = debounce(async (encryptedHtml: string): Promise<void> => {
+		this._note.contentHTML = await this._cryptoCore.decryptText(this._key, encryptedHtml);
+	}, DEFAULT_UPDATE_DEBOUNCE_MS);
 
 	// #endregion Members
 
@@ -119,22 +142,11 @@ export class NoteWrapper implements INote, IDisposable {
 
 		this._note.contentText = contents.contentText;
 		this._note.contentHTML = contents.contentHTML;
-
-		debounce(async (debounceContents: INoteContents): Promise<void> => {
-			await ApiFacade.NotesApi.setNoteContent(
-				{
-					contentText: this.isEncrypted ? await this._cryptoCore.encryptText(this._key, debounceContents.contentText) : debounceContents.contentText,
-					contentHTML: this.isEncrypted ? await this._cryptoCore.encryptText(this._key, debounceContents.contentHTML) : debounceContents.contentHTML,
-				},
-				this._note.id,
-				this._socket?.channelKey
-			);
-		}, DEFAULT_UPDATE_DEBOUNCE_MS)(contents);
+		this._setContentsDebounced(contents);
 	}
 
 	public async setStatus(status: StatusNoteIdBody): Promise<void> {
 		this.assertWriteAccess();
-
 		await ApiFacade.NotesApi.setNoteStatus(status, this.id, this._socket?.channelKey);
 	}
 
@@ -159,9 +171,7 @@ export class NoteWrapper implements INote, IDisposable {
 		this.assertWriteAccess();
 
 		this._note.name = value;
-		debounce(async (name: string): Promise<void> => {
-			await ApiFacade.NotesApi.setNoteName({ name }, this.id, this._socket?.channelKey);
-		}, DEFAULT_UPDATE_DEBOUNCE_MS)(value);
+		this._setNameDebounced(value);
 	}
 
 	private setEncryption(value: Encryption): void {
@@ -174,9 +184,7 @@ export class NoteWrapper implements INote, IDisposable {
 		this.assertWriteAccess();
 
 		this._note.tags = value || [];
-		debounce(async (tags: string[]): Promise<void> => {
-			await ApiFacade.NotesApi.setNoteTags(tags || [], this.id, this._socket?.channelKey);
-		}, DEFAULT_UPDATE_DEBOUNCE_MS)(value);
+		this._setTagsDebounced(this._note.tags);
 	}
 
 	private async initializeEncryption(): Promise<void> {
@@ -199,9 +207,7 @@ export class NoteWrapper implements INote, IDisposable {
 			return;
 		}
 
-		debounce(async (encryptedHtml: string): Promise<void> => {
-			this._note.contentHTML = await this._cryptoCore.decryptText(this._key, encryptedHtml);
-		}, DEFAULT_UPDATE_DEBOUNCE_MS)(e.contentHTML);
+		this._decryptTextDebounced(e.contentHTML);
 	}
 
 	private detachSocket(): void {
