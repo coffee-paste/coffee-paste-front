@@ -42,7 +42,7 @@ export default defineComponent({
 		// Load notes
 		await this.loadNotes();
 
-		// Set first intialization as true
+		// Set first initialization as true
 		this.firstInitialization = false;
 	},
 	data() {
@@ -57,8 +57,6 @@ export default defineComponent({
 	methods: {
 		async attachChannelHandlers() {
 			try {
-				// These may be leaky- channel may get closed/opened intermittently and these events may leak.
-				// Verify!
 				noteManager.socket.opened.attach(() => {
 					this.channelStatus = channelStatus.open;
 				});
@@ -77,7 +75,7 @@ export default defineComponent({
 
 					if (messagePayload.event !== NoteUpdateEvent.FEED) {
 						// Currently, if the update is not content update, re-render all page.
-						// TODO: chnage only required property (or add/remove the note)
+						// TODO: change only required property (or add/remove the note)
 						this.loadNotes();
 						return;
 					}
@@ -87,7 +85,7 @@ export default defineComponent({
 
 					const changedNote = this.notes.find((n) => n.id === messagePayload.noteId);
 					if (!changedNote) {
-						// Thre is a new note, so rload notes
+						// There is a new note, so reload notes
 						this.loadNotes();
 					}
 				});
@@ -124,7 +122,7 @@ export default defineComponent({
 				this.lastModifiedTime = `${new Date().getTime()}`;
 				this.channelStatus = channelStatus.open;
 			} catch (error) {
-				// If it's 401, the action already hnalded ny the API proxy
+				// If it's 401, the action already handled ny the API proxy
 				if (error?.status === 401) {
 					return;
 				}

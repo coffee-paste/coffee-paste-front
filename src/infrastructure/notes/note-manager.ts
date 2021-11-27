@@ -12,8 +12,6 @@ class NoteManager {
 		return this._initialized;
 	}
 
-	private _channelSession: string;
-
 	private _socket: NotesSocket;
 
 	public get socket(): NotesSocket {
@@ -21,8 +19,8 @@ class NoteManager {
 	}
 
 	public async initialize() {
-		this._channelSession = await ApiFacade.NotesApi.getChannelKey();
-		this._socket = new NotesSocket(this._channelSession);
+		this._socket = new NotesSocket();
+		await this._socket.open();
 	}
 
 	public async getNote(id: string): Promise<INote> {

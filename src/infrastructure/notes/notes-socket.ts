@@ -1,9 +1,16 @@
 import { ITypedEvent, WeakEvent } from 'weak-event';
 import { envFacade } from '../env-facade';
 import { IncomingNoteUpdate, OutgoingNoteUpdate } from '../generated/api/channel-spec';
+import { ApiFacade } from '../generated/proxies/api-proxies';
 
 export class NotesSocket {
 	private _socket: WebSocket;
+
+	private _autoReopen: boolean;
+
+	public get autoReopen(): boolean {
+		return this._autoReopen;
+	}
 
 	private _channelKey: string;
 
@@ -39,25 +46,21 @@ export class NotesSocket {
 
 	//  #endregion Events
 
-	public constructor(channelKey: string) {
-		this._socket = new WebSocket(`${envFacade.apiUrl.replace('http', 'ws')}/notes?channelKey=${channelKey}`);
-		this._channelKey = channelKey;
+	public constructor(opts?: { autoReopen?: boolean }) {
+		this._autoReopen = opts?.autoReopen || true;
+	}
 
-		this._socket.onopen = () => {
-			this._opened.invokeAsync(this);
-		};
+	public async open(): Promise<void> {
+		// If the socket is open or connecting, do nothing.
+		if (this._socket?.readyState === WebSocket.OPEN || this._socket?.readyState === WebSocket.CONNECTING) {
+			return;
+		}
 
-		this._socket.onerror = (e) => {
-			this._error.invokeAsync(this, e);
-		};
+		// Create a new socket
+		this._channelKey = await ApiFacade.NotesApi.getChannelKey();
+		this._socket = new WebSocket(`${envFacade.apiUrl.replace('http', 'ws')}/notes?channelKey=${this._channelKey}`);
 
-		this._socket.onclose = () => {
-			this._closed.invokeAsync(this);
-		};
-
-		this._socket.onmessage = (e: { data: string }) => {
-			this._message.invokeAsync(this, JSON.parse(e.data));
-		};
+		this.attachHandlers();
 	}
 
 	public close(code?: number, reason?: string): void {
@@ -72,5 +75,27 @@ export class NotesSocket {
 				contentText: note.contentText,
 			})
 		);
+	}
+
+	private attachHandlers(): void {
+		this._socket.onopen = () => {
+			this._opened.invokeAsync(this);
+		};
+
+		this._socket.onerror = (e) => {
+			this._error.invokeAsync(this, e);
+		};
+
+		this._socket.onclose = () => {
+			if (this._autoReopen) {
+				// Note the lack of 'await' here. We don't need to wait for 'open' to complete
+				this.open();
+			}
+			this._closed.invokeAsync(this);
+		};
+
+		this._socket.onmessage = (e: { data: string }) => {
+			this._message.invokeAsync(this, JSON.parse(e.data));
+		};
 	}
 }
