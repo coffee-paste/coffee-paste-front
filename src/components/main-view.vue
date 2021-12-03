@@ -17,10 +17,15 @@ import { generateNewNoteName } from '@/common-constants/note-constants';
 import { NoteUpdateEvent } from '@/infrastructure/generated/api/channel-spec';
 import { noteManager } from '@/infrastructure/notes/note-manager';
 import { INote } from '@/infrastructure/notes/note-interfaces';
-import { NoteTabs } from './tabs/note-tabs.vue';
-import { INoteTab } from './tabs/tab-interfaces';
-import { MainViewToolbar } from './toolbar/main-view-toolbar.vue';
+import { getCryptoCore } from '@/infrastructure/crypto/core/aes-gcm/crypto-core-aes-gcm';
+import { getPbkdf2Salt } from '@/infrastructure/crypto/low-level/crypto-low-level';
+import { DEFAULT_AES_BLOCK_BITS } from '@/infrastructure/crypto/low-level/crypto-low-level-definitions';
+import { Encryption } from '@/infrastructure/generated/api';
+import { fromByteArray } from 'base64-js';
 import { IStatus, StatusType } from './toolbar/menu-interfaces';
+import { MainViewToolbar } from './toolbar/main-view-toolbar.vue';
+import { INoteTab } from './tabs/tab-interfaces';
+import { NoteTabs } from './tabs/note-tabs.vue';
 
 const channelStatus = {
 	unknown: { status: 'Unknown Issue', statusType: StatusType.Error },
@@ -35,6 +40,19 @@ const channelStatus = {
 export default defineComponent({
 	components: { NoteTabs, MainViewToolbar },
 	async created() {
+		const kekB64 = 'suKNPDkzQpZV7z8QpsqzZRqRPtvlejqsRsx9cW6z2d8=';
+		const saltB64 = 'NNNNPDkzQpZV7z8QpsqzZRqRPtvlejqsRsx9cW6z2d8=';
+		const cryptoCore = getCryptoCore(Encryption.PASSWORD);
+		if (!(await cryptoCore.loadMasterKey(kekB64))) {
+			await cryptoCore.createAndStoreMasterKey('1234', {
+				kekB64,
+				aesGcm: {
+					saltB64,
+					blockSize: DEFAULT_AES_BLOCK_BITS,
+				},
+			});
+		}
+
 		await noteManager.initialize();
 		// Open updated feed channel
 		await this.attachChannelHandlers();

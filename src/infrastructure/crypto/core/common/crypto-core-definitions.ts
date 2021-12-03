@@ -37,7 +37,7 @@ export interface ICryptoCore {
 	 * @return {*} {Promise<void>} A promise that is resolved when a master key has been generated, encrypted and stored in the local storage
 	 * @memberof ICryptoCore
 	 */
-	createAndStoreMasterKey(password: string, settings: IServerSideEncryptionSettings, localStorageKey: LocalStorageKey): Promise<void>;
+	createAndStoreMasterKey(password: string, settings: IServerSideEncryptionSettings, localStorageKey?: LocalStorageKey): Promise<void>;
 
 	/**
 	 * Loads a previously encrypted master key from the given local storage location
@@ -49,7 +49,7 @@ export interface ICryptoCore {
 	 * @return {*} {Promise<boolean>} A promise that is resolved when a master key has been read from the local storage, decrypted and loaded into memory
 	 * @memberof ICryptoCore
 	 */
-	loadMasterKey(serverKekB64: string, localStorageKey: LocalStorageKey): Promise<boolean>;
+	loadMasterKey(serverKekB64: string, localStorageKey?: LocalStorageKey): Promise<boolean>;
 
 	/**
 	 *  Create a sub-key from the loaded master key

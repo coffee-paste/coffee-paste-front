@@ -54,26 +54,23 @@ export async function importStringKeyForPbkdf2(toImport: string, keyUsage: KeyUs
 }
 
 export async function importBase64AesGcmKey(toImport: string, exportable: boolean, keyUsage = DEFAULT_AES_GCM_KEY_USAGES): Promise<CryptoKey> {
-	return Subtle.importKey('raw', toByteArray(toImport), { name: SubtleCryptoAlgorithm.AesGcm }, false, keyUsage);
+	return Subtle.importKey('raw', toByteArray(toImport), { name: SubtleCryptoAlgorithm.AesGcm }, exportable, keyUsage);
 }
 
-export async function deriveAesGcmKey(
+export async function createMasterKey(
 	password: string,
 	salt: BinaryData,
 	exportable = false,
 	blockSize: AesBlockSize = DEFAULT_AES_BLOCK_BITS,
 	iterations: number = DEFAULT_PBKDF2_ITERATIONS,
-	keyUsages: KeyUsage[] = DEFAULT_AES_GCM_KEY_USAGES,
 	hash: ShaType = ShaType.Sha512
 ): Promise<CryptoKey> {
-	const opts: Pbkdf2Params = {
-		hash,
-		salt,
-		iterations,
-		name: SubtleCryptoAlgorithm.PBKDF2,
-	};
-
-	return Subtle.deriveKey(opts, await importStringKeyForPbkdf2(password), { name: SubtleCryptoAlgorithm.AesGcm, length: blockSize }, exportable, keyUsages);
+	const importedPbkdf = await importStringKeyForPbkdf2(password);
+	const algorithm: Pbkdf2Params = { salt, hash, iterations, name: SubtleCryptoAlgorithm.PBKDF2 };
+	const masterKeyMaterial = await Subtle.deriveBits(algorithm, importedPbkdf, blockSize);
+	const result = await Subtle.importKey('raw', masterKeyMaterial, SubtleCryptoAlgorithm.HKDF, exportable, ['deriveKey', 'deriveBits']);
+	console.log('Master key created');
+	return result;
 }
 
 export async function deriveAesGcmSubKey(
@@ -91,7 +88,7 @@ export async function deriveAesGcmSubKey(
 		info,
 		hash,
 	};
-
+	console.log(`MK: ${masterKey.usages}, ${JSON.stringify(masterKey.algorithm)}`);
 	return Subtle.deriveKey(opts, masterKey, { name: SubtleCryptoAlgorithm.AesGcm, length: targetBlockSize }, exportable, keyUsages);
 }
 
@@ -139,10 +136,16 @@ export async function decryptAesGcm(
 		opts.additionalData = toByteArray(encryptedKeyBlob.b64AdditionalData);
 	}
 
-	return Subtle.decrypt(opts, key, toByteArray(encryptedKeyBlob.b64EncryptedData));
+	const cipherText = toByteArray(encryptedKeyBlob.b64EncryptedData);
+	try {
+		return await Subtle.decrypt(opts, key, cipherText);
+	} catch (error) {
+		console.log(`[CryptoLowLevel.decryptAesGcm] Failed to decrypt AES-GCM data- ${error}`);
+		throw error;
+	}
 }
 
-export async function exportJwkAesGcm(
+export async function exportRawAesGcmKey(
 	keyToExport: CryptoKey,
 	kek: CryptoKey,
 	additionalData?: BinaryData,
@@ -159,7 +162,7 @@ export async function exportJwkAesGcm(
 		wrapAlgorithm.additionalData = additionalData;
 	}
 
-	const binaryJwk = await Subtle.wrapKey('jwk', keyToExport, kek, wrapAlgorithm);
+	const binaryJwk = await Subtle.wrapKey('raw', keyToExport, kek, wrapAlgorithm);
 
 	return {
 		b64Iv: fromByteArray(iv),
@@ -168,30 +171,38 @@ export async function exportJwkAesGcm(
 	};
 }
 
-export async function importJwkAesGcm(
+export async function importRawKey(
 	encryptedKeyBlob: IAesGcmEncryptedBlob,
 	kek: CryptoKey,
 	exportable = false,
 	keyUsages: KeyUsage[] = DEFAULT_AES_GCM_KEY_USAGES,
 	tagLength: AesGcmTagLength = DEFAULT_AES_GCM_TAG_BITS
 ): Promise<CryptoKey> {
-	const wrapAlgorithm: AesGcmParams = {
+	const unwrapAlgorithm: AesGcmParams = {
 		name: SubtleCryptoAlgorithm.AesGcm,
 		iv: toByteArray(encryptedKeyBlob.b64Iv),
+		additionalData: encryptedKeyBlob.b64AdditionalData ? toByteArray(encryptedKeyBlob.b64AdditionalData) : undefined,
 		tagLength,
 	};
-
-	if (encryptedKeyBlob.b64AdditionalData) {
-		wrapAlgorithm.additionalData = toByteArray(encryptedKeyBlob.b64AdditionalData);
+/*
+	try {
+		const results = await Subtle.unwrapKey(
+			'raw',
+			toByteArray(encryptedKeyBlob.b64EncryptedData),
+			kek,
+			unwrapAlgorithm,
+			{ name: SubtleCryptoAlgorithm.HKDF },
+			exportable,
+			keyUsages
+		);
+		console.log(`Unwrapped key: ${results.usages}`);
+		return results;
+	} catch (err) {
+		console.log(`Unwrap failed: ${err}`);
+		throw err;
 	}
+*/
 
-	return Subtle.unwrapKey(
-		'jwk',
-		toByteArray(encryptedKeyBlob.b64EncryptedData),
-		kek,
-		wrapAlgorithm,
-		{ name: SubtleCryptoAlgorithm.AesGcm },
-		exportable,
-		keyUsages
-	);
+	const decrypted = await decryptAesGcm(encryptedKeyBlob, kek);
+	return Subtle.importKey('raw', decrypted, SubtleCryptoAlgorithm.HKDF, exportable, ['deriveBits', 'deriveKey']);
 }

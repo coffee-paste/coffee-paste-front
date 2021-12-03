@@ -75,12 +75,14 @@ const NoteTabComponent = defineComponent({
 
 	data() {
 		return {
-			contentHTML: this.note.contentHTML,
 			lastNoteInternalUpdate: `${new Date().getTime()}`,
 		};
 	},
 
 	computed: {
+		contentHTML(): string {
+			return this.note.contentHTML;
+		},
 		lastNoteUpdate(): string {
 			return `${this.lastNoteInternalUpdate}:${this.note?.lastModifiedTime}`;
 		},

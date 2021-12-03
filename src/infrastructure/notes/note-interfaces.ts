@@ -1,4 +1,4 @@
-import { Note, StatusNoteIdBody } from '../generated/api';
+import { Encryption, Note, StatusNoteIdBody } from '../generated/api';
 
 export interface INoteContents {
 	contentText: string;
@@ -8,6 +8,7 @@ export interface INoteContents {
 export interface INote extends Omit<Note, 'randomNoteSalt' | 'contentText'> {
 	setStatus(status: StatusNoteIdBody): Promise<void>;
 	setContents(contents: INoteContents): void;
+	setEncryption(value: Encryption): Promise<void>;
 	delete(): Promise<void>;
 	dispose(): void;
 }

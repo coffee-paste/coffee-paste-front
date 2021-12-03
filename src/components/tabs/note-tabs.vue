@@ -8,7 +8,7 @@
 					<label class="note-name-input-label" for="newNoteNameInput">New name</label>
 					<span class="texbox-with-button">
 						<InputText ref="renameNoteTextInput" id="newNoteNameInput" class="p-inputtext-lg" type="text" v-model="this.noteRenameBoxValue" />
-						<Button class="p-button-icon fit-content" icon="pi pi-check" @click="sumbitNoteNameChange" :disabled="!this.noteRenameBoxValue" />
+						<Button class="p-button-icon fit-content" icon="pi pi-check" @click="submitNoteNameChange" :disabled="!this.noteRenameBoxValue" />
 					</span>
 				</div>
 			</OverlayPanel>
@@ -52,6 +52,7 @@ import OverlayPanel from 'primevue/overlaypanel';
 import InputText from 'primevue/inputtext';
 import { INote } from '@/infrastructure/notes/note-interfaces';
 import { noteManager } from '@/infrastructure/notes/note-manager';
+import { Encryption } from '@/infrastructure/generated/api';
 import TabPanel from './prime-extension/prime-tabpanel';
 import TabView, { TabViewEventArgs } from './prime-extension/prime-tabview';
 import { downloadAsText } from '../common/utils';
@@ -88,18 +89,27 @@ const NoteTabsComponent = defineComponent({
 	data() {
 		return {
 			activeTabIndex: 0,
-			tabPanelContextMenuItems: [
-				{ label: 'Rename', icon: PrimeIcons.PENCIL, command: this.renameNote },
-				{ label: 'Download', icon: PrimeIcons.DOWNLOAD, command: this.downloadNoteAsHTML },
-				{ label: 'Archive', icon: PrimeIcons.INBOX, command: this.archiveNote },
-				{ label: 'Delete', icon: PrimeIcons.TRASH, command: this.deleteNote },
-			] as IVueMenuItem[],
 			contextedTabHeader: undefined as INote | undefined,
 			cachedHtml: {} as { [key: string]: string },
 			noteRenameBoxValue: '',
 		};
 	},
+	computed: {
+		tabPanelContextMenuItems(): IVueMenuItem[] {
+			const isEncrypted = this.contextedTabHeader?.encryption === Encryption.PASSWORD;
+			const label = isEncrypted ? 'Decrypt' : 'Encrypt';
+			const icon = isEncrypted ? PrimeIcons.UNLOCK : PrimeIcons.LOCK;
+			const newEncryption = isEncrypted ? Encryption.NONE : Encryption.PASSWORD;
 
+			return [
+				{ label: 'Rename', icon: PrimeIcons.PENCIL, command: this.renameNote },
+				{ label: 'Download', icon: PrimeIcons.DOWNLOAD, command: this.downloadNoteAsHTML },
+				{ label: 'Archive', icon: PrimeIcons.INBOX, command: this.archiveNote },
+				{ label: 'Delete', icon: PrimeIcons.TRASH, command: this.deleteNote },
+				{ label, icon, command: () => this.setNoteEncryption(this.contextedTabHeader as INote, newEncryption) },
+			];
+		},
+	},
 	methods: {
 		onChange(e: INoteChangedEventArgs): void {
 			// Keep changes in a cache, to allow download as HTML file
@@ -190,11 +200,28 @@ const NoteTabsComponent = defineComponent({
 			});
 		},
 
-		async sumbitNoteNameChange(): Promise<void> {
+		async setNoteEncryption(note: INote, newEncryption: Encryption): Promise<void> {
+			if (!note) {
+				console.warn(`[NoteTabs.setNoteEncryption] Could not determine target note`);
+				return;
+			}
+			try {
+				await note.setEncryption(newEncryption);
+			} catch (error) {
+				this.$toast.add({
+					severity: ToastSeverity.Error,
+					summary: `Failed to set note encryption to '${newEncryption}'`,
+					detail: 'Please try again later',
+					life: ToastDuration.Medium,
+				});
+			}
+		},
+
+		async submitNoteNameChange(): Promise<void> {
 			(this.$refs.renameOverlay as OverlayPanel).hide();
 			const note = this.contextedTabHeader as INote;
 			if (!this.contextedTabHeader) {
-				console.warn(`[NoteTabs.sumbitNoteNameChange] Could not determine target note`);
+				console.warn(`[NoteTabs.submitNoteNameChange] Could not determine target note`);
 				return;
 			}
 			note.name = this.noteRenameBoxValue || 'Unnamed note';
@@ -205,7 +232,7 @@ const NoteTabsComponent = defineComponent({
 				life: ToastDuration.Short,
 			});
 			note.name = this.noteRenameBoxValue;
-			console.log(`[NoteTabs.sumbitNoteNameChange] Note '${note.name}' (${note.id}) has been renamed`);
+			console.log(`[NoteTabs.submitNoteNameChange] Note '${note.name}' (${note.id}) has been renamed`);
 		},
 
 		async createNewNote(): Promise<void> {

@@ -1,17 +1,17 @@
 import { getLocalStorageItem, LocalStorageKey, setLocalStorageItem } from '@/infrastructure/local-storage';
 import { toByteArray } from 'base64-js';
 import { Encryption } from '@/infrastructure/generated/api';
-import { IAesGcmEncryptedBlob } from '../../low-level/crypto-low-level-definitions';
+import { DEFAULT_AES_GCM_KEY_USAGES, IAesGcmEncryptedBlob } from '../../low-level/crypto-low-level-definitions';
 import { ICryptoCore, IServerSideEncryptionSettings } from '../common/crypto-core-definitions';
 import {
 	decryptAesGcm,
-	deriveAesGcmKey,
 	deriveAesGcmSubKey,
 	encryptAesGcm,
-	exportJwkAesGcm,
+	exportRawAesGcmKey as exportRawBase64AesGcmKey,
 	importBase64AesGcmKey,
-	importJwkAesGcm,
+	importRawKey,
 	isCryptographyAvailable,
+	createMasterKey,
 } from '../../low-level/crypto-low-level';
 
 /**
@@ -23,10 +23,10 @@ import {
  * @implements {ICryptoCore}
  */
 class CryptoCoreAesGcm implements ICryptoCore {
-	private masterKey: CryptoKey;
+	private _masterKey: CryptoKey;
 
 	public get isReady(): boolean {
-		return !!this.masterKey;
+		return !!this._masterKey;
 	}
 
 	public get isSupported(): boolean {
@@ -38,31 +38,38 @@ class CryptoCoreAesGcm implements ICryptoCore {
 		settings: IServerSideEncryptionSettings,
 		localStorageKey: LocalStorageKey = LocalStorageKey.MasterKey
 	): Promise<void> {
+		console.log('[CryptoCoreAesGcm.createAndStoreMasterKey] Initializing AES GCM cryptography');
 		// Run the password though PBKDF2 using the server-provided salt and settings
 		const { saltB64, blockSize, pbkdf2Iterations } = settings.aesGcm;
-		const masterKey = await deriveAesGcmKey(password, toByteArray(saltB64), true, blockSize, pbkdf2Iterations);
+		this._masterKey = await createMasterKey(password, toByteArray(saltB64), true, blockSize, pbkdf2Iterations);
+		console.log(`Master key created. Usages: ${this._masterKey.usages}`);
 
+		console.log('[CryptoCoreAesGcm.createAndStoreMasterKey] Importing KEK');
 		// Import the KEK provided by the server
 		const kek = await importBase64AesGcmKey(settings.kekB64, false);
 
 		// Export the master key and encrypt it via the KEK
-		const encryptedKeyBlob = await exportJwkAesGcm(masterKey, kek);
+		const encryptedKeyBlob = await exportRawBase64AesGcmKey(this._masterKey, kek);
 
 		// Store the encrypted key blob in the local storage
 		setLocalStorageItem<IAesGcmEncryptedBlob>(localStorageKey, encryptedKeyBlob, { itemType: 'object' });
+		console.log(`Updated master key to ${JSON.stringify(encryptedKeyBlob)}`);
 	}
 
 	public async loadMasterKey(serverKekB64: string, localStorageKey: LocalStorageKey = LocalStorageKey.MasterKey): Promise<boolean> {
+		const logPrefix = '[CryptoCoreAesGcm.loadMasterKey]';
 		try {
 			const encryptedKeyBlob = getLocalStorageItem<IAesGcmEncryptedBlob>(localStorageKey, { itemType: 'object' });
 			if (!encryptedKeyBlob) {
 				return false;
 			}
+			console.log(`${logPrefix} Importing KEK...`);
 			const kek = await importBase64AesGcmKey(serverKekB64, false);
-			this.masterKey = await importJwkAesGcm(encryptedKeyBlob, kek);
+			console.log(`${logPrefix} Importing JWK...`);
+			this._masterKey = await importRawKey(encryptedKeyBlob, kek, false);
 			return true;
 		} catch (err) {
-			console.error(`[CryptoCoreAesGcm.loadMasterKey] Failed to load the a master key- ${err}`);
+			console.error(` Failed to load the a master key- ${err}`);
 			return false;
 		}
 	}
@@ -71,8 +78,9 @@ class CryptoCoreAesGcm implements ICryptoCore {
 		if (!this.isReady) {
 			throw new Error('CryptoCoreAesGcm instance is not ready');
 		}
-		return deriveAesGcmSubKey(
-			this.masterKey,
+
+		return await deriveAesGcmSubKey(
+			this._masterKey,
 			toByteArray(saltB64),
 			contextType === 'base64' ? toByteArray(contextPermutation) : new TextEncoder().encode(contextPermutation)
 		);

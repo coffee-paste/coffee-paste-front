@@ -34,8 +34,8 @@ export class NoteWrapper implements INote, IDisposable {
 	private _setContentsDebounced = debounce(async (debounceContents: INoteContents): Promise<void> => {
 		await ApiFacade.NotesApi.setNoteContent(
 			{
-				contentText: this.isEncrypted ? await this._cryptoCore.encryptText(this._key, debounceContents.contentText) : debounceContents.contentText,
-				contentHTML: this.isEncrypted ? await this._cryptoCore.encryptText(this._key, debounceContents.contentHTML) : debounceContents.contentHTML,
+				contentText: this.isEncrypted ? await this.encryptText(debounceContents.contentText) : debounceContents.contentText,
+				contentHTML: this.isEncrypted ? await this.encryptText(debounceContents.contentHTML) : debounceContents.contentHTML,
 			},
 			this._note.id,
 			this._socket?.channelKey
@@ -51,7 +51,7 @@ export class NoteWrapper implements INote, IDisposable {
 	}, DEFAULT_UPDATE_DEBOUNCE_MS);
 
 	private _decryptTextDebounced = debounce(async (encryptedHtml: string): Promise<void> => {
-		this._note.contentHTML = await this._cryptoCore.decryptText(this._key, encryptedHtml);
+		this._note.contentHTML = await this.decryptText(encryptedHtml);
 	}, DEFAULT_UPDATE_DEBOUNCE_MS);
 
 	// #endregion Members
@@ -106,10 +106,6 @@ export class NoteWrapper implements INote, IDisposable {
 		return this._note.encryption;
 	}
 
-	public set encryption(value: Encryption) {
-		this.setEncryption(value);
-	}
-
 	public get isEncrypted(): boolean {
 		return this._note.encryption !== Encryption.NONE;
 	}
@@ -159,6 +155,43 @@ export class NoteWrapper implements INote, IDisposable {
 		this.detachSocket();
 	}
 
+	public async setEncryption(value: Encryption): Promise<void> {
+		if (this.encryption === value) {
+			// No change of state. Ignore.
+			return;
+		}
+		this.assertWriteAccess();
+
+		try {
+			switch (value) {
+				case Encryption.PASSWORD:
+					this._cryptoCore = getCryptoCore(value);
+					this._key = await this._cryptoCore.createSubKey(this._note.randomNoteSalt, this._note.id, 'text');
+					break;
+				case Encryption.NONE:
+					break;
+				case Encryption.CERTIFICATE:
+					throw new Error('Certificate based encryption is not yet supported');
+				default:
+					throw new Error(`Unknown encryption scheme ${value}`);
+			}
+
+			await ApiFacade.NotesApi.setNoteEncryptionMethod(
+				{
+					encryption: value,
+					contentHTML: value === Encryption.NONE ? await this.decryptText(this._note.contentHTML) : await this.encryptText(this._note.contentHTML),
+					contentText: value === Encryption.NONE ? await this.decryptText(this._note.contentText) : await this.encryptText(this._note.contentText)
+				},
+				this._note.id,
+				this._socket?.channelKey
+			);
+			// If the 'setNoteEncryptionMethod' succeeded, update the note's state
+			this._note.encryption = value;
+		} catch (error) {
+			console.error(`[NoteWrapper.setEncryption] Failed to set encryption mode to ${value} on note ${this.id} - ${error}`);
+		}
+	}
+
 	public dispose(): void {
 		this.detachSocket();
 	}
@@ -174,12 +207,6 @@ export class NoteWrapper implements INote, IDisposable {
 		this._setNameDebounced(value);
 	}
 
-	private setEncryption(value: Encryption): void {
-		this.assertWriteAccess();
-
-		throw new Error(`Encryption setter not yet implemented (value ${value})`);
-	}
-
 	private setTags(value: string[]): void {
 		this.assertWriteAccess();
 
@@ -191,8 +218,13 @@ export class NoteWrapper implements INote, IDisposable {
 		if (!this.isEncrypted) {
 			return;
 		}
+
+		console.log('Note is encrypted. Decrypting...');
 		this._cryptoCore = getCryptoCore(this._note?.encryption);
 		this._key = await this._cryptoCore.createSubKey(this._note.randomNoteSalt, this._note.id, 'text');
+		this._note.contentText = await this.decryptText(this._note.contentText);
+		this._note.contentHTML = await this.decryptText(this._note.contentHTML);
+		console.log(`Decryption complete: ${this._note.contentText}, ${this._note.contentHTML}`);
 	}
 
 	private onSocketMessage(sender: NotesSocket, e: OutgoingNoteUpdate): void {
@@ -218,6 +250,14 @@ export class NoteWrapper implements INote, IDisposable {
 		if (this.isReadOnly) {
 			throw new Error("Operation requires Note 'Write' access");
 		}
+	}
+
+	private async encryptText(plainText: string): Promise<string> {
+		return await this._cryptoCore.encryptText(this._key, plainText);
+	}
+
+	private async decryptText(cipherText: string): Promise<string> {
+		return await this._cryptoCore.decryptText(this._key, cipherText);
 	}
 
 	// #endregion Private Methods
