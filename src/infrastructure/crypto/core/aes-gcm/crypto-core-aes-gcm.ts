@@ -1,7 +1,7 @@
 import { getLocalStorageItem, LocalStorageKey, setLocalStorageItem } from '@/infrastructure/local-storage';
 import { toByteArray } from 'base64-js';
 import { Encryption } from '@/infrastructure/generated/api';
-import { DEFAULT_AES_GCM_KEY_USAGES, IAesGcmEncryptedBlob } from '../../low-level/crypto-low-level-definitions';
+import { IAesGcmEncryptedBlob } from '../../low-level/crypto-low-level-definitions';
 import { ICryptoCore, IServerSideEncryptionSettings } from '../common/crypto-core-definitions';
 import {
 	decryptAesGcm,
@@ -38,13 +38,10 @@ class CryptoCoreAesGcm implements ICryptoCore {
 		settings: IServerSideEncryptionSettings,
 		localStorageKey: LocalStorageKey = LocalStorageKey.MasterKey
 	): Promise<void> {
-		console.log('[CryptoCoreAesGcm.createAndStoreMasterKey] Initializing AES GCM cryptography');
 		// Run the password though PBKDF2 using the server-provided salt and settings
 		const { saltB64, blockSize, pbkdf2Iterations } = settings.aesGcm;
 		this._masterKey = await createMasterKey(password, toByteArray(saltB64), true, blockSize, pbkdf2Iterations);
-		console.log(`Master key created. Usages: ${this._masterKey.usages}`);
 
-		console.log('[CryptoCoreAesGcm.createAndStoreMasterKey] Importing KEK');
 		// Import the KEK provided by the server
 		const kek = await importBase64AesGcmKey(settings.kekB64, false);
 
@@ -53,19 +50,15 @@ class CryptoCoreAesGcm implements ICryptoCore {
 
 		// Store the encrypted key blob in the local storage
 		setLocalStorageItem<IAesGcmEncryptedBlob>(localStorageKey, encryptedKeyBlob, { itemType: 'object' });
-		console.log(`Updated master key to ${JSON.stringify(encryptedKeyBlob)}`);
 	}
 
 	public async loadMasterKey(serverKekB64: string, localStorageKey: LocalStorageKey = LocalStorageKey.MasterKey): Promise<boolean> {
-		const logPrefix = '[CryptoCoreAesGcm.loadMasterKey]';
 		try {
 			const encryptedKeyBlob = getLocalStorageItem<IAesGcmEncryptedBlob>(localStorageKey, { itemType: 'object' });
 			if (!encryptedKeyBlob) {
 				return false;
 			}
-			console.log(`${logPrefix} Importing KEK...`);
 			const kek = await importBase64AesGcmKey(serverKekB64, false);
-			console.log(`${logPrefix} Importing JWK...`);
 			this._masterKey = await importRawKey(encryptedKeyBlob, kek, false);
 			return true;
 		} catch (err) {

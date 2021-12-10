@@ -69,9 +69,7 @@ export async function createMasterKey(
 	const importedPbkdf = await importStringKeyForPbkdf2(password);
 	const algorithm: Pbkdf2Params = { salt, hash, iterations, name: SubtleCryptoAlgorithm.PBKDF2 };
 	const masterKeyMaterial = await Subtle.deriveBits(algorithm, importedPbkdf, blockSize);
-	const result = await Subtle.importKey('raw', masterKeyMaterial, SubtleCryptoAlgorithm.HKDF, exportable, ['deriveKey', 'deriveBits']);
-	console.log('Master key created');
-	return result;
+	return await Subtle.importKey('raw', masterKeyMaterial, SubtleCryptoAlgorithm.HKDF, exportable, DEFAULT_PBKDF2_KEY_USAGES);
 }
 
 export async function deriveAesGcmSubKey(
@@ -89,7 +87,6 @@ export async function deriveAesGcmSubKey(
 		info,
 		hash,
 	};
-	console.log(`MK: ${masterKey.usages}, ${JSON.stringify(masterKey.algorithm)}`);
 	return Subtle.deriveKey(opts, masterKey, { name: SubtleCryptoAlgorithm.AesGcm, length: targetBlockSize }, exportable, keyUsages);
 }
 

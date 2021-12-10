@@ -198,7 +198,7 @@ export default defineComponent({
 				.login-loader-container {
 					position: absolute;
 					margin-top: 45px;
-					// Take space of 100% minues the card padding(form both sides) since it's absolute position
+					// Take space of 100% minus the card padding(form both sides) since it's absolute position
 					width: calc(100% - 16px - 16px);
 				}
 				.login-provider-container {

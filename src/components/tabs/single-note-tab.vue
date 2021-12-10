@@ -73,14 +73,6 @@ const NoteTabComponent = defineComponent({
 		},
 	},
 
-	created() {
-		this.note.updated.attach((changedNote) => {
-			console.log(`note updated- ${JSON.stringify(changedNote)}`);
-			this.contentHTML = changedNote.contentHTML;
-			this.$forceUpdate();
-		});
-	},
-
 	data() {
 		return {
 			lastNoteInternalUpdate: `${new Date().getTime()}`,
