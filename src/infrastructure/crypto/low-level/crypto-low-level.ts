@@ -13,6 +13,7 @@ import {
 	DEFAULT_AES_GCM_KEY_USAGES,
 	IAesGcmEncryptedBlob,
 	DEFAULT_AES_IV_BYTES,
+	DEFAULT_MASTER_KEY_USAGES,
 } from './crypto-low-level-definitions';
 
 const Subtle = window?.crypto.subtle;
@@ -171,38 +172,7 @@ export async function exportRawAesGcmKey(
 	};
 }
 
-export async function importRawKey(
-	encryptedKeyBlob: IAesGcmEncryptedBlob,
-	kek: CryptoKey,
-	exportable = false,
-	keyUsages: KeyUsage[] = DEFAULT_AES_GCM_KEY_USAGES,
-	tagLength: AesGcmTagLength = DEFAULT_AES_GCM_TAG_BITS
-): Promise<CryptoKey> {
-	const unwrapAlgorithm: AesGcmParams = {
-		name: SubtleCryptoAlgorithm.AesGcm,
-		iv: toByteArray(encryptedKeyBlob.b64Iv),
-		additionalData: encryptedKeyBlob.b64AdditionalData ? toByteArray(encryptedKeyBlob.b64AdditionalData) : undefined,
-		tagLength,
-	};
-/*
-	try {
-		const results = await Subtle.unwrapKey(
-			'raw',
-			toByteArray(encryptedKeyBlob.b64EncryptedData),
-			kek,
-			unwrapAlgorithm,
-			{ name: SubtleCryptoAlgorithm.HKDF },
-			exportable,
-			keyUsages
-		);
-		console.log(`Unwrapped key: ${results.usages}`);
-		return results;
-	} catch (err) {
-		console.log(`Unwrap failed: ${err}`);
-		throw err;
-	}
-*/
-
+export async function importRawKey(encryptedKeyBlob: IAesGcmEncryptedBlob, kek: CryptoKey, exportable = false): Promise<CryptoKey> {
 	const decrypted = await decryptAesGcm(encryptedKeyBlob, kek);
-	return Subtle.importKey('raw', decrypted, SubtleCryptoAlgorithm.HKDF, exportable, ['deriveBits', 'deriveKey']);
+	return Subtle.importKey('raw', decrypted, SubtleCryptoAlgorithm.HKDF, exportable, DEFAULT_MASTER_KEY_USAGES);
 }

@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { generateNewNoteName } from '@/common-constants/note-constants';
 import debounce from 'lodash.debounce';
+import { ITypedEvent, WeakEvent } from 'weak-event';
 import { getCryptoCore } from '../crypto/core/aes-gcm/crypto-core-aes-gcm';
 import { ICryptoCore } from '../crypto/core/common/crypto-core-definitions';
 import { NotesSocket } from './notes-socket';
@@ -15,6 +17,10 @@ const DEFAULT_UPDATE_DEBOUNCE_MS = 1500;
 // No individual setters for contentText/contentHtml!
 
 // No getter for contentText
+
+type INoteProperties = {
+	[Property in Exclude<keyof INote, 'setStatus' | 'setContents' | 'setEncryption' | 'delete' | 'dispose'>]: INote[Property];
+};
 
 export class NoteWrapper implements INote, IDisposable {
 	// #region Members
@@ -32,14 +38,17 @@ export class NoteWrapper implements INote, IDisposable {
 	private _onSocketMessage = this.onSocketMessage.bind(this);
 
 	private _setContentsDebounced = debounce(async (debounceContents: INoteContents): Promise<void> => {
+		const contentText = this.isEncrypted ? await this.encryptText(debounceContents.contentText) : debounceContents.contentText;
+		const contentHTML = this.isEncrypted ? await this.encryptText(debounceContents.contentHTML) : debounceContents.contentHTML;
 		await ApiFacade.NotesApi.setNoteContent(
 			{
-				contentText: this.isEncrypted ? await this.encryptText(debounceContents.contentText) : debounceContents.contentText,
-				contentHTML: this.isEncrypted ? await this.encryptText(debounceContents.contentHTML) : debounceContents.contentHTML,
+				contentText,
+				contentHTML,
 			},
 			this._note.id,
 			this._socket?.channelKey
 		);
+		console.log(`Updating note- Content Text: ${contentText}\n Content HTML: ${contentHTML}`);
 	}, DEFAULT_UPDATE_DEBOUNCE_MS);
 
 	private _setNameDebounced = debounce(async (name: string): Promise<void> => {
@@ -53,6 +62,8 @@ export class NoteWrapper implements INote, IDisposable {
 	private _decryptTextDebounced = debounce(async (encryptedHtml: string): Promise<void> => {
 		this._note.contentHTML = await this.decryptText(encryptedHtml);
 	}, DEFAULT_UPDATE_DEBOUNCE_MS);
+
+	private _updatedEvent: WeakEvent<INote, keyof INoteProperties> = new WeakEvent();
 
 	// #endregion Members
 
@@ -118,6 +129,10 @@ export class NoteWrapper implements INote, IDisposable {
 		return !this._socket;
 	}
 
+	public get updated(): ITypedEvent<INote, keyof INoteProperties> {
+		return this._updatedEvent;
+	}
+
 	// #endregion Accessors
 
 	public constructor(noteData: Note, updateSocket?: NotesSocket) {
@@ -180,7 +195,7 @@ export class NoteWrapper implements INote, IDisposable {
 				{
 					encryption: value,
 					contentHTML: value === Encryption.NONE ? await this.decryptText(this._note.contentHTML) : await this.encryptText(this._note.contentHTML),
-					contentText: value === Encryption.NONE ? await this.decryptText(this._note.contentText) : await this.encryptText(this._note.contentText)
+					contentText: value === Encryption.NONE ? await this.decryptText(this._note.contentText) : await this.encryptText(this._note.contentText),
 				},
 				this._note.id,
 				this._socket?.channelKey
@@ -219,12 +234,11 @@ export class NoteWrapper implements INote, IDisposable {
 			return;
 		}
 
-		console.log('Note is encrypted. Decrypting...');
 		this._cryptoCore = getCryptoCore(this._note?.encryption);
 		this._key = await this._cryptoCore.createSubKey(this._note.randomNoteSalt, this._note.id, 'text');
 		this._note.contentText = await this.decryptText(this._note.contentText);
 		this._note.contentHTML = await this.decryptText(this._note.contentHTML);
-		console.log(`Decryption complete: ${this._note.contentText}, ${this._note.contentHTML}`);
+		this._updatedEvent.invoke(this, 'contentHTML');
 	}
 
 	private onSocketMessage(sender: NotesSocket, e: OutgoingNoteUpdate): void {

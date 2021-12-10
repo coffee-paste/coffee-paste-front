@@ -46,7 +46,7 @@
 				<button class="ql-link"></button>
 				<button class="ql-image"></button>
 				<button class="ql-video"></button>
-				<!-- Formula dosn't work proprly  -->
+				<!-- Formula doesn't work properly  -->
 				<!-- <button class="ql-formula"></button> -->
 			</span>
 			<span class="ql-formats">
@@ -73,22 +73,32 @@ const NoteTabComponent = defineComponent({
 		},
 	},
 
+	created() {
+		this.note.updated.attach((changedNote) => {
+			console.log(`note updated- ${JSON.stringify(changedNote)}`);
+			this.contentHTML = changedNote.contentHTML;
+			this.$forceUpdate();
+		});
+	},
+
 	data() {
 		return {
 			lastNoteInternalUpdate: `${new Date().getTime()}`,
+			contentHTML: this.note.contentHTML,
 		};
 	},
 
 	computed: {
-		contentHTML(): string {
-			return this.note.contentHTML;
-		},
 		lastNoteUpdate(): string {
 			return `${this.lastNoteInternalUpdate}:${this.note?.lastModifiedTime}`;
 		},
 	},
 
 	methods: {
+		onNoteChange() {
+			this.$forceUpdate();
+		},
+
 		onChange(e: { htmlValue: string; textValue: string }): void {
 			this.note.setContents({ contentHTML: e.htmlValue, contentText: e.textValue });
 

@@ -35,9 +35,11 @@ export const DEFAULT_AES_GCM_TAG_BITS: AesGcmTagLength = 128;
 
 export const DEFAULT_AES_BLOCK_BITS: AesBlockSize = 256;
 
-export const DEFAULT_AES_IV_BYTES = 16;
+export const DEFAULT_AES_IV_BYTES = 12;
 
 export const DEFAULT_AES_GCM_KEY_USAGES: KeyUsage[] = ['encrypt', 'decrypt', 'wrapKey', 'unwrapKey'];
+
+export const DEFAULT_MASTER_KEY_USAGES: KeyUsage[] = ['deriveBits', 'deriveKey'];
 
 // #region PBKDF2
 

@@ -23,7 +23,7 @@
     "vue": "^3.0.0",
     "vue-class-component": "^8.0.0-0",
     "vue-router": "^4.0.0-0",
-    "weak-event": "^1.0.3"
+    "weak-event": "^2.0.5"
   },
   "devDependencies": {
     "@types/chai": "^4.2.11",
