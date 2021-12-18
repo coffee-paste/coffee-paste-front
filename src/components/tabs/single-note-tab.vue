@@ -73,6 +73,15 @@ const NoteTabComponent = defineComponent({
 		},
 	},
 
+	mounted() {
+		this.note.updated.attach((sender) => {
+			// Not the prettiest. This overcomes the fact that the underlying 'NoteWrapper' component is not a Vue one
+			// and ensures the view is truly 2-way-bound to the view-model
+			this.lastNoteInternalUpdate = `${new Date().getTime()}`;
+			this.contentHTML = sender.contentHTML;
+		});
+	},
+
 	data() {
 		return {
 			lastNoteInternalUpdate: `${new Date().getTime()}`,
@@ -87,10 +96,6 @@ const NoteTabComponent = defineComponent({
 	},
 
 	methods: {
-		onNoteChange() {
-			this.$forceUpdate();
-		},
-
 		onChange(e: { htmlValue: string; textValue: string }): void {
 			this.note.setContents({ contentHTML: e.htmlValue, contentText: e.textValue });
 

@@ -65,6 +65,8 @@ export class NoteWrapper implements INote, IDisposable {
 
 	private _updatedEvent: WeakEvent<INote, keyof INoteProperties> = new WeakEvent();
 
+	private _isInitialized = false;
+
 	// #endregion Members
 
 	// #region Accessors
@@ -133,6 +135,10 @@ export class NoteWrapper implements INote, IDisposable {
 		return this._updatedEvent;
 	}
 
+	public get isInitialized(): boolean {
+		return this._isInitialized;
+	}
+
 	// #endregion Accessors
 
 	public constructor(noteData: Note, updateSocket?: NotesSocket) {
@@ -150,6 +156,7 @@ export class NoteWrapper implements INote, IDisposable {
 
 	public setContents(contents: INoteContents): void {
 		this.assertWriteAccess();
+		this.assertIsInitialized();
 
 		this._note.contentText = contents.contentText;
 		this._note.contentHTML = contents.contentHTML;
@@ -177,6 +184,7 @@ export class NoteWrapper implements INote, IDisposable {
 		}
 		this.assertWriteAccess();
 
+		this.assertIsInitialized();
 		try {
 			switch (value) {
 				case Encryption.PASSWORD:
@@ -194,8 +202,8 @@ export class NoteWrapper implements INote, IDisposable {
 			await ApiFacade.NotesApi.setNoteEncryptionMethod(
 				{
 					encryption: value,
-					contentHTML: value === Encryption.NONE ? await this.decryptText(this._note.contentHTML) : await this.encryptText(this._note.contentHTML),
-					contentText: value === Encryption.NONE ? await this.decryptText(this._note.contentText) : await this.encryptText(this._note.contentText),
+					contentHTML: value === Encryption.NONE ? this._note.contentHTML : await this.encryptText(this._note.contentHTML),
+					contentText: value === Encryption.NONE ? this._note.contentText : await this.encryptText(this._note.contentText),
 				},
 				this._note.id,
 				this._socket?.channelKey
@@ -238,6 +246,7 @@ export class NoteWrapper implements INote, IDisposable {
 		this._key = await this._cryptoCore.createSubKey(this._note.randomNoteSalt, this._note.id, 'text');
 		this._note.contentText = await this.decryptText(this._note.contentText);
 		this._note.contentHTML = await this.decryptText(this._note.contentHTML);
+		this._isInitialized = true;
 		this._updatedEvent.invoke(this, 'contentHTML');
 	}
 
@@ -263,6 +272,12 @@ export class NoteWrapper implements INote, IDisposable {
 	private assertWriteAccess(): void {
 		if (this.isReadOnly) {
 			throw new Error("Operation requires Note 'Write' access");
+		}
+	}
+
+	private assertIsInitialized(): void {
+		if (!this.isInitialized) {
+			throw new Error('Operation requires Note to be fully initialized');
 		}
 	}
 
