@@ -37,19 +37,24 @@ class CryptoCoreAesGcm implements ICryptoCore {
 		password: string,
 		settings: IServerSideEncryptionSettings,
 		localStorageKey: LocalStorageKey = LocalStorageKey.MasterKey
-	): Promise<void> {
-		// Run the password though PBKDF2 using the server-provided salt and settings
-		const { saltB64, blockSize, pbkdf2Iterations } = settings.aesGcm;
-		this._masterKey = await createMasterKey(password, toByteArray(saltB64), true, blockSize, pbkdf2Iterations);
+	): Promise<boolean> {
+		try {
+			// Run the password though PBKDF2 using the server-provided salt and settings
+			const { saltB64, blockSize, pbkdf2Iterations } = settings.aesGcm;
+			this._masterKey = await createMasterKey(password, toByteArray(saltB64), true, blockSize, pbkdf2Iterations);
 
-		// Import the KEK provided by the server
-		const kek = await importBase64AesGcmKey(settings.kekB64, false);
+			// Import the KEK provided by the server
+			const kek = await importBase64AesGcmKey(settings.kekB64, false);
 
-		// Export the master key and encrypt it via the KEK
-		const encryptedKeyBlob = await exportRawBase64AesGcmKey(this._masterKey, kek);
+			// Export the master key and encrypt it via the KEK
+			const encryptedKeyBlob = await exportRawBase64AesGcmKey(this._masterKey, kek);
 
-		// Store the encrypted key blob in the local storage
-		setLocalStorageItem<IAesGcmEncryptedBlob>(localStorageKey, encryptedKeyBlob, { itemType: 'object' });
+			// Store the encrypted key blob in the local storage
+			setLocalStorageItem<IAesGcmEncryptedBlob>(localStorageKey, encryptedKeyBlob, { itemType: 'object' });
+			return true;
+		} catch {
+			return false;
+		}
 	}
 
 	public async loadMasterKey(serverKekB64: string, localStorageKey: LocalStorageKey = LocalStorageKey.MasterKey): Promise<boolean> {

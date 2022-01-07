@@ -246,6 +246,13 @@ export class NoteWrapper implements INote, IDisposable {
 		return this._note.encryption;
 	}
 
+	/**
+	 * The current encryption method used to secure the note
+	 *
+	 * @readonly
+	 * @type {boolean}
+	 * @memberof NoteWrapper
+	 */
 	public get isEncrypted(): boolean {
 		return this._note.encryption !== Encryption.NONE;
 	}
@@ -364,18 +371,33 @@ export class NoteWrapper implements INote, IDisposable {
 		this._setTagsDebounced(this._note.tags);
 	}
 
-	private async initializeEncryption(): Promise<void> {
-		if (!this.isEncrypted) {
-			this._isInitialized = true;
-			return;
+	public async initializeEncryption(): Promise<boolean> {
+		if (this.isInitialized) {
+			return true;
 		}
 
-		this._cryptoCore = getCryptoCore(this._note?.encryption);
-		this._key = await this._cryptoCore.createSubKey(this._note.randomNoteSalt, this._note.id, 'text');
-		this._note.contentText = await this.decryptText(this._note.contentText);
-		this._note.contentHTML = await this.decryptText(this._note.contentHTML);
-		this._isInitialized = true;
-		this._updatedEvent.invoke(this, 'contentHTML');
+		if (!this.isEncrypted) {
+			this._isInitialized = true;
+			return true;
+		}
+
+		const cryptoCore = getCryptoCore(this._note?.encryption);
+		if (!cryptoCore.isReady) {
+			console.log(`[NoteWrapper.initializeEncryption] Crypto-core is not ready. Cannot decrypt note '${this.name}' (${this.id})`);
+			return false;
+		}
+		try {
+			this._cryptoCore = cryptoCore;
+			this._key = await this._cryptoCore.createSubKey(this._note.randomNoteSalt, this._note.id, 'text');
+			this._note.contentText = await this.decryptText(this._note.contentText);
+			this._note.contentHTML = await this.decryptText(this._note.contentHTML);
+			this._isInitialized = true;
+			this._updatedEvent.invoke(this, 'contentHTML');
+			return true;
+		} catch (err) {
+			console.log(`[NoteWrapper.initializeEncryption] Failed to initialize note encryption - ${err}`);
+			return false;
+		}
 	}
 
 	private onSocketMessage(sender: NotesSocket, e: OutgoingNoteUpdate): void {

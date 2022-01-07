@@ -11,6 +11,7 @@ export interface INote extends Omit<Note, 'randomNoteSalt' | 'contentText'> {
 	setStatus(status: StatusNoteIdBody): Promise<void>;
 	setContents(contents: INoteContents): void;
 	setEncryption(value: Encryption): Promise<void>;
+	initializeEncryption(): Promise<boolean>;
 	delete(): Promise<void>;
 	dispose(): void;
 }

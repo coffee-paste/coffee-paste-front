@@ -14,6 +14,7 @@ import Avatar from 'primevue/avatar';
 import Tooltip from 'primevue/tooltip';
 import ConfirmationService from 'primevue/confirmationservice';
 import Menubar from 'primevue/menubar';
+import Divider from 'primevue/divider';
 import { getLocalStorageItem, LocalStorageKey } from './infrastructure/local-storage';
 import router from './router';
 import App from './App.vue';
@@ -44,6 +45,7 @@ app.component('SelectButton', SelectButton);
 app.component('CascadeSelect', CascadeSelect);
 app.component('Avatar', Avatar);
 app.component('Menubar', Menubar);
+app.component('Divider', Divider);
 
 app.directive('tooltip', Tooltip);
 

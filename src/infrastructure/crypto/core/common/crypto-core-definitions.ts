@@ -34,10 +34,10 @@ export interface ICryptoCore {
 	 *
 	 * Used to encrypt the master key before storing it in the local storage
 	 * @param {LocalStorageKey} localStorageKey The local storage key under which to store the encrypted master key
-	 * @return {*} {Promise<void>} A promise that is resolved when a master key has been generated, encrypted and stored in the local storage
+	 * @return {boolean} {Promise<boolean>} A promise that is resolved when a master key has been generated, encrypted and stored in the local storage
 	 * @memberof ICryptoCore
 	 */
-	createAndStoreMasterKey(password: string, settings: IServerSideEncryptionSettings, localStorageKey?: LocalStorageKey): Promise<void>;
+	createAndStoreMasterKey(password: string, settings: IServerSideEncryptionSettings, localStorageKey?: LocalStorageKey): Promise<boolean>;
 
 	/**
 	 * Loads a previously encrypted master key from the given local storage location
@@ -101,7 +101,7 @@ export interface IServerSideEncryptionSettings {
 	kekB64: string;
 
 	/**
-	 * COntains parameters and options relevant to the split-key AES-GCM encryption scheme
+	 * Contains parameters and options relevant to the split-key AES-GCM encryption scheme
 	 */
 	aesGcm: {
 		/**
