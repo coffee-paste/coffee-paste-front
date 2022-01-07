@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { generateNewNoteName } from '@/common-constants/note-constants';
 import debounce from 'lodash.debounce';
 import { ITypedEvent, WeakEvent } from 'weak-event';
@@ -37,6 +36,14 @@ export class NoteWrapper implements INote, IDisposable {
 
 	private _onSocketMessage = this.onSocketMessage.bind(this);
 
+	/**
+	 * A lodash debounced function that updates the note's contents- both text and HTML
+	 *
+	 * @debounced
+	 *
+	 * @private
+	 * @memberof NoteWrapper
+	 */
 	private _setContentsDebounced = debounce(async (debounceContents: INoteContents): Promise<void> => {
 		const contentText = this.isEncrypted ? await this.encryptText(debounceContents.contentText) : debounceContents.contentText;
 		const contentHTML = this.isEncrypted ? await this.encryptText(debounceContents.contentHTML) : debounceContents.contentHTML;
@@ -51,70 +58,190 @@ export class NoteWrapper implements INote, IDisposable {
 		console.log(`Updating note- Content Text: ${contentText}\n Content HTML: ${contentHTML}`);
 	}, DEFAULT_UPDATE_DEBOUNCE_MS);
 
+	/**
+	 * A lodash debounced function that updates the note's name
+	 *
+	 * @debounced
+	 *
+	 * @private
+	 * @memberof NoteWrapper
+	 */
 	private _setNameDebounced = debounce(async (name: string): Promise<void> => {
 		await ApiFacade.NotesApi.setNoteName({ name }, this.id, this._socket?.channelKey);
 	}, DEFAULT_UPDATE_DEBOUNCE_MS);
 
+	/**
+	 * A lodash debounced function that update's the note's tags
+	 *
+	 * @debounced
+	 *
+	 * @private
+	 * @memberof NoteWrapper
+	 */
 	private _setTagsDebounced = debounce(async (tags: string[]): Promise<void> => {
 		await ApiFacade.NotesApi.setNoteTags(tags || [], this.id, this._socket?.channelKey);
 	}, DEFAULT_UPDATE_DEBOUNCE_MS);
 
+	/**
+	 * A lodash debounced function that decrypts the given text
+	 *
+	 * @debounced
+	 *
+	 * @private
+	 * @memberof NoteWrapper
+	 */
 	private _decryptTextDebounced = debounce(async (encryptedHtml: string): Promise<void> => {
 		this._note.contentHTML = await this.decryptText(encryptedHtml);
 	}, DEFAULT_UPDATE_DEBOUNCE_MS);
 
+	/**
+	 * An event that is fired whenever the note is updated.
+	 * A single event is raised for each property change
+	 *
+	 * @private
+	 * @type {WeakEvent<INote, keyof INoteProperties>}
+	 * @memberof NoteWrapper
+	 */
 	private _updatedEvent: WeakEvent<INote, keyof INoteProperties> = new WeakEvent();
 
+	/**
+	 * Specifies whether the note is initialized and ready for interaction
+	 *
+	 * @private
+	 * @memberof NoteWrapper
+	 */
 	private _isInitialized = false;
 
 	// #endregion Members
 
 	// #region Accessors
 
+	/**
+	 * The note's unique ID
+	 *
+	 * @readonly
+	 * @type {string}
+	 * @memberof NoteWrapper
+	 */
 	public get id(): string {
 		return this._note.id;
 	}
 
+	/**
+	 * The ID of the note's owner
+	 *
+	 * @readonly
+	 * @type {string}
+	 * @memberof NoteWrapper
+	 */
 	public get userId(): string {
 		return this._note.userId;
 	}
 
+	/**
+	 * The note's creation time
+	 *
+	 * @readonly
+	 * @type {number}
+	 * @memberof NoteWrapper
+	 */
 	public get creationTime(): number {
 		return this._note.creationTime;
 	}
 
+	/**
+	 * A code-name for the password used to encrypt the note
+	 *
+	 * @readonly
+	 * @type {(string | undefined)}
+	 * @memberof NoteWrapper
+	 */
 	public get passwordVersionCodeName(): string | undefined {
 		return this._note.passwordVersionCodeName;
 	}
 
+	/**
+	 * A code-name for the certificate used to encrypt the note
+	 *
+	 * @readonly
+	 * @type {(string | undefined)}
+	 * @memberof NoteWrapper
+	 */
 	public get certificateVersionCodeName(): string | undefined {
 		return this._note.certificateVersionCodeName;
 	}
 
+	/**
+	 * The note's display name
+	 *
+	 * @type {string}
+	 * @memberof NoteWrapper
+	 */
 	public get name(): string {
 		return this._note.name || generateNewNoteName([]); // Not ideal, need to think of a better way
 	}
 
+	/**
+	 * Set's the note's display name
+	 *
+	 * @debounced
+	 *
+	 * @memberof NoteWrapper
+	 */
 	public set name(value: string) {
 		this.setName(value);
 	}
 
+	/**
+	 * The note's HTML content
+	 *
+	 * @readonly
+	 * @type {string}
+	 * @memberof NoteWrapper
+	 */
 	public get contentHTML(): string {
 		return this._note.contentHTML;
 	}
 
+	/**
+	 * An epoch specifying the time the note was last updated
+	 *
+	 * @readonly
+	 * @type {number}
+	 * @memberof NoteWrapper
+	 */
 	public get lastModifiedTime(): number {
 		return this._note.lastModifiedTime;
 	}
 
+	/**
+	 * The note's tags
+	 *
+	 * @type {string[]}
+	 * @memberof NoteWrapper
+	 */
 	public get tags(): string[] {
 		return this._note.tags;
 	}
 
+	/**
+	 * Sets the note's tags
+	 *
+	 * @debounced
+	 *
+	 * @memberof NoteWrapper
+	 */
 	public set tags(value: string[]) {
 		this.setTags(value);
 	}
 
+	/**
+	 * The note's encryption type
+	 *
+	 * @readonly
+	 * @type {Encryption}
+	 * @memberof NoteWrapper
+	 */
 	public get encryption(): Encryption {
 		return this._note.encryption;
 	}
