@@ -239,6 +239,7 @@ export class NoteWrapper implements INote, IDisposable {
 
 	private async initializeEncryption(): Promise<void> {
 		if (!this.isEncrypted) {
+			this._isInitialized = true;
 			return;
 		}
 
