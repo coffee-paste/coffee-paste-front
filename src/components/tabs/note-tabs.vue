@@ -19,6 +19,7 @@
 						<div class="tab-header">
 							<span>{{ note.name }}</span>
 							<span class="tab-header-menu">
+								<span v-if="note.isEncrypted" class="pi pi-shield"></span>
 								<i class="pi pi-ellipsis-v p-button-icon" @click="onTabHeaderMenuClick($event, note)"></i>
 							</span>
 						</div>
@@ -53,6 +54,7 @@ import InputText from 'primevue/inputtext';
 import { INote } from '@/infrastructure/notes/note-interfaces';
 import { noteManager } from '@/infrastructure/notes/note-manager';
 import { Encryption } from '@/infrastructure/generated/api';
+import { getCryptoCore } from '@/infrastructure/crypto/core/aes-gcm/crypto-core-aes-gcm';
 import TabPanel from './prime-extension/prime-tabpanel';
 import TabView, { TabViewEventArgs } from './prime-extension/prime-tabview';
 import { downloadAsText } from '../common/utils';
@@ -205,6 +207,17 @@ const NoteTabsComponent = defineComponent({
 				console.warn(`[NoteTabs.setNoteEncryption] Could not determine target note`);
 				return;
 			}
+
+			if (!getCryptoCore(newEncryption).isReady) {
+				this.$toast.add({
+					severity: ToastSeverity.Warn,
+					summary: `Please configure your system '${newEncryption}'`,
+					detail: 'Please go to encryption settings',
+					life: ToastDuration.Medium,
+				});
+				return;
+			}
+
 			try {
 				await note.setEncryption(newEncryption);
 			} catch (error) {

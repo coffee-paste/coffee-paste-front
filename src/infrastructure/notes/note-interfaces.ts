@@ -8,6 +8,7 @@ export interface INoteContents {
 
 export interface INote extends Omit<Note, 'randomNoteSalt' | 'contentText'> {
 	updated: ITypedEvent<INote, Exclude<keyof INote, 'setStatus' | 'setContents' | 'setEncryption' | 'delete' | 'dispose'>>;
+	isEncrypted: boolean;
 	setStatus(status: StatusNoteIdBody): Promise<void>;
 	setContents(contents: INoteContents): void;
 	setEncryption(value: Encryption): Promise<void>;

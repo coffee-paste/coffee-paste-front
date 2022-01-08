@@ -346,6 +346,7 @@ export class NoteWrapper implements INote, IDisposable {
 			this._note.encryption = value;
 		} catch (error) {
 			console.error(`[NoteWrapper.setEncryption] Failed to set encryption mode to ${value} on note ${this.id} - ${error}`);
+			throw error;
 		}
 	}
 

@@ -145,7 +145,7 @@ const MainViewToolbarComponent = defineComponent({
 				},
 				{
 					label: 'Encryption',
-					icon: PrimeIcons.LOCK,
+					icon: PrimeIcons.WALLET,
 					command: (event: ContextMenuCommandEventArgs) => {
 						(this.$refs.encryptionOverlay as OverlayPanel).toggle(event.originalEvent);
 					},
