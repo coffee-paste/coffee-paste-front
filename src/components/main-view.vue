@@ -17,8 +17,7 @@ import { generateNewNoteName } from '@/common-constants/note-constants';
 import { NoteUpdateEvent } from '@/infrastructure/generated/api/channel-spec';
 import { noteManager } from '@/infrastructure/notes/note-manager';
 import { INote } from '@/infrastructure/notes/note-interfaces';
-import { getCryptoCore } from '@/infrastructure/crypto/core/aes-gcm/crypto-core-aes-gcm';
-import { Encryption } from '@/infrastructure/generated/api';
+import { loadPasswordMasterKey } from '@/infrastructure/crypto/handlers/password-loader';
 import { IStatus, StatusType } from './toolbar/menu-interfaces';
 import { MainViewToolbar } from './toolbar/main-view-toolbar.vue';
 import { INoteTab } from './tabs/tab-interfaces';
@@ -37,23 +36,8 @@ const channelStatus = {
 export default defineComponent({
 	components: { NoteTabs, MainViewToolbar },
 	async created() {
-		const kekB64 = 'suKNPDkzQpZV7z8QpsqzZRqRPtvlejqsRsx9cW6z2d8=';
-		const cryptoCore = getCryptoCore(Encryption.PASSWORD);
-		const masterKeyLoaded = await cryptoCore.loadMasterKey(kekB64);
+		const masterKeyLoaded = await loadPasswordMasterKey();
 		console.log(`Master key ${masterKeyLoaded ? 'successfully loaded' : 'was not loaded'}`);
-
-		/*
-		const saltB64 = 'NNNNPDkzQpZV7z8QpsqzZRqRPtvlejqsRsx9cW6z2d8=';
-		if (!(await cryptoCore.loadMasterKey(kekB64))) {
-			await cryptoCore.createAndStoreMasterKey('1234', {
-				kekB64,
-				aesGcm: {
-					saltB64,
-					blockSize: DEFAULT_AES_BLOCK_BITS,
-				},
-			});
-		}
-		*/
 
 		await noteManager.initialize();
 		// Open updated feed channel

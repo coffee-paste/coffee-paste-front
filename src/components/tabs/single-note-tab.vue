@@ -86,9 +86,9 @@ import { PrimeIcons } from 'primevue/api';
 import Password from 'primevue/password';
 import { Encryption } from '@/infrastructure/generated/api';
 import { getCryptoCore } from '@/infrastructure/crypto/core/aes-gcm/crypto-core-aes-gcm';
-import { DEFAULT_AES_BLOCK_BITS } from '@/infrastructure/crypto/low-level/crypto-low-level-definitions';
 import { ToastDuration, ToastSeverity } from '@/common-constants/prime-constants';
 import { INoteChangedEventArgs } from './tab-interfaces';
+import { loadPassword } from '../../infrastructure/crypto/handlers/password-loader';
 
 const NoteTabComponent = defineComponent({
 	components: { Password },
@@ -157,17 +157,10 @@ const NoteTabComponent = defineComponent({
 			const logPrefix: string = '[SingleNoteTab.onDecrypt]';
 			console.log(`${logPrefix} Preparing decryption core for note '${this.note.name}' (${this.note.id})`);
 
-			// Replace with a fetch from store/server
-			const kekB64 = 'suKNPDkzQpZV7z8QpsqzZRqRPtvlejqsRsx9cW6z2d8=';
-			const saltB64 = 'NNNNPDkzQpZV7z8QpsqzZRqRPtvlejqsRsx9cW6z2d8=';
-
-			// This needs to change to perform a transient decryption without overwriting the MK...
-			// The way it is right now, every password attempt overwrite the MK which is really bad.
-			// A temporary solution.
-			const succeeded = await getCryptoCore(this.note.encryption).createAndStoreMasterKey(this.decryptionPassword, {
-				kekB64,
-				aesGcm: { saltB64, blockSize: DEFAULT_AES_BLOCK_BITS },
-			});
+			let succeeded = false;
+			if (this.note.encryption === Encryption.PASSWORD) {
+				succeeded = await loadPassword(this.decryptionPassword);
+			}
 
 			if (!succeeded) {
 				console.error(`${logPrefix} Failed to create/store a master key from a user-given password`);

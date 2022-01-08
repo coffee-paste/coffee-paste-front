@@ -27,6 +27,11 @@
 			<NotesArchive />
 		</div>
 	</OverlayPanel>
+	<OverlayPanel ref="encryptionOverlay" :baseZIndex="-100" :dismissable="false">
+		<div>
+			<!-- <NotesArchive /> -->
+		</div>
+	</OverlayPanel>
 </template>
 
 <script lang="ts">
@@ -138,6 +143,13 @@ const MainViewToolbarComponent = defineComponent({
 						(this.$refs.archiveOverlay as OverlayPanel).toggle(event.originalEvent);
 					},
 				},
+				{
+					label: 'Encryption',
+					icon: PrimeIcons.LOCK,
+					command: (event: ContextMenuCommandEventArgs) => {
+						(this.$refs.encryptionOverlay as OverlayPanel).toggle(event.originalEvent);
+					},
+				},
 			],
 		};
 	},
@@ -215,10 +227,6 @@ const MainViewToolbarComponent = defineComponent({
 
 		onProfileButtonClick(e: MouseEvent): void {
 			(this.$refs.menu as Menu).toggle(e);
-		},
-
-		onArchiveButtonClick(e: MouseEvent) {
-			(this.$refs.archiveOverlayRef as OverlayPanel).toggle(e);
 		},
 	},
 });
