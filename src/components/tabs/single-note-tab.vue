@@ -4,7 +4,7 @@
 			<div :class="isDecryptionRequiredIcon" class="large-icon" />
 		</template>
 		<template #title>
-			<div class="password-is-required-title">Encrypted note</div>
+			<div class="password-is-required-title">ENCRYPTED NOTE</div>
 		</template>
 		<template #content>
 			<div class="content-container">
@@ -14,7 +14,7 @@
 					<div class="password-input">
 						<span class="password-input-text">{{ passwordCodeNameMessage }}</span>
 						<Password v-model="decryptionPassword" class="password-input-box-margins" :toggleMask="true" :feedback="false" />
-						<Button label="Decrypt" class="decrypt-button" @click="onDecrypt" />
+						<Button :disabled="passwordDecryptButtonDisabled" label="Decrypt" class="decrypt-button" @click="onDecrypt" />
 					</div>
 				</div>
 			</div>
@@ -138,6 +138,9 @@ const NoteTabComponent = defineComponent({
 		passwordCodeNameMessage(): string {
 			return `Enter the password corresponding to the code-name '${this.note.passwordVersionCodeName}':`;
 		},
+		passwordDecryptButtonDisabled(): boolean {
+			return this.decryptionPassword.length <= 0;
+		},
 	},
 
 	methods: {
@@ -203,17 +206,22 @@ export default NoteTab;
 
 <style lang="scss" scoped>
 .decryption-required-card {
-	width: 60vw;
+	width: 80vw;
 	display: inline-block;
 	font-size: 1rem;
+
+	.password-is-required-title {
+	}
 
 	.p-divider-solid {
 		border-top-style: solid;
 		border-top-width: 0.15rem;
+		margin-top: 0.25rem;
+		margin-bottom: 2rem;
 	}
 
 	.large-icon {
-		font-size: 4.5em;
+		font-size: 5vh;
 		margin-top: 3rem;
 		margin-bottom: 0.5rem;
 	}
@@ -241,6 +249,7 @@ export default NoteTab;
 
 		.password-input-box-margins {
 			margin-top: 1rem;
+			margin-right: 0.8rem;
 		}
 
 		::v-deep(.p-password-input) {
@@ -250,7 +259,7 @@ export default NoteTab;
 		}
 
 		.decrypt-button {
-			margin-left: 0.8rem;
+			margin-top: 0.5rem;
 			height: 2.3rem;
 		}
 	}
