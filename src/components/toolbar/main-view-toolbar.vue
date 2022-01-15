@@ -29,7 +29,7 @@
 	</OverlayPanel>
 	<OverlayPanel ref="encryptionOverlay" :baseZIndex="-100" :dismissable="false">
 		<div>
-			<!-- <NotesArchive /> -->
+			<SetEncryption @encryptionConfigured="encryptionReady" :passwordVersionCodeName="passwordVersionCodeName" :encryption="'PASSWORD'" />
 		</div>
 	</OverlayPanel>
 </template>
@@ -52,6 +52,7 @@ import { ContextMenuCommandEventArgs, IVueMenuItem } from '../common/interfaces/
 import { IStatus, StatusType } from './menu-interfaces';
 import NotesArchive from '../notes-archive/notes-archive';
 import { MenubarItem } from '../tabs/prime-extension/prime-tabview';
+import { SetEncryption } from '../encryption/set-encryption.vue';
 
 /** On theme selecte keep the selection in the local storage ans reload page */
 function onThemeSelected(e: { item: ThemeItem }) {
@@ -76,7 +77,7 @@ for (const themeGroup of themeGroups) {
 }
 
 const MainViewToolbarComponent = defineComponent({
-	components: { Button, Menu, OverlayPanel, NotesArchive },
+	components: { Button, Menu, OverlayPanel, NotesArchive, SetEncryption },
 	props: {
 		profileImageB64: {
 			type: String,
@@ -189,6 +190,9 @@ const MainViewToolbarComponent = defineComponent({
 			const lastMsg = `${this.msgStatus.getHours()}:${this.msgStatus.getMinutes()}:${this.msgStatus.getSeconds()}`;
 			return `${this.status?.status}\n\nLast update ${lastMsg}`;
 		},
+		passwordVersionCodeName(): string {
+			return getLocalStorageItem<User>(LocalStorageKey.Profile, { itemType: 'object' })?.passwordVersionCodeName || '';
+		},
 	},
 	methods: {
 		// Once the 'CascadeSelect' clicked show the current theme as selected, before the first click just show the placeholder text
@@ -224,7 +228,9 @@ const MainViewToolbarComponent = defineComponent({
 				});
 			}
 		},
-
+		encryptionReady(e: Event) {
+			(this.$refs.encryptionOverlay as OverlayPanel).toggle(e);
+		},
 		onProfileButtonClick(e: MouseEvent): void {
 			(this.$refs.menu as Menu).toggle(e);
 		},

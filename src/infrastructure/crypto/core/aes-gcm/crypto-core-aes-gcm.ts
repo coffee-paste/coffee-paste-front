@@ -52,7 +52,8 @@ class CryptoCoreAesGcm implements ICryptoCore {
 			// Store the encrypted key blob in the local storage
 			setLocalStorageItem<IAesGcmEncryptedBlob>(localStorageKey, encryptedKeyBlob, { itemType: 'object' });
 			return true;
-		} catch {
+		} catch (err) {
+			console.error(` Failed to createAndStoreMasterKey - ${err.message}`);
 			return false;
 		}
 	}

@@ -24,6 +24,7 @@ export async function loadPassword(plainPassword: string): Promise<boolean> {
 
 		return succeeded;
 	} catch (error) {
+		console.error(`Failed to loadPassword - ${error.message}`);
 		return false;
 	}
 }
@@ -41,6 +42,7 @@ export async function loadPasswordMasterKey(): Promise<boolean> {
 
 		return succeeded;
 	} catch (error) {
+		console.error(` Failed to loadPasswordMasterKey - ${error.message}`);
 		return false;
 	}
 }
