@@ -42,7 +42,7 @@ export async function loadPasswordMasterKey(): Promise<boolean> {
 
 		return succeeded;
 	} catch (error) {
-		console.error(` Failed to loadPasswordMasterKey - ${error.message}`);
+		console.error(`Failed to loadPasswordMasterKey - ${error.message}`);
 		return false;
 	}
 }

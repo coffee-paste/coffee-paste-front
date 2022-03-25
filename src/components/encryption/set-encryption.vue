@@ -76,7 +76,6 @@ const SetEncryptionComponent = defineComponent({
 			console.log(`${logPrefix} Preparing decryption core for encryption method ${this.$props.encryption} code ${this.$props.passwordVersionCodeName} ...`);
 
 			let succeeded = false;
-			console.log(this.$props.encryption);
 			if (this.$props.encryption === Encryption.PASSWORD) {
 				succeeded = await loadPassword(this.decryptionPassword);
 			}
@@ -94,7 +93,9 @@ const SetEncryptionComponent = defineComponent({
 				return;
 			}
 
-			console.log(`${logPrefix} Preparing decryption core for encryption method ${this.$props.encryption} code ${this.$props.passwordVersionCodeName} succeed`);
+			console.log(
+				`${logPrefix} Successfully prepared a cryptography core for '${this.$props.encryption}' encryption, version '${this.$props.passwordVersionCodeName}'`
+			);
 
 			this.onEncryptionConfigured(e);
 		},

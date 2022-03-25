@@ -37,7 +37,7 @@ export default defineComponent({
 	components: { NoteTabs, MainViewToolbar },
 	async created() {
 		const masterKeyLoaded = await loadPasswordMasterKey();
-		console.log(`Master key ${masterKeyLoaded ? 'successfully loaded' : 'was not loaded'}`);
+		console.log(`[MainView.created] Master key ${masterKeyLoaded ? 'successfully loaded' : 'was not loaded'}`);
 
 		await noteManager.initialize();
 		// Open updated feed channel
@@ -75,7 +75,7 @@ export default defineComponent({
 				});
 
 				noteManager.socket.message.attach((sender, messagePayload) => {
-					console.log(`Incoming message:  ${JSON.stringify(messagePayload)}`);
+					console.log(`[MainView.noteManagerAttach] Incoming message:  ${JSON.stringify(messagePayload)}`);
 
 					if (messagePayload.event !== NoteUpdateEvent.FEED) {
 						// Currently, if the update is not content update, re-render all page.
