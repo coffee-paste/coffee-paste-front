@@ -1,16 +1,20 @@
 import { generateNewNoteName } from '@/common-constants/note-constants';
 import debounce from 'lodash.debounce';
 import { ITypedEvent, WeakEvent } from 'weak-event';
+import { fromByteArray } from 'base64-js';
 import { getCryptoCore } from '../crypto/core/aes-gcm/crypto-core-aes-gcm';
 import { ICryptoCore } from '../crypto/core/common/crypto-core-definitions';
 import { NotesSocket } from './notes-socket';
-import { NoteUpdateEvent, OutgoingNoteUpdate } from '../generated/api/channel-spec';
+import { NoteUpdateEvent, BackToFrontNoteUpdate } from '../generated/api/channel-spec';
 import { Encryption, Note, StatusNoteIdBody } from '../generated/api';
 import { ApiFacade } from '../generated/proxies/api-proxies';
 import { IDisposable } from '../common-interfaces.ts/disposable';
 import { INote, INoteContents } from './note-interfaces';
+import { getSecureRandomBytes } from '../crypto/low-level/crypto-low-level';
 
-const DEFAULT_UPDATE_DEBOUNCE_MS = 1500;
+const DEFAULT_UPDATE_DEBOUNCE_MS: number = 1500;
+
+const DEFAULT_GUARD_NONCE_LENGTH_BYTES: number = 16;
 
 // Set contents should receive NoteContents.
 // No individual setters for contentText/contentHtml!
@@ -32,6 +36,8 @@ export class NoteWrapper implements INote, IDisposable {
 
 	private _socket?: NotesSocket;
 
+	private _guardNonce?: string;
+
 	private _disposed: boolean;
 
 	private _onSocketMessage = this.onSocketMessage.bind(this);
@@ -45,16 +51,28 @@ export class NoteWrapper implements INote, IDisposable {
 	 * @memberof NoteWrapper
 	 */
 	private _setContentsDebounced = debounce(async (debounceContents: INoteContents): Promise<void> => {
+		let newGuardNonce: string | undefined;
+		let encryptedNewGuardNonce: string | undefined;
+
+		if (this.isEncrypted) {
+			({ newGuardNonce, encryptedNewGuardNonce } = await this.getNewNonce());
+		}
+
 		const contentText = this.isEncrypted ? await this.encryptText(debounceContents.contentText) : debounceContents.contentText;
 		const contentHTML = this.isEncrypted ? await this.encryptText(debounceContents.contentHTML) : debounceContents.contentHTML;
 		await ApiFacade.NotesApi.setNoteContent(
 			{
+				newGuardNonce,
+				encryptedNewGuardNonce,
+				oldGuardNonce: this._guardNonce,
 				contentText,
 				contentHTML,
 			},
 			this._note.id,
 			this._socket?.channelKey
 		);
+		// Keep track of the currently in use Nonce
+		this._guardNonce = newGuardNonce;
 		console.log(`Updating note- Content Text: ${contentText}\n Content HTML: ${contentHTML}`);
 	}, DEFAULT_UPDATE_DEBOUNCE_MS);
 
@@ -319,11 +337,16 @@ export class NoteWrapper implements INote, IDisposable {
 		this.assertWriteAccess();
 
 		this.assertIsInitialized();
+
+		let newGuardNonce: string | undefined;
+		let encryptedNewGuardNonce: string | undefined;
+
 		try {
 			switch (value) {
 				case Encryption.PASSWORD:
 					this._cryptoCore = getCryptoCore(value);
 					this._key = await this._cryptoCore.createSubKey(this._note.randomNoteSalt, this._note.id, 'text');
+					({ newGuardNonce, encryptedNewGuardNonce } = await this.getNewNonce());
 					break;
 				case Encryption.NONE:
 					break;
@@ -335,6 +358,9 @@ export class NoteWrapper implements INote, IDisposable {
 
 			await ApiFacade.NotesApi.setNoteEncryptionMethod(
 				{
+					newGuardNonce,
+					encryptedNewGuardNonce,
+					oldGuardNonce: this._guardNonce,
 					encryption: value,
 					contentHTML: value === Encryption.NONE ? this._note.contentHTML : await this.encryptText(this._note.contentHTML),
 					contentText: value === Encryption.NONE ? this._note.contentText : await this.encryptText(this._note.contentText),
@@ -344,7 +370,10 @@ export class NoteWrapper implements INote, IDisposable {
 			);
 			// If the 'setNoteEncryptionMethod' succeeded, update the note's state
 			this._note.encryption = value;
+			// Keep track of the currently in use Nonce
+			this._guardNonce = newGuardNonce;
 		} catch (error) {
+			// Need to actually pass error info from backend
 			console.error(`[NoteWrapper.setEncryption] Failed to set encryption mode to ${value} on note ${this.id} - ${error}`);
 			throw error;
 		}
@@ -373,6 +402,8 @@ export class NoteWrapper implements INote, IDisposable {
 	}
 
 	public async initializeEncryption(): Promise<boolean> {
+		const logPrefix: string = '[NoteWrapper.initializeEncryption]';
+
 		if (this.isInitialized) {
 			return true;
 		}
@@ -384,7 +415,7 @@ export class NoteWrapper implements INote, IDisposable {
 
 		const cryptoCore = getCryptoCore(this._note?.encryption);
 		if (!cryptoCore.isReady) {
-			console.log(`[NoteWrapper.initializeEncryption] Crypto-core is not ready. Cannot decrypt note '${this.name}' (${this.id})`);
+			console.log(`${logPrefix} Crypto-core is not ready. Cannot decrypt note '${this.name}' (${this.id})`);
 			return false;
 		}
 		try {
@@ -392,16 +423,25 @@ export class NoteWrapper implements INote, IDisposable {
 			this._key = await this._cryptoCore.createSubKey(this._note.randomNoteSalt, this._note.id, 'text');
 			this._note.contentText = await this.decryptText(this._note.contentText);
 			this._note.contentHTML = await this.decryptText(this._note.contentHTML);
+
+			// Decrypt the Guard Nonce. It's to be sent with all note content updates to verify the user
+			// was indeed able to decrypt and is not just corrupting the data.
+			if (this._note.encryptedGuardNonce) {
+				this._guardNonce = await this.decryptText(this._note.encryptedGuardNonce);
+			} else {
+				console.warn(`${logPrefix} Note ${this.name} (${this.id}) is encrypted but has no Guard Nonce`);
+			}
+
 			this._isInitialized = true;
 			this._updatedEvent.invoke(this, 'contentHTML');
 			return true;
 		} catch (err) {
-			console.log(`[NoteWrapper.initializeEncryption] Failed to initialize note encryption - ${err}`);
+			console.log(`${logPrefix} Failed to initialize note encryption - ${err}`);
 			return false;
 		}
 	}
 
-	private onSocketMessage(sender: NotesSocket, e: OutgoingNoteUpdate): void {
+	private onSocketMessage(sender: NotesSocket, e: BackToFrontNoteUpdate): void {
 		if (e.event !== NoteUpdateEvent.FEED || e.noteId !== this._note.id) {
 			// Irrelevant event. Ignore.
 			return;
@@ -438,6 +478,12 @@ export class NoteWrapper implements INote, IDisposable {
 
 	private async decryptText(cipherText: string): Promise<string> {
 		return await this._cryptoCore.decryptText(this._key, cipherText);
+	}
+
+	private async getNewNonce(): Promise<{ newGuardNonce: string; encryptedNewGuardNonce: string }> {
+		const newGuardNonce = fromByteArray(getSecureRandomBytes(DEFAULT_GUARD_NONCE_LENGTH_BYTES));
+		const encryptedNewGuardNonce = await this.encryptText(newGuardNonce);
+		return { newGuardNonce, encryptedNewGuardNonce };
 	}
 
 	// #endregion Private Methods

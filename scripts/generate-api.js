@@ -1,14 +1,23 @@
 /* eslint-disable no-useless-escape */
 /* eslint-disable no-multi-str */
 /* eslint-disable import/no-extraneous-dependencies */
+/* eslint-disable import/first */
+import * as dotenv from 'dotenv';
+import fs, { existsSync } from 'fs';
+// load environment variable from .env file before all
+if (existsSync('.env')) {
+	console.log('Env file exists and will be loaded');
+	dotenv.config();
+}
+
 import nodeFetch from 'node-fetch';
-import fs from 'fs';
 import path from 'path';
 import jszip from 'jszip';
 
 // #region Commons
 // Build API based on develop branch, unless it's build for main branch, then use main branch API.
-const ENV_BRANCH = process.env.GITHUB_REF !== 'main' ? 'develop' : 'main';
+const ENV_BRANCH = process.env.BACKEND_BRANCH ?? (process.env.GITHUB_REF !== 'main' ? 'develop' : 'main');
+console.log(`Generating OpenAPI client stubs for branch '${ENV_BRANCH}'`);
 const SELF_NAME = 'generate-api.js';
 const NODE_BUFFER = 'nodebuffer';
 
@@ -145,6 +154,11 @@ async function createApiTs(jsZip) {
 	return proxiesToEmit;
 }
 
+function fixChannelSpecImports(spec) {
+	const imports = 'import { SetNoteContentParams } from "./api";';
+	return spec.replace(/import.+from.+';/, imports);
+}
+
 /**
  * Emits a class containing, for each class name in `proxiesToEmit` a static getter returning a dynamic proxy of the API object
  * @description **Note:** This method requires that the output directory already exists. The output file may or may not exist
@@ -213,6 +227,6 @@ function emitProxiesFile(proxiesToEmit) {
 
 	// Download the latest channel TS spec API
 	const channelSpecResponse = await nodeFetch(`https://raw.githubusercontent.com/coffee-paste/coffee-paste-backend/${ENV_BRANCH}/src/core/channel.protocol.ts`);
-	const channelSpecBuffer = await channelSpecResponse.buffer();
-	fs.writeFileSync(path.join(CHANNEL_SPEC_PATH), channelSpecBuffer);
+	const fixedSpec = fixChannelSpecImports((await channelSpecResponse.buffer()).toString('utf-8'));
+	fs.writeFileSync(path.join(CHANNEL_SPEC_PATH), fixedSpec);
 })();

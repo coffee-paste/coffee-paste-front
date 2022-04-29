@@ -1,6 +1,6 @@
 import { ITypedEvent, WeakEvent } from 'weak-event';
 import { envFacade } from '../env-facade';
-import { IncomingNoteUpdate, OutgoingNoteUpdate } from '../generated/api/channel-spec';
+import { FrontToBackNoteUpdate, BackToFrontNoteUpdate } from '../generated/api/channel-spec';
 import { ApiFacade } from '../generated/proxies/api-proxies';
 
 export class NotesSocket {
@@ -38,9 +38,9 @@ export class NotesSocket {
 		return this._closed;
 	}
 
-	private _message: WeakEvent<NotesSocket, OutgoingNoteUpdate> = new WeakEvent<NotesSocket, OutgoingNoteUpdate>();
+	private _message: WeakEvent<NotesSocket, BackToFrontNoteUpdate> = new WeakEvent<NotesSocket, BackToFrontNoteUpdate>();
 
-	public get message(): ITypedEvent<NotesSocket, OutgoingNoteUpdate> {
+	public get message(): ITypedEvent<NotesSocket, BackToFrontNoteUpdate> {
 		return this._message;
 	}
 
@@ -67,12 +67,15 @@ export class NotesSocket {
 		this._socket.close(code, reason);
 	}
 
-	public sendNoteUpdate(note: IncomingNoteUpdate): void {
+	public sendNoteUpdate(note: FrontToBackNoteUpdate): void {
 		this._socket.send(
 			JSON.stringify({
 				noteId: note.noteId,
 				contentHTML: note.contentHTML,
 				contentText: note.contentText,
+				oldGuardNonce: note.oldGuardNonce,
+				newGuardNonce: note.newGuardNonce,
+				encryptedNewGuardNonce: note.encryptedNewGuardNonce,
 			})
 		);
 	}
