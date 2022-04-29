@@ -36,7 +36,9 @@ export interface IVueMenuItem {
 	 * @type {Function}
 	 * @memberof IVueMenuItem
 	 */
-	command?: () => void;
+	// This is a somewhat generic callback function. No explicit type here
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	command?: (e?: any) => void;
 
 	/**
 	 * External link to navigate when item is clicked

@@ -33,6 +33,7 @@ module.exports = {
 		"no-debugger": process.env.NODE_ENV === "production" ? "warn" : "off",
 		"vue/require-valid-default-prop": "off",
 		"import/no-unresolved": "off",
+		"@typescript-eslint/no-inferrable-types": "off",
 	},
 	overrides: [
 		{
@@ -63,6 +64,11 @@ module.exports = {
 				"no-continue": "off",
 				"no-plusplus": "off",
 				"no-console": "off",
+				"no-underscore-dangle": ["error", { "allowAfterThis": true }],
+				"no-trailing-spaces": "error",
+				"spaced-comment": ["error", "always", { "exceptions": ["#region", "#endregion"] }],
+				"no-return-await": "off",
+				"@typescript-eslint/return-await": "off",
 			}
 		},
 		{

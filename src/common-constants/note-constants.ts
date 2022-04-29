@@ -1,4 +1,4 @@
-import { Note } from '@/infrastructure/generated/api';
+import { INote } from '@/infrastructure/notes/note-interfaces';
 
 enum NoteStringPrefix {
 	NewNote = 'New note',
@@ -13,7 +13,7 @@ function formatNewNoteName(newNoteIndex: number) {
  * @param notes The exists notes collection
  * @returns The suggested new note name.
  */
-export function generateNewNoteName(notes: Note[]): string {
+export function generateNewNoteName(notes: INote[]): string {
 	// Filter out all notes that not match prefix, then map to names to string array, and sort by string value
 	const relevantNames = notes
 		.filter((n) => n.name?.startsWith(NoteStringPrefix.NewNote))

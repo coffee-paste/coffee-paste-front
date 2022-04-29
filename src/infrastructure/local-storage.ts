@@ -5,6 +5,7 @@ export enum LocalStorageKey {
 	ActiveTabIndex = 'ACTIVE_TAB_INDEX',
 	IsLocalDev = 'IS_LOCAL_DEV',
 	Theme = 'THEME',
+	MasterKey = 'MK',
 }
 
 export interface LocalStorageItemOptions {
