@@ -154,7 +154,7 @@ const NoteTabsComponent = defineComponent({
             const id = this.contextedTabHeader!.id;
             const noteName = this.contextedTabHeader!.name || 'un-named note';
             this.$confirm.require({
-                target: e.originalEvent.target,
+                target: e.originalEvent.target as HTMLElement,
                 message: `Really archive note '${noteName}'?`,
                 icon: PrimeIcons.QUESTION,
                 accept: async () => {
@@ -179,7 +179,7 @@ const NoteTabsComponent = defineComponent({
             const id = this.contextedTabHeader!.id;
             const noteName = this.contextedTabHeader?.name || 'un-named note';
             this.$confirm.require({
-                target: e.originalEvent.target,
+                target: e.originalEvent.target as HTMLElement,
                 message: `Really delete note '${noteName}'?`,
                 icon: PrimeIcons.EXCLAMATION_TRIANGLE,
                 accept: async () => {
