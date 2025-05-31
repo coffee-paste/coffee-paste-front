@@ -54,7 +54,7 @@ const BASE_PATH = envFacade.apiUrl;`;
 
 const CLASS_DEFS_REGEX = /export[\t ]+class\s+(?<className>[\w\d]+)\s+extends\s+BaseAPI/g;
 
-const INJECT_PARAMS_FIND_REGEX = /localVarUrlObj\.search/g
+const INJECT_PARAMS_FIND_REGEX = /localVarUrlObj.search = null;/g
 const INJECT_PARAMS_FIND_CONTENT = "\
 delete localVarUrlObj.search;\n\
 			localVarRequestOptions.credentials = 'include';\n\
